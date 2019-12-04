@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29509.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Core", "WebsocketsSimple.Core\WebsocketsSimple.Core.csproj", "{901E17C4-E354-45BA-A7B6-8D3D542EEAB1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Server", "WebsocketsSimple.Server\WebsocketsSimple.Server.csproj", "{C1610377-2E55-4042-8076-D751FA53E900}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Middleware", "WebsocketsSimple.Middleware\WebsocketsSimple.Middleware.csproj", "{BB7611B6-5FAA-41F8-A8F6-FDE13C5F4151}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Client", "WebsocketsSimple.Client\WebsocketsSimple.Client.csproj", "{00F6425A-F087-4CC3-A718-03E3F99DB581}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple", "WebsocketsSimple\WebsocketsSimple.csproj", "{89B62E28-9899-479A-BF92-644C443F5153}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{901E17C4-E354-45BA-A7B6-8D3D542EEAB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{901E17C4-E354-45BA-A7B6-8D3D542EEAB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{901E17C4-E354-45BA-A7B6-8D3D542EEAB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{901E17C4-E354-45BA-A7B6-8D3D542EEAB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1610377-2E55-4042-8076-D751FA53E900}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1610377-2E55-4042-8076-D751FA53E900}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1610377-2E55-4042-8076-D751FA53E900}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1610377-2E55-4042-8076-D751FA53E900}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB7611B6-5FAA-41F8-A8F6-FDE13C5F4151}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB7611B6-5FAA-41F8-A8F6-FDE13C5F4151}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB7611B6-5FAA-41F8-A8F6-FDE13C5F4151}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB7611B6-5FAA-41F8-A8F6-FDE13C5F4151}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00F6425A-F087-4CC3-A718-03E3F99DB581}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00F6425A-F087-4CC3-A718-03E3F99DB581}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00F6425A-F087-4CC3-A718-03E3F99DB581}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00F6425A-F087-4CC3-A718-03E3F99DB581}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89B62E28-9899-479A-BF92-644C443F5153}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89B62E28-9899-479A-BF92-644C443F5153}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89B62E28-9899-479A-BF92-644C443F5153}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89B62E28-9899-479A-BF92-644C443F5153}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {75FFEAB6-17F7-4D46-BF4B-7057926A6358}
+	EndGlobalSection
+EndGlobal
