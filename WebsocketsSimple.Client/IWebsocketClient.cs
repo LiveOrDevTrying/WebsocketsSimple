@@ -6,11 +6,11 @@ namespace WebsocketsSimple.Client
 {
     public interface IWebsocketClient : ICoreNetworking<WSConnectionEventArgs, WSMessageEventArgs, WSErrorEventArgs>
     {
-        bool IsRunning { get; }
+        bool IsConnected { get; }
 
-        Task<bool> Send(PacketDTO packet);
-        Task<bool> Send(string message);
-        Task<bool> Start(string url, int port, string parameters, bool isWSS);
+        Task<bool> SendAsync(PacketDTO packet);
+        Task<bool> SendAsync(string message);
+        Task<bool> StartAsync(string url, int port, string parameters, bool isWSS);
         Task<bool> StopAsync();
     }
 }

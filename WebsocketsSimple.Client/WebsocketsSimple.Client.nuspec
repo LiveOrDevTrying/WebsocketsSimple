@@ -13,11 +13,11 @@
     <description>The Client module for a simple websocket server and client implementation using Kestrel middleware.</description>
     <releaseNotes>Initial commit</releaseNotes>
     <copyright>Copyright 2019</copyright>
-    <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple</tags>
+    <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple</tags>
     <dependencies>
       <group targetFramework="netcoreapp2.1">
         <dependency id="Microsoft.NETCore.App" version="[2.1,3]" />
-        <dependency id="WebsocketsSimple.Core" version="[1,2]" />
+        <dependency id="WebsocketsSimple.Core" version="[1.0.3,2]" />
       </group>
     </dependencies>
   </metadata>

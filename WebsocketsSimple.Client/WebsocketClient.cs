@@ -16,7 +16,7 @@ namespace WebsocketsSimple.Client
     {
         protected ClientWebSocket _client;
 
-        public async Task<bool> Start(string url, int port, string parameters, bool isWSS)
+        public virtual async Task<bool> StartAsync(string url, int port, string parameters, bool isWSS)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace WebsocketsSimple.Client
 
             return false;
         }
-        public virtual async Task<bool> Send(string message)
+        public virtual async Task<bool> SendAsync(string message)
         {
             try
             {
@@ -110,7 +110,7 @@ namespace WebsocketsSimple.Client
 
             return false;
         }
-        public virtual async Task<bool> Send(PacketDTO packet)
+        public virtual async Task<bool> SendAsync(PacketDTO packet)
         {
             try
             {
@@ -235,7 +235,7 @@ namespace WebsocketsSimple.Client
                 });
             }
         }
-        public bool IsRunning
+        public bool IsConnected
         {
             get
             {
