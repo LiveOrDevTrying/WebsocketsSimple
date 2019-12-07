@@ -16,7 +16,7 @@ namespace WebsocketsSimple.Client
     {
         protected ClientWebSocket _client;
 
-        public virtual async Task<bool> StartAsync(string url, int port, string parameters, bool isWSS)
+        public virtual async Task<bool> ConnectAsync(string url, int port, string parameters, bool isWSS)
         {
             try
             {
@@ -146,7 +146,7 @@ namespace WebsocketsSimple.Client
 
             return false;
         }
-        public virtual async Task<bool> StopAsync()
+        public virtual async Task<bool> DisconnectAsync()
         {
             try
             {
@@ -219,7 +219,7 @@ namespace WebsocketsSimple.Client
                     }
                     else if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        await StopAsync();
+                        await DisconnectAsync();
                         break;
                     }
                 }
