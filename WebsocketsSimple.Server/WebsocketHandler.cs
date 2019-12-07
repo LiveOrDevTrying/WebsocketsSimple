@@ -11,11 +11,11 @@ using WebsocketsSimple.Core.Events.Args;
 
 namespace WebsocketsSimple.Server
 {
-    public class WebsocketHandler :
+    public sealed class WebsocketHandler :
         CoreNetworking<WSConnectionEventArgs, WSMessageEventArgs, WSErrorEventArgs>,
         ICoreNetworking<WSConnectionEventArgs, WSMessageEventArgs, WSErrorEventArgs>
     {
-        public virtual void ConnectClient(Guid userId, WebSocket websocket)
+        public void ConnectClient(Guid userId, WebSocket websocket)
         {
             FireEvent(this, new WSConnectionAuthEventArgs
             {
@@ -25,7 +25,7 @@ namespace WebsocketsSimple.Server
                 Websocket = websocket,
             });
         }
-        public virtual Task DisconnectClient(WebSocket websocket)
+        public Task DisconnectClient(WebSocket websocket)
         {
             FireEvent(this, new WSConnectionEventArgs
             {
@@ -73,7 +73,7 @@ namespace WebsocketsSimple.Server
 
             await SendAsync(packet, websocket);
         }
-        public virtual async Task SendRawAsync(string message, WebSocket websocket)
+        public async Task SendRawAsync(string message, WebSocket websocket)
         {
             if (websocket.State != WebSocketState.Open)
             {
@@ -102,7 +102,7 @@ namespace WebsocketsSimple.Server
             });
         }
         
-        public virtual Task ReceiveAsync(WebSocket websocket, WebSocketReceiveResult result, string message)
+        public Task ReceiveAsync(WebSocket websocket, WebSocketReceiveResult result, string message)
         {
             PacketDTO packet;
 

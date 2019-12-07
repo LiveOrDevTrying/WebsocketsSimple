@@ -24,13 +24,12 @@ namespace WebsocketsSimple.Server
         protected bool _isPingRunning;
 
         public WebsocketServer(ParamsWSServer parameters,
-            WebsocketConnectionManager connectionManager,
-            WebsocketHandler handler)
+            WebsocketConnectionManager connectionManager)
         {
             _parameters = parameters;
             _connectionManager = connectionManager;
 
-            _handler = handler;
+            _handler = new WebsocketHandler();
             _handler.ConnectionEvent += OnConnectionEvent;
             _handler.MessageEvent += OnMessageEvent;
             _handler.ErrorEvent += OnErrorEvent;
