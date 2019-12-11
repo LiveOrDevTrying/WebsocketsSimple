@@ -42,7 +42,7 @@ namespace WebsocketsSimple.Client
                         Websocket = _client
                     });
 
-                    await Task.Run(async () => await ReceivingAsync(_client));
+                    Task.Run(async () => await ReceivingAsync(_client));
                     return true;
                 }
                 else
