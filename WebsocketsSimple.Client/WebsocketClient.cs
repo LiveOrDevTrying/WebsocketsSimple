@@ -235,7 +235,7 @@ namespace WebsocketsSimple.Client
                 });
             }
         }
-        public bool IsConnected
+        public bool IsRunning
         {
             get
             {

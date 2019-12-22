@@ -13,12 +13,12 @@
     <RepositoryType>Github Public</RepositoryType>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Version>1.0.3</Version>
+    <Version>1.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.1.1" />
-    <PackageReference Include="WebsocketsSimple.Server" Version="1.0.5" />
+    <PackageReference Include="WebsocketsSimple.Server" Version="1.0.7" />
   </ItemGroup>
 
 </Project>

@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Server", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Middleware", "WebsocketsSimple.Middleware\WebsocketsSimple.Middleware.csproj", "{BB7611B6-5FAA-41F8-A8F6-FDE13C5F4151}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Client", "WebsocketsSimple.Client\WebsocketsSimple.Client.csproj", "{00F6425A-F087-4CC3-A718-03E3F99DB581}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Client", "WebsocketsSimple.Client\WebsocketsSimple.Client.csproj", "{00F6425A-F087-4CC3-A718-03E3F99DB581}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple", "WebsocketsSimple\WebsocketsSimple.csproj", "{89B62E28-9899-479A-BF92-644C443F5153}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple", "WebsocketsSimple\WebsocketsSimple.csproj", "{89B62E28-9899-479A-BF92-644C443F5153}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
