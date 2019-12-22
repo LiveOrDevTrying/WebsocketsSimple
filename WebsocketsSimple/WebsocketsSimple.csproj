@@ -17,8 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WebsocketsSimple.Client\WebsocketsSimple.Client.csproj" />
-    <ProjectReference Include="..\WebsocketsSimple.Middleware\WebsocketsSimple.Middleware.csproj" />
+    <PackageReference Include="WebsocketsSimple.Client" Version="1.0.8" />
+    <PackageReference Include="WebsocketsSimple.Middleware" Version="1.0.5" />
   </ItemGroup>
 
 </Project>
