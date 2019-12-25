@@ -1,9 +1,9 @@
 ﻿using PHS.Core.Services;
-using PHS.WS.Core.Server.Middleware.Models;
+using WebsocketsSimple.Middleware.Models;
 using System;
 using System.Threading.Tasks;
 
-namespace PHS.WS.Core.Server.Middleware
+namespace WebsocketsSimple.Middleware
 {
     public interface IUserServiceWebsocket : IUserService
     {

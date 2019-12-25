@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PHS.WS.Core.Server.Middleware.Models
+namespace WebsocketsSimple.Middleware.Models
 {
     public class UserWS : IUserWS
     {

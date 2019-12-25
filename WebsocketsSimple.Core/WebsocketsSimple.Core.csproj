@@ -8,16 +8,24 @@
     <Copyright>Copyright 2019</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
-    <PackageIconUrl>https://pixelhorrorstudios.s3-us-west-2.amazonaws.com/Packages/WebsocketsSimple.png</PackageIconUrl>
+    <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <RepositoryType>Github Public</RepositoryType>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Version>1.0.5</Version>
+    <PackageIcon>Logo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="PHS.Core" Version="1.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

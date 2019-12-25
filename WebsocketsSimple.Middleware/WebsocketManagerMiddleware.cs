@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using PHS.WS.Core.Server.Middleware.Models;
+using WebsocketsSimple.Middleware.Models;
 using System;
 using System.Net.WebSockets;
 using System.Text;
@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Server;
 
-namespace PHS.WS.Core.Server.Middleware
+namespace WebsocketsSimple.Middleware
 {
     public class WebsocketManagerMiddleware
     {

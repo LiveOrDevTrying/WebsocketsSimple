@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using PHS.Core.Services;
-using PHS.WS.Core.Server.Middleware.Models;
+using WebsocketsSimple.Middleware.Models;
 using WebsocketsSimple.Server;
 
-namespace PHS.WS.Core.Server.Middleware
+namespace WebsocketsSimple.Middleware
 {
     public static class WebsocketExtensions
     {

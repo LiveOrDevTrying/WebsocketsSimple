@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PHS.WS.Core.Server.Middleware.Models
+﻿namespace WebsocketsSimple.Middleware.Models
 {
     public struct WebsocketManagerParams
     {
