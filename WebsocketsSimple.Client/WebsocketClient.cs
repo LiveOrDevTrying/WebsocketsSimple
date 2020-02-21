@@ -1,97 +1,112 @@
 ﻿using Newtonsoft.Json;
-using PHS.Core.Enums;
-using PHS.Core.Models;
+using PHS.Networking.Enums;
+using PHS.Networking.Models;
+using PHS.Networking.Services;
 using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WebsocketsSimple.Core.Events.Args;
+using WebsocketsSimple.Client.Events.Args;
+using WebsocketsSimple.Client.Models;
+using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client
 {
     public class WebsocketClient :
-        CoreNetworking<WSConnectionEventArgs, WSMessageEventArgs, WSErrorEventArgs>,
+        CoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>,
         IWebsocketClient
     {
-        protected ClientWebSocket _client;
+        protected IConnection _connection;
+        protected IParamsWSClient _parameters;
+        protected string _oauthToken;
 
-        public virtual async Task<bool> ConnectAsync(string url, int port, string parameters, bool isWSS)
+        public WebsocketClient(IParamsWSClient parameters, string oauthToken = "")
+        {
+            _parameters = parameters;
+            _oauthToken = oauthToken;
+        }
+
+        public async Task<bool> ConnectAsync()
         {
             try
             {
-                if (_client != null)
+                if (_connection != null &&
+                    _connection.Websocket != null)
                 {
-                    if (_client.State == WebSocketState.Open)
+                    if (_connection.Websocket.State == WebSocketState.Open)
                     {
-                        await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                        await _connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                     }
-                    _client.Dispose();
+                    _connection.Websocket.Dispose();
+                    _connection = null;
                 }
 
-                _client = new ClientWebSocket();
-                var prefix = isWSS ? "wss" : "ws";
-                await _client.ConnectAsync(new Uri($"{prefix}://{url}:{port}/{parameters}"), CancellationToken.None);
+                var client = new ClientWebSocket();
+                var prefix = _parameters.IsWebsocketSecured ? "wss" : "ws";
 
-                if (_client.State == WebSocketState.Open)
+                if (string.IsNullOrWhiteSpace(_oauthToken))
                 {
-                    FireEvent(this, new WSConnectionEventArgs
+                    await client.ConnectAsync(new Uri($"{prefix}://{_parameters.Uri}:{_parameters.Port}"), CancellationToken.None);
+
+                }
+                else
+                {
+                    await client.ConnectAsync(new Uri($"{prefix}://{_parameters.Uri}:{_parameters.Port}/{_oauthToken}"), CancellationToken.None);
+                }
+
+                if (client.State == WebSocketState.Open)
+                {
+                    _connection = new Connection
                     {
-                        ArgsType = ArgsType.Connection,
-                        ConnectionEventType = ConnectionEventType.ServerStart,
-                        Websocket = _client
+                        Websocket = client
+                    };
+
+                    FireEvent(this, new WSConnectionClientEventArgs
+                    {
+                        ConnectionEventType = ConnectionEventType.Connected,
+                        Connection = _connection
                     });
 
-                    Task.Run(async () => await ReceivingAsync(_client));
+                    ReceiveAsync();
                     return true;
                 }
                 else
                 {
-                    FireEvent(this, new WSConnectionEventArgs
+                    FireEvent(this, new WSConnectionClientEventArgs
                     {
-                        ArgsType = ArgsType.Connection,
-                        ConnectionEventType = ConnectionEventType.ServerStop,
-                        Websocket = _client
+                        ConnectionEventType = ConnectionEventType.Disconnect,
+                        Connection = _connection,
                     });
                 }
 
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
-                    ArgsType = ArgsType.Error,
                     Exception = ex,
                     Message = "Error during StartAsync()",
-                    Websocket = _client
+                    Connection = _connection
                 });
             }
 
             return false;
         }
-        public virtual async Task<bool> SendAsync(string message)
+        public async Task<bool> DisconnectAsync()
         {
             try
             {
-                if (_client != null &&
-                    _client.State == WebSocketState.Open)
+                if (_connection != null &&
+                    _connection.Websocket != null &&
+                    _connection.Websocket.State == WebSocketState.Open)
                 {
-                    var bytes = Encoding.UTF8.GetBytes(message);
+                    await _connection.Websocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 
-                    await _client.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
-
-                    FireEvent(this, new WSMessageEventArgs
+                    FireEvent(this, new WSConnectionClientEventArgs
                     {
-                        ArgsType = ArgsType.Message,
-                        MessageEventType = MessageEventType.Sent,
-                        Message = message,
-                        Packet = new PacketDTO
-                        {
-                            Action = (int)ActionType.SendToServer,
-                            Data = message,
-                            Timestamp = DateTime.UtcNow
-                        },
-                        Websocket = _client
+                        ConnectionEventType = ConnectionEventType.Disconnect,
+                        Connection = _connection
                     });
 
                     return true;
@@ -99,35 +114,35 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
-                    ArgsType = ArgsType.Error,
                     Exception = ex,
-                    Message = "Error during SendAsync()",
-                    Websocket = _client
+                    Message = "Error in StopAsync()",
+                    Connection = _connection
                 });
             }
 
             return false;
         }
-        public virtual async Task<bool> SendAsync(PacketDTO packet)
+        
+        public async Task<bool> SentToServerAsync<T>(T packet) where T : IPacket
         {
             try
             {
-                if (_client != null &&
-                    _client.State == WebSocketState.Open)
+                if (_connection != null &&
+                    _connection.Websocket != null &&
+                    _connection.Websocket.State == WebSocketState.Open)
                 {
                     var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(packet));
 
-                    await _client.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                    await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 
-                    FireEvent(this, new WSMessageEventArgs
+                    FireEvent(this, new WSMessageClientEventArgs
                     {
-                        ArgsType = ArgsType.Message,
                         MessageEventType = MessageEventType.Sent,
                         Message = JsonConvert.SerializeObject(packet),
                         Packet = packet,
-                        Websocket = _client
+                        Connection = _connection,
                     });
 
                     return true;
@@ -135,31 +150,46 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
-                    ArgsType = ArgsType.Error,
                     Exception = ex,
                     Message = "Error during SendAsync()",
-                    Websocket = _client
+                    Connection = _connection
                 });
             }
 
             return false;
         }
-        public virtual async Task<bool> DisconnectAsync()
+        public async Task<bool> SendToServerAsync(string message)
+        {
+            return await SentToServerAsync(new Packet
+            {
+                Data = message,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+        public async Task<bool> SendToServerRawAsync(string message)
         {
             try
             {
-                if (_client != null &&
-                    _client.State == WebSocketState.Open)
+                if (_connection != null &&
+                    _connection.Websocket != null &&
+                    _connection.Websocket.State == WebSocketState.Open)
                 {
-                    await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                    var bytes = Encoding.UTF8.GetBytes(message);
 
-                    FireEvent(this, new WSConnectionEventArgs
+                    await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                    FireEvent(this, new WSMessageClientEventArgs
                     {
-                        ArgsType = ArgsType.Connection,
-                        ConnectionEventType = ConnectionEventType.ServerStop,
-                        Websocket = _client
+                        MessageEventType = MessageEventType.Sent,
+                        Message = message,
+                        Packet = new Packet
+                        {
+                            Data = message,
+                            Timestamp = DateTime.UtcNow
+                        },
+                        Connection = _connection
                     });
 
                     return true;
@@ -167,80 +197,114 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
-                    ArgsType = ArgsType.Error,
                     Exception = ex,
-                    Message = "Error in StopAsync()",
-                    Websocket = _client
+                    Message = "Error during SendAsync()",
+                    Connection = _connection
                 });
             }
 
             return false;
         }
 
-        private async Task ReceivingAsync(ClientWebSocket client)
+        private async Task ReceiveAsync()
         {
             try
             {
                 var buffer = new byte[1024 * 4];
 
-                while (true)
+                var isRunning = true;
+
+                while (isRunning)
                 {
-                    var result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    var result = await _connection.Websocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
                         var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        PacketDTO packet;
 
-                        try
+                        if (!string.IsNullOrWhiteSpace(message))
                         {
-                            packet = JsonConvert.DeserializeObject<PacketDTO>(message);
-                        }
-                        catch
-                        {
-                            packet = new PacketDTO
+                            if (message.Trim().ToLower() == "ping")
                             {
-                                Action = (int)ActionType.SendToClient,
-                                Data = message,
-                                Timestamp = DateTime.UtcNow
-                            };
-                        }
+                                await SendToServerRawAsync("pong");
+                            }
+                            else 
+                            {
+                                var packet = MessageReceived(message);
 
-                        FireEvent(this, new WSMessageEventArgs
-                        {
-                            ArgsType = ArgsType.Message,
-                            Message = message,
-                            Packet = packet,
-                            Websocket = _client,
-                            MessageEventType = MessageEventType.Receive
-                        });
+                                FireEvent(this, new WSMessageClientEventArgs
+                                {
+                                    Message = message,
+                                    Packet = packet,
+                                    Connection = _connection,
+                                    MessageEventType = MessageEventType.Receive
+                                });
+                            }
+                        }
                     }
                     else if (result.MessageType == WebSocketMessageType.Close)
                     {
                         await DisconnectAsync();
-                        break;
+                        isRunning = false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
-                    ArgsType = ArgsType.Error,
                     Exception = ex,
                     Message = "Error in ReceiveAsync()",
-                    Websocket = _client
+                    Connection = _connection
                 });
             }
         }
+
+        protected virtual IPacket MessageReceived(string message)
+        {
+            IPacket packet;
+
+            try
+            {
+                packet = JsonConvert.DeserializeObject<Packet>(message);
+
+                if (string.IsNullOrWhiteSpace(packet.Data))
+                {
+                    packet = new Packet
+                    {
+                        Data = message,
+                        Timestamp = DateTime.UtcNow
+                    };
+                }
+            }
+            catch
+            {
+                packet = new Packet
+                {
+                    Data = message,
+                    Timestamp = DateTime.UtcNow
+                };
+            }
+
+            return packet;
+        }
+
         public bool IsRunning
         {
             get
             {
-                return _client != null &&
-                    _client.State == WebSocketState.Open;
+                return _connection != null &&
+                    _connection.Websocket != null &&
+                    _connection.Websocket.State == WebSocketState.Open;
+            }
+        }
+        public IConnection Connection
+        {
+            get
+            {
+                return _connection;
             }
         }
     }

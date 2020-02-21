@@ -10,14 +10,14 @@
     <projectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</projectUrl>
     <icon>Logo.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>The core module for a simple websocket server and client implementation using Kestrel middleware.</description>
+    <description>The core module for a simple websocket server and client implementation with authentication using Kestrel middleware.</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright 2019</copyright>
-    <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple</tags>
+    <copyright>Copyright 2020</copyright>
+    <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
       <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.NETCore.App" version="[2.1,3]" />
-        <dependency id="PHS.Core" version="[1.0.4,2]" />
+        <dependency id="Microsoft.NETCore.App" version="[2.1,3)" />
+        <dependency id="PHS.Networking" version="[1.2.2,2)" />
       </group>
     </dependencies>
   </metadata>

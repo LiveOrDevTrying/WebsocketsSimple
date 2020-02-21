@@ -4,28 +4,31 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
-    <Description>The server module for a simple websocket server and client implementation using Kestrel middleware.</Description>
-    <Copyright>Copyright 2019</Copyright>
+    <Description>The server module for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
+    <Copyright>Copyright 2020</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <RepositoryType>Github Public</RepositoryType>
-    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple</PackageTags>
+    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Version>1.0.7</Version>
+    <Version>1.1.1</Version>
     <PackageIcon>Logo.png</PackageIcon>
+    <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="WebsocketsSimple.Core" Version="1.0.5" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Include="Logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.1.1" />
+    <PackageReference Include="PHS.Networking.Server" Version="1.2.1" />
+    <PackageReference Include="WebsocketsSimple.Core" Version="1.1.1" />
   </ItemGroup>
 
 </Project>

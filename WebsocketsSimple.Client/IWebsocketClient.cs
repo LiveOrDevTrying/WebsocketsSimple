@@ -1,16 +1,21 @@
 ﻿using System.Threading.Tasks;
-using PHS.Core.Models;
-using PHS.Core.Networking;
-using WebsocketsSimple.Core.Events.Args;
+using PHS.Networking.Models;
+using PHS.Networking.Services;
+using WebsocketsSimple.Client.Events.Args;
+using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client
 {
-    public interface IWebsocketClient : ICoreNetworking<WSConnectionEventArgs, WSMessageEventArgs, WSErrorEventArgs>, 
-        INetworkClient
+    public interface IWebsocketClient : ICoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>
     {
-        Task<bool> SendAsync(PacketDTO packet);
-        Task<bool> SendAsync(string message);
-        Task<bool> ConnectAsync(string url, int port, string parameters, bool isWSS);
+        Task<bool> SentToServerAsync<T>(T packet) where T : IPacket;
+        Task<bool> SendToServerAsync(string message);
+        Task<bool> SendToServerRawAsync(string message);
+
+        Task<bool> ConnectAsync();
         Task<bool> DisconnectAsync();
+
+        bool IsRunning { get; }
+        IConnection Connection { get; }
     }
 }

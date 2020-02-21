@@ -1,10 +1,10 @@
-﻿using PHS.Core.Events.Args.NetworkEventArgs;
-using System.Net.WebSockets;
+﻿using PHS.Networking.Events.Args;
+using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Core.Events.Args
 {
-    public class WSErrorEventArgs : ErrorEventArgs
+    public class WSErrorEventArgs<T> : ErrorEventArgs where T : IConnection
     {
-        public WebSocket Websocket { get; set; }
+        public T Connection { get; set; }
     }
 }

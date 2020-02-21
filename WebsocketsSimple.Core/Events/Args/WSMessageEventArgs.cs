@@ -1,12 +1,11 @@
-﻿using PHS.Core.Events.Args.NetworkEventArgs;
-using PHS.Core.Models;
-using System.Net.WebSockets;
+﻿using PHS.Networking.Events.Args;
+using PHS.Networking.Models;
+using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Core.Events.Args
 {
-    public class WSMessageEventArgs : MessageEventArgs
+    public class WSMessageEventArgs<T>: MessageEventArgs where T : IConnection
     {
-        public WebSocket Websocket { get; set; }
-        public PacketDTO Packet { get; set; }
+        public T Connection { get; set; }
     }
 }

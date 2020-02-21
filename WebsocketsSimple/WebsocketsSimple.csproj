@@ -4,22 +4,23 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
-    <Description>The client and server modules combined for a simple websocket server and client implementation using Kestrel middleware.</Description>
-    <Copyright>Copyright 2019</Copyright>
+    <Description>The client and server modules combined for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
+    <Copyright>Copyright 2020</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <RepositoryType>Github Public</RepositoryType>
-    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple</PackageTags>
+    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Version>1.0.10</Version>
+    <Version>1.1.1</Version>
     <PackageIcon>Logo.png</PackageIcon>
+    <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WebsocketsSimple.Client" Version="1.0.8" />
-    <PackageReference Include="WebsocketsSimple.Middleware" Version="1.0.6" />
+    <PackageReference Include="WebsocketsSimple.Client" Version="1.1.1" />
+    <PackageReference Include="WebsocketsSimple.Server" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>
