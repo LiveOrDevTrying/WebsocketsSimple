@@ -8,7 +8,7 @@ namespace WebsocketsSimple.Client
 {
     public interface IWebsocketClient : ICoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>
     {
-        Task<bool> SentToServerAsync<T>(T packet) where T : IPacket;
+        Task<bool> SendToServerAsync<T>(T packet) where T : IPacket;
         Task<bool> SendToServerAsync(string message);
         Task<bool> SendToServerRawAsync(string message);
 

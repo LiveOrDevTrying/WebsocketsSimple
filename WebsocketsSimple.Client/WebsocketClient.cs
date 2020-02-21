@@ -125,7 +125,7 @@ namespace WebsocketsSimple.Client
             return false;
         }
         
-        public async Task<bool> SentToServerAsync<T>(T packet) where T : IPacket
+        public async Task<bool> SendToServerAsync<T>(T packet) where T : IPacket
         {
             try
             {
@@ -162,7 +162,7 @@ namespace WebsocketsSimple.Client
         }
         public async Task<bool> SendToServerAsync(string message)
         {
-            return await SentToServerAsync(new Packet
+            return await SendToServerAsync(new Packet
             {
                 Data = message,
                 Timestamp = DateTime.UtcNow
