@@ -20,7 +20,7 @@ namespace WebsocketsSimple.Server.Managers
         }
         public virtual IUserConnections<T> GetIdentity(IConnectionServer connection)
         {
-            return _userConnections.Any(p => p.Value.Connections.Any(t => t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
+            return _userConnections.Any(p => p.Value.Connections.Any(t => t != null && t.Websocket != null && t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
                ? _userConnections.Values.FirstOrDefault(s => s.Connections.Any(t => t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
                : (default);
         }
@@ -41,7 +41,7 @@ namespace WebsocketsSimple.Server.Managers
                 _userConnections.TryAdd(userId, userConnection);
             }
 
-            if (!userConnection.Connections.Any(s => s.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
+            if (!userConnection.Connections.Any(s => s != null && s.Websocket != null && s.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
             {
                 userConnection.Connections.Add(connection);
                 return userConnection;
@@ -55,7 +55,7 @@ namespace WebsocketsSimple.Server.Managers
 
             if (userConnection != null)
             {
-                var instance = userConnection.Connections.FirstOrDefault(s => s.Websocket.GetHashCode() == connection.Websocket.GetHashCode());
+                var instance = userConnection.Connections.FirstOrDefault(s => s != null && s.Websocket != null && s.Websocket.GetHashCode() == connection.Websocket.GetHashCode());
 
                 if (instance != null)
                 {
