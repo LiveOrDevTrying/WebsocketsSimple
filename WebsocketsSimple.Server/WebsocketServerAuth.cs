@@ -366,30 +366,35 @@ namespace WebsocketsSimple.Server
                     return;
                 }
 
-                var userId = await _userService.GetIdAsync(oauthToken);
-
-                if (userId == null)
+                if (await _userService.IsValidTokenAsync(oauthToken))
                 {
-                    await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
+                    var userId = await _userService.GetIdAsync(oauthToken);
+
+                    if (userId == null)
+                    {
+                        await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
+                        FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                        {
+                            Connection = connection,
+                            ConnectionEventType = ConnectionEventType.Disconnect,
+                            UserId = default
+                        });
+                        return;
+                    }
+
+                    _connectionManager.AddUserConnection(userId, connection);
+                    await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
+
                     FireEvent(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         Connection = connection,
-                        ConnectionEventType = ConnectionEventType.Disconnect,
-                        UserId = default
+                        ConnectionEventType = ConnectionEventType.Connected,
+                        UserId = userId
                     });
+
+                    await _handler.StartReceiving(connection);
                     return;
                 }
-
-                _connectionManager.AddUserConnection(userId, connection);
-                await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
-                await _handler.StartReceiving(connection);
-
-                FireEvent(this, new WSConnectionServerAuthEventArgs<T>
-                {
-                    Connection = connection,
-                    ConnectionEventType = ConnectionEventType.Connected,
-                    UserId = userId
-                });
             }
             catch (Exception ex)
             {
@@ -401,6 +406,15 @@ namespace WebsocketsSimple.Server
                     UserId = default
                 });
             }
+
+            await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
+
+            FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+            {
+                Connection = connection,
+                ConnectionEventType = ConnectionEventType.Disconnect,
+                UserId = default
+            });
 
         }
 

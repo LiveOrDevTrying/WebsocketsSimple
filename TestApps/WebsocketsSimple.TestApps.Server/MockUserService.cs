@@ -11,8 +11,14 @@ namespace WebsocketsSimple.TestApps.Server
             return Task.FromResult(Guid.NewGuid());
         }
 
+        public Task<bool> IsValidTokenAsync(string token)
+        {
+            return Task.FromResult(true);
+        }
+
         public virtual void Dispose()
         {
         }
+
     }
 }
