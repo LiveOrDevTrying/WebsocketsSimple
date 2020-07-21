@@ -15,7 +15,7 @@ namespace WebsocketsSimple.Server
         Task<bool> SendToConnectionRawAsync(string message, IConnectionServer connection);
         Task DisconnectConnectionAsync(IConnectionServer connection);
 
-        Task StartReceiving(IConnectionServer connection);
+        Task StartReceivingAsync(IConnectionServer connection);
         
         IConnectionServer[] Connections { get; }
 

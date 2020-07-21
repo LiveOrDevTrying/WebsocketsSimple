@@ -24,7 +24,7 @@ namespace WebsocketsSimple.Server
         Task<bool> SendToConnectionRawAsync(string message, IConnectionServer connection);
         Task DisconnectConnectionAsync(IConnectionServer connection);
 
-        Task AuthorizeAndStartReceiving(IConnectionServer connection, string oauthToken);
+        Task AuthorizeAndStartReceivingAsync(IConnectionServer connection, string oauthToken);
         
         IConnectionServer[] Connections { get; }
         IUserConnections<T>[] UserConnections { get;

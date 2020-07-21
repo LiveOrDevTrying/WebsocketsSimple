@@ -42,11 +42,6 @@ namespace WebsocketsSimple.Server
             _handler.ServerEvent += OnServerEvent;
 
             _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
-
-            FireEvent(this, new ServerEventArgs
-            {
-                ServerEventType = ServerEventType.Start
-            });
         }
 
         public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionServer connection) where S : IPacket
@@ -57,7 +52,7 @@ namespace WebsocketsSimple.Server
                 {
                     await _handler.SendAsync(packet, connection);
 
-                    FireEvent(this, new WSMessageServerEventArgs
+                    await FireEventAsync(this, new WSMessageServerEventArgs
                     {
                         Connection = connection,
                         Message = packet.Data,
@@ -70,7 +65,7 @@ namespace WebsocketsSimple.Server
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerEventArgs
+                    await FireEventAsync(this, new WSErrorServerEventArgs
                     {
                         Connection = connection,
                         Exception = ex,
@@ -101,7 +96,7 @@ namespace WebsocketsSimple.Server
                 {
                     await _handler.SendRawAsync(message, connection);
 
-                    FireEvent(this, new WSMessageServerEventArgs
+                    await FireEventAsync(this, new WSMessageServerEventArgs
                     {
                         Connection = connection,
                         Message = message,
@@ -118,7 +113,7 @@ namespace WebsocketsSimple.Server
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerEventArgs
+                    await FireEventAsync(this, new WSErrorServerEventArgs
                     {
                         Connection = connection,
                         Exception = ex,
@@ -133,7 +128,6 @@ namespace WebsocketsSimple.Server
 
             return false;
         }
-                
         public virtual async Task DisconnectConnectionAsync(IConnectionServer connection)
         {
             try
@@ -142,9 +136,9 @@ namespace WebsocketsSimple.Server
                 {
                     await _connectionManager.RemoveConnectionAsync(connection, true);
                     
-                    _handler.DisconnectConnection(connection);
+                    await _handler.DisconnectConnectionAsync(connection);
 
-                    FireEvent(this, new WSConnectionServerEventArgs
+                    await FireEventAsync(this, new WSConnectionServerEventArgs
                     {
                         Connection = connection,
                         ConnectionEventType = ConnectionEventType.Disconnect,
@@ -153,7 +147,7 @@ namespace WebsocketsSimple.Server
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs
+                await FireEventAsync(this, new WSErrorServerEventArgs
                 {
                     Connection = connection,
                     Exception = ex,
@@ -161,16 +155,15 @@ namespace WebsocketsSimple.Server
                 });
             }
         }
-                
-        public virtual async Task StartReceiving(IConnectionServer connection)
+        public virtual async Task StartReceivingAsync(IConnectionServer connection)
         {
             try
             {
                 _connectionManager.AddConnection(connection);
                 await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
-                await _handler.StartReceiving(connection);
+                await _handler.StartReceivingAsync(connection);
 
-                FireEvent(this, new WSConnectionServerEventArgs
+                await FireEventAsync(this, new WSConnectionServerEventArgs
                 {
                     Connection = connection,
                     ConnectionEventType = ConnectionEventType.Connected,
@@ -178,7 +171,7 @@ namespace WebsocketsSimple.Server
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs
+                await FireEventAsync(this, new WSErrorServerEventArgs
                 {
                     Connection = connection,
                     Exception = ex,
@@ -187,7 +180,7 @@ namespace WebsocketsSimple.Server
             }
         }
 
-        private async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
+        protected virtual async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
         {
             try
             {
@@ -195,7 +188,7 @@ namespace WebsocketsSimple.Server
                 {
                     case ConnectionEventType.Connected:
                     case ConnectionEventType.Connecting:
-                        FireEvent(this, new WSConnectionServerEventArgs
+                        await FireEventAsync(this, new WSConnectionServerEventArgs
                         {
                             Connection = args.Connection,
                             ConnectionEventType = args.ConnectionEventType,
@@ -203,7 +196,7 @@ namespace WebsocketsSimple.Server
                         break;
                     case ConnectionEventType.Disconnect:
                         await _connectionManager.RemoveConnectionAsync(args.Connection, true);
-                        FireEvent(this, new WSConnectionServerEventArgs
+                        await FireEventAsync(this, new WSConnectionServerEventArgs
                         {
                             Connection = args.Connection,
                             ConnectionEventType = args.ConnectionEventType,
@@ -213,7 +206,7 @@ namespace WebsocketsSimple.Server
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs
+                await FireEventAsync(this, new WSErrorServerEventArgs
                 {
                     Connection = args.Connection,
                     Exception = ex,
@@ -221,22 +214,19 @@ namespace WebsocketsSimple.Server
                 });
             }
         }
-        private Task OnErrorEvent(object sender, WSErrorServerEventArgs args)
+        protected virtual async Task OnErrorEvent(object sender, WSErrorServerEventArgs args)
         {
-            FireEvent(sender, args);
-            return Task.CompletedTask;
+            await FireEventAsync(sender, args);
         }
-        private Task OnMessageEvent(object sender, WSMessageServerEventArgs args)
+        protected virtual async Task OnMessageEvent(object sender, WSMessageServerEventArgs args)
         {
-            FireEvent(sender, args);
-            return Task.CompletedTask;
+            await FireEventAsync(sender, args);
         }
-        private Task OnServerEvent(object sender, ServerEventArgs args)
+        protected virtual async Task OnServerEvent(object sender, ServerEventArgs args)
         {
-            FireEvent(sender, args);
-            return Task.CompletedTask;
+            await FireEventAsync(sender, args);
         }
-        private void OnTimerPingTick(object state)
+        protected virtual void OnTimerPingTick(object state)
         {
             if (!_isPingRunning)
             {
@@ -262,7 +252,7 @@ namespace WebsocketsSimple.Server
                         } 
                         catch (Exception ex)
                         {
-                            FireEvent(this, new WSErrorServerEventArgs
+                            await FireEventAsync(this, new WSErrorServerEventArgs
                             {
                                 Connection = connection,
                                 Exception = ex,
@@ -276,9 +266,9 @@ namespace WebsocketsSimple.Server
             }
         }
 
-        protected void FireEvent(object sender, ServerEventArgs args)
+        protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
         {
-            _serverEvent?.Invoke(sender, args);
+            await _serverEvent?.Invoke(sender, args);
         }
 
         public override void Dispose()
@@ -296,10 +286,10 @@ namespace WebsocketsSimple.Server
                 _timerPing.Dispose();
             }
 
-            FireEvent(this, new ServerEventArgs
+            FireEventAsync(this, new ServerEventArgs
             {
                 ServerEventType = ServerEventType.Stop
-            });
+            }).Wait();
 
             base.Dispose();
         }

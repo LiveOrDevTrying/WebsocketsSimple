@@ -27,7 +27,7 @@ namespace WebsocketsSimple.Client
             _oauthToken = oauthToken;
         }
 
-        public async Task<bool> ConnectAsync()
+        public virtual async Task<bool> ConnectAsync()
         {
             try
             {
@@ -62,7 +62,7 @@ namespace WebsocketsSimple.Client
                         Websocket = client
                     };
 
-                    FireEvent(this, new WSConnectionClientEventArgs
+                    await FireEventAsync(this, new WSConnectionClientEventArgs
                     {
                         ConnectionEventType = ConnectionEventType.Connected,
                         Connection = _connection
@@ -73,7 +73,7 @@ namespace WebsocketsSimple.Client
                 }
                 else
                 {
-                    FireEvent(this, new WSConnectionClientEventArgs
+                    await FireEventAsync(this, new WSConnectionClientEventArgs
                     {
                         ConnectionEventType = ConnectionEventType.Disconnect,
                         Connection = _connection,
@@ -83,7 +83,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorClientEventArgs
+                await FireEventAsync(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = "Error during StartAsync()",
@@ -93,7 +93,7 @@ namespace WebsocketsSimple.Client
 
             return false;
         }
-        public async Task<bool> DisconnectAsync()
+        public virtual async Task<bool> DisconnectAsync()
         {
             try
             {
@@ -103,7 +103,7 @@ namespace WebsocketsSimple.Client
                 {
                     await _connection.Websocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 
-                    FireEvent(this, new WSConnectionClientEventArgs
+                    await FireEventAsync(this, new WSConnectionClientEventArgs
                     {
                         ConnectionEventType = ConnectionEventType.Disconnect,
                         Connection = _connection
@@ -114,7 +114,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorClientEventArgs
+                await FireEventAsync(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = "Error in StopAsync()",
@@ -125,7 +125,7 @@ namespace WebsocketsSimple.Client
             return false;
         }
         
-        public async Task<bool> SendToServerAsync<T>(T packet) where T : IPacket
+        public virtual async Task<bool> SendToServerAsync<T>(T packet) where T : IPacket
         {
             try
             {
@@ -137,7 +137,7 @@ namespace WebsocketsSimple.Client
 
                     await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 
-                    FireEvent(this, new WSMessageClientEventArgs
+                    await FireEventAsync(this, new WSMessageClientEventArgs
                     {
                         MessageEventType = MessageEventType.Sent,
                         Message = JsonConvert.SerializeObject(packet),
@@ -150,7 +150,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorClientEventArgs
+                await FireEventAsync(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = "Error during SendAsync()",
@@ -160,7 +160,7 @@ namespace WebsocketsSimple.Client
 
             return false;
         }
-        public async Task<bool> SendToServerAsync(string message)
+        public virtual async Task<bool> SendToServerAsync(string message)
         {
             return await SendToServerAsync(new Packet
             {
@@ -168,7 +168,7 @@ namespace WebsocketsSimple.Client
                 Timestamp = DateTime.UtcNow
             });
         }
-        public async Task<bool> SendToServerRawAsync(string message)
+        public virtual async Task<bool> SendToServerRawAsync(string message)
         {
             try
             {
@@ -180,7 +180,7 @@ namespace WebsocketsSimple.Client
 
                     await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 
-                    FireEvent(this, new WSMessageClientEventArgs
+                    await FireEventAsync(this, new WSMessageClientEventArgs
                     {
                         MessageEventType = MessageEventType.Sent,
                         Message = message,
@@ -197,7 +197,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorClientEventArgs
+                await FireEventAsync(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = "Error during SendAsync()",
@@ -208,7 +208,7 @@ namespace WebsocketsSimple.Client
             return false;
         }
 
-        private async Task ReceiveAsync()
+        protected virtual async Task ReceiveAsync()
         {
             try
             {
@@ -234,7 +234,7 @@ namespace WebsocketsSimple.Client
                             {
                                 var packet = MessageReceived(message);
 
-                                FireEvent(this, new WSMessageClientEventArgs
+                                await FireEventAsync(this, new WSMessageClientEventArgs
                                 {
                                     Message = message,
                                     Packet = packet,
@@ -253,7 +253,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorClientEventArgs
+                await FireEventAsync(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = "Error in ReceiveAsync()",

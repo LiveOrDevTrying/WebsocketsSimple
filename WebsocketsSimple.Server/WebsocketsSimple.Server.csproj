@@ -13,7 +13,7 @@
     <RepositoryType>Github Public</RepositoryType>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Version>1.1.4</Version>
+    <Version>1.2.0</Version>
     <PackageIcon>Logo.png</PackageIcon>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
@@ -29,10 +29,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="PHS.Networking.Server" Version="1.2.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebsocketsSimple.Core\WebsocketsSimple.Core.csproj" />
+    <PackageReference Include="WebsocketsSimple.Core" Version="1.2.0" />
   </ItemGroup>
 
 </Project>

@@ -31,7 +31,7 @@ namespace WebsocketsSimple.Server.Middleware
                 ConnectionId = Guid.NewGuid().ToString()
             };
 
-            await _websocketServer.StartReceiving(connection);
+            await _websocketServer.StartReceivingAsync(connection);
             
             await _next.Invoke(context);
         }

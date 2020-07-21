@@ -48,11 +48,6 @@ namespace WebsocketsSimple.Server
             _handler.ServerEvent += OnServerEvent;
 
             _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
-
-            FireEvent(this, new ServerEventArgs
-            {
-                ServerEventType = ServerEventType.Start
-            });
         }
 
         public virtual async Task BroadcastToAllUsersAsync<S>(S packet) where S : IPacket
@@ -147,7 +142,7 @@ namespace WebsocketsSimple.Server
                 {
                     await _handler.SendAsync(packet, connection);
 
-                    FireEvent(this, new WSMessageServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         Message = packet.Data,
@@ -161,7 +156,7 @@ namespace WebsocketsSimple.Server
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         UserId = default,
@@ -184,7 +179,7 @@ namespace WebsocketsSimple.Server
                     {
                         await _handler.SendAsync(packet, connection);
 
-                        FireEvent(this, new WSMessageServerAuthEventArgs<T>
+                        await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                         {
                             Connection = connection,
                             Message = packet.Data,
@@ -198,7 +193,7 @@ namespace WebsocketsSimple.Server
                     }
                     catch (Exception ex)
                     {
-                        FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                        await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                         {
                             Connection = connection,
                             UserId = identity.Id,
@@ -231,7 +226,7 @@ namespace WebsocketsSimple.Server
                 {
                     await _handler.SendRawAsync(message, connection);
 
-                    FireEvent(this, new WSMessageServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         Message = message,
@@ -249,7 +244,7 @@ namespace WebsocketsSimple.Server
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         UserId = default,
@@ -272,7 +267,7 @@ namespace WebsocketsSimple.Server
                     {
                         await _handler.SendRawAsync(message, connection);
 
-                        FireEvent(this, new WSMessageServerAuthEventArgs<T>
+                        await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                         {
                             Connection = connection,
                             Message = message,
@@ -290,7 +285,7 @@ namespace WebsocketsSimple.Server
                     }
                     catch (Exception ex)
                     {
-                        FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                        await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                         {
                             Connection = connection,
                             UserId = identity.Id,
@@ -315,7 +310,7 @@ namespace WebsocketsSimple.Server
                 if (_connectionManager.IsConnectionOpen(connection))
                 {
                     await _connectionManager.RemoveConnectionAsync(connection, true);
-                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         UserId = default,
                         Connection = connection,
@@ -328,7 +323,7 @@ namespace WebsocketsSimple.Server
                     var identity = _connectionManager.GetIdentity(connection);
                     await _connectionManager.RemoveUserConnectionAsync(connection, true);
 
-                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         UserId = identity.Id,
                         Connection = connection,
@@ -336,11 +331,11 @@ namespace WebsocketsSimple.Server
                     });
                 }
 
-                _handler.DisconnectConnection(connection);
+                await _handler.DisconnectConnectionAsync(connection);
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                 {
                     Connection = connection,
                     Exception = ex,
@@ -350,14 +345,14 @@ namespace WebsocketsSimple.Server
             }
         }
                 
-        public virtual async Task AuthorizeAndStartReceiving(IConnectionServer connection, string oauthToken)
+        public virtual async Task AuthorizeAndStartReceivingAsync(IConnectionServer connection, string oauthToken)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(oauthToken))
                 {
                     await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
-                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         ConnectionEventType = ConnectionEventType.Disconnect,
@@ -373,7 +368,7 @@ namespace WebsocketsSimple.Server
                     if (userId == null)
                     {
                         await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
-                        FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                        await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                         {
                             Connection = connection,
                             ConnectionEventType = ConnectionEventType.Disconnect,
@@ -385,20 +380,20 @@ namespace WebsocketsSimple.Server
                     _connectionManager.AddUserConnection(userId, connection);
                     await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
 
-                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         ConnectionEventType = ConnectionEventType.Connected,
                         UserId = userId
                     });
 
-                    await _handler.StartReceiving(connection);
+                    await _handler.StartReceivingAsync(connection);
                     return;
                 }
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                 {
                     Connection = connection,
                     Exception = ex,
@@ -409,7 +404,7 @@ namespace WebsocketsSimple.Server
 
             await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
 
-            FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Disconnect,
@@ -418,7 +413,7 @@ namespace WebsocketsSimple.Server
 
         }
 
-        private async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
+        protected virtual async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
         {
             try
             {
@@ -426,7 +421,7 @@ namespace WebsocketsSimple.Server
                 {
                     case ConnectionEventType.Connected:
                     case ConnectionEventType.Connecting:
-                        FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                        await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                         {
                             Connection = args.Connection,
                             ConnectionEventType = args.ConnectionEventType,
@@ -439,7 +434,7 @@ namespace WebsocketsSimple.Server
                         if (identity != null)
                         {
                             await _connectionManager.RemoveUserConnectionAsync(args.Connection, true);
-                            FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+                            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                             {
                                 Connection = args.Connection,
                                 ConnectionEventType = args.ConnectionEventType,
@@ -451,7 +446,7 @@ namespace WebsocketsSimple.Server
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                 {
                     Connection = args.Connection,
                     Exception = ex,
@@ -460,13 +455,13 @@ namespace WebsocketsSimple.Server
                 });
             }
         }
-        private Task OnErrorEvent(object sender, WSErrorServerEventArgs args)
+        protected virtual async Task OnErrorEvent(object sender, WSErrorServerEventArgs args)
         {
             if (_connectionManager.IsConnectionAuthorized(args.Connection))
             {
                 var identity = _connectionManager.GetIdentity(args.Connection);
 
-                FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                 {
                     Connection = args.Connection,
                     Exception = args.Exception,
@@ -474,15 +469,14 @@ namespace WebsocketsSimple.Server
                     UserId = identity.Id
                 });
             }
-            return Task.CompletedTask;
         }
-        private Task OnMessageEvent(object sender, WSMessageServerEventArgs args)
+        protected virtual async Task OnMessageEvent(object sender, WSMessageServerEventArgs args)
         {
             var identity = _connectionManager.GetIdentity(args.Connection);
 
             if (identity != null)
             {
-                FireEvent(this, new WSMessageServerAuthEventArgs<T>
+                await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                 {
                     Connection = args.Connection,
                     Message = args.Message,
@@ -491,14 +485,12 @@ namespace WebsocketsSimple.Server
                     UserId = identity.Id
                 });
             }
-            return Task.CompletedTask;
         }
-        private Task OnServerEvent(object sender, ServerEventArgs args)
+        protected virtual async Task OnServerEvent(object sender, ServerEventArgs args)
         {
-            FireEvent(sender, args);
-            return Task.CompletedTask;
+            await FireEventAsync(sender, args);
         }
-        private void OnTimerPingTick(object state)
+        protected virtual void OnTimerPingTick(object state)
         {
             if (!_isPingRunning)
             {
@@ -526,7 +518,7 @@ namespace WebsocketsSimple.Server
                             } 
                             catch (Exception ex)
                             {
-                                FireEvent(this, new WSErrorServerAuthEventArgs<T>
+                                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                                 {
                                     Connection = connection,
                                     Exception = ex,
@@ -542,9 +534,9 @@ namespace WebsocketsSimple.Server
             }
         }
 
-        protected void FireEvent(object sender, ServerEventArgs args)
+        protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
         {
-            _serverEvent?.Invoke(sender, args);
+            await _serverEvent?.Invoke(sender, args);
         }
 
         public override void Dispose()
@@ -562,10 +554,10 @@ namespace WebsocketsSimple.Server
                 _timerPing.Dispose();
             }
 
-            FireEvent(this, new ServerEventArgs
+            FireEventAsync(this, new ServerEventArgs
             {
                 ServerEventType = ServerEventType.Stop
-            });
+            }).Wait();
 
             base.Dispose();
         }
