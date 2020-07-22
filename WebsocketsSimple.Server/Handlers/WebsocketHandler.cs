@@ -241,7 +241,10 @@ namespace WebsocketsSimple.Server.Handlers
 
         protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
         {
-            await _serverEvent?.Invoke(sender, args);
+            if (_serverEvent != null)
+            {
+                await _serverEvent?.Invoke(sender, args);
+            }
         }
 
         public override void Dispose()
