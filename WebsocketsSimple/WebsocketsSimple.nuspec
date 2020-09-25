@@ -17,8 +17,8 @@
     <dependencies>
       <group targetFramework="netcoreapp2.1">
         <dependency id="Microsoft.NETCore.App" version="2.1" />
-        <dependency id="WebsocketsSimple.Client" version="1.2.1" />
-        <dependency id="WebsocketsSimple.Server" version="1.2.3" />
+        <dependency id="WebsocketsSimple.Client" version="[1,2)" />
+        <dependency id="WebsocketsSimple.Server" version="[1,2)" />
       </group>
     </dependencies>
   </metadata>
