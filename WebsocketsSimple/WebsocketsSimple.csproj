@@ -13,17 +13,17 @@
     <RepositoryType>Github Public</RepositoryType>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Version>1.3.0</Version>
+    <Version>1.3.1</Version>
     <PackageIcon>Logo.png</PackageIcon>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\..\Tcp.NET\Tcp.NET.Server.SSL.Auth\Logo.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="Logo.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="WebsocketsSimple.Client" Version="1.*" />
