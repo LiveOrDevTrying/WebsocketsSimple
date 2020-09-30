@@ -15,10 +15,7 @@
     <copyright>Copyright 2020</copyright>
     <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
-      <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.NETCore.App" version="2.1" />
-		<dependency id="PHS.Networking" version="[1,2)" />
-	  </group>
+	    <dependency id="PHS.Networking" version="[1,2)" />
     </dependencies>
   </metadata>
   <files>

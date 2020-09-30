@@ -15,11 +15,8 @@
     <copyright>Copyright 2020</copyright>
     <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
-      <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.NETCore.App" version="2.1" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" />
+	    <dependency id="Newtonsoft.Json" version="12.0.2" />
         <dependency id="WebsocketsSimple.Core" version="[1,2)" />
-	  </group>
     </dependencies>
   </metadata>
   <files>
