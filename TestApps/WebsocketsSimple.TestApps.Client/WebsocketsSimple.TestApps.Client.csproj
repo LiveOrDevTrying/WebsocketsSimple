@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WebsocketsSimple\WebsocketsSimple.csproj" />
+    <PackageReference Include="WebsocketsSimple" Version="1.*" />
   </ItemGroup>
 
 </Project>

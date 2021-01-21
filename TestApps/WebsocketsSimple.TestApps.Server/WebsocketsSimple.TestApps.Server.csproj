@@ -11,10 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\WebsocketsSimple\WebsocketsSimple.csproj" />
+    <PackageReference Include="WebsocketsSimple" Version="1.*" />
   </ItemGroup>
 
 </Project>

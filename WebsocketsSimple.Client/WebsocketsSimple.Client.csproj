@@ -17,14 +17,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+	<PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+	<PackageReference Include="WebsocketsSimple.Core" Version="1.*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\WebsocketsSimple.Core\WebsocketsSimple.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+	<ItemGroup>
     <None Include="Logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
