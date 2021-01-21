@@ -1,30 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
-    <Version>1.4.0</Version>
+    <Version>2.1.0</Version>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
+    <Copyright>Apache-2.0</Copyright>
     <Description>The core module for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
-    <Copyright>Copyright 2020</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <PackageIcon>Logo.png</PackageIcon>
-    <RepositoryType>GitHub</RepositoryType>
+    <RepositoryType>Github Public</RepositoryType>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="Logo.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="PHS.Networking" Version="1.*" />
-  </ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="PHS.Networking" Version="2.*" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <None Include="Logo.png">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
+	</ItemGroup>
 
 </Project>

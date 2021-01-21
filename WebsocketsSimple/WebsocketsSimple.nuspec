@@ -12,11 +12,13 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>The client and server modules combined for a simple websocket server and client implementation with authentication using Kestrel middleware.</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright 2020</copyright>
+    <copyright>Copyright 2021</copyright>
     <tags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
-        <dependency id="WebsocketsSimple.Client" version="[1,2)" />
-        <dependency id="WebsocketsSimple.Server" version="[1,2)" />
+		<group targetFramework="netstandard2.1">
+			<dependency id="WebsocketsSimple.Client" version="[1,2)" />
+			<dependency id="WebsocketsSimple.Server" version="[1,2)" />
+		</group>
     </dependencies>
   </metadata>
   <files>

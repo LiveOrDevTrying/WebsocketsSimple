@@ -9,34 +9,34 @@ using System.Threading.Tasks;
 
 namespace WebsocketsSimple.Server.Managers
 {
-    internal class WebsocketConnectionManagerAuth<T> : WebsocketConnectionManager
+    public class WebsocketConnectionManagerAuth<T> : WebsocketConnectionManager
     {
         protected ConcurrentDictionary<T, IUserConnections<T>> _userConnections =
             new ConcurrentDictionary<T, IUserConnections<T>>();
 
-        public virtual IUserConnections<T> GetIdentity(T userId)
+        public IUserConnections<T> GetIdentity(T userId)
         {
             return _userConnections.TryGetValue(userId, out var identity) ? identity : null;
         }
-        public virtual IUserConnections<T> GetIdentity(IConnectionServer connection)
+        public IUserConnections<T> GetIdentity(IConnectionServer connection)
         {
             return _userConnections.Any(p => p.Value.Connections.Any(t => t != null && t.Websocket != null && t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
                ? _userConnections.Values.FirstOrDefault(s => s.Connections.Any(t => t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
                : (default);
         }
-        public virtual IUserConnections<T>[] GetAllIdentities()
+        public IUserConnections<T>[] GetAllIdentities()
         {
             return _userConnections.Values.ToArray();
         }
 
-        public virtual IUserConnections<T> AddUserConnection(T userId, IConnectionServer connection)
+        public IUserConnections<T> AddUserConnection(T userId, IConnectionServer connection)
         {
             if (!_userConnections.TryGetValue(userId, out var userConnection))
             {
                 userConnection = new UserConnections<T>
                 {
                     Connections = new List<IConnectionServer>(),
-                    Id = userId
+                    UserId = userId
                 };
                 _userConnections.TryAdd(userId, userConnection);
             }
@@ -49,7 +49,7 @@ namespace WebsocketsSimple.Server.Managers
 
             return null;
         }
-        public virtual async Task RemoveUserConnectionAsync(IConnectionServer connection, bool disconnectConnection)
+        public async Task RemoveUserConnectionAsync(IConnectionServer connection, bool disconnectConnection)
         {
             var userConnection = _userConnections.Values.FirstOrDefault(s => s.Connections.Any(t => t.GetHashCode() == connection.GetHashCode()));
 
@@ -63,7 +63,7 @@ namespace WebsocketsSimple.Server.Managers
 
                     if (!userConnection.Connections.Any())
                     {
-                        _userConnections.TryRemove(userConnection.Id, out userConnection);
+                        _userConnections.TryRemove(userConnection.UserId, out userConnection);
                     }
                 }
             }
@@ -78,7 +78,7 @@ namespace WebsocketsSimple.Server.Managers
             }
         }
 
-        public virtual bool IsConnectionAuthorized(IConnectionServer connection)
+        public bool IsConnectionAuthorized(IConnectionServer connection)
         {
             var userConnection = _userConnections.Values.FirstOrDefault(s => s.Connections.Any(t => t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()));
 
@@ -95,7 +95,7 @@ namespace WebsocketsSimple.Server.Managers
 
             return false;
         }
-        public virtual bool IsUserConnected(T userId)
+        public bool IsUserConnected(T userId)
         {
             return _userConnections.ContainsKey(userId);
         }

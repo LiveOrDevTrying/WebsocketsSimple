@@ -31,8 +31,6 @@ namespace WebsocketsSimple.Server
 
         private const int PING_INTERVAL_SEC = 120;
 
-        private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
-
         public WebsocketServerAuth(IParamsWSServerAuth parameters,
             IUserService<T> userService,
             WebsocketHandler handler = null)
@@ -45,7 +43,6 @@ namespace WebsocketsSimple.Server
             _handler.ConnectionEvent += OnConnectionEvent;
             _handler.MessageEvent += OnMessageEvent;
             _handler.ErrorEvent += OnErrorEvent;
-            _handler.ServerEvent += OnServerEvent;
 
             _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
         }
@@ -185,7 +182,7 @@ namespace WebsocketsSimple.Server
                             Message = packet.Data,
                             MessageEventType = MessageEventType.Sent,
                             Packet = packet,
-                            UserId = identity.Id,
+                            UserId = identity.UserId,
                         });
 
                         return true;
@@ -196,7 +193,7 @@ namespace WebsocketsSimple.Server
                         await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                         {
                             Connection = connection,
-                            UserId = identity.Id,
+                            UserId = identity.UserId,
                             Exception = ex,
                             Message = ex.Message
                         });
@@ -277,7 +274,7 @@ namespace WebsocketsSimple.Server
                                 Data = message,
                                 Timestamp = DateTime.UtcNow
                             },
-                            UserId = identity.Id,
+                            UserId = identity.UserId,
                         });
 
                         return true;
@@ -288,7 +285,7 @@ namespace WebsocketsSimple.Server
                         await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                         {
                             Connection = connection,
-                            UserId = identity.Id,
+                            UserId = identity.UserId,
                             Exception = ex,
                             Message = ex.Message
                         });
@@ -325,7 +322,7 @@ namespace WebsocketsSimple.Server
 
                     await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                     {
-                        UserId = identity.Id,
+                        UserId = identity.UserId,
                         Connection = connection,
                         ConnectionEventType = ConnectionEventType.Disconnect,
                     });
@@ -438,7 +435,7 @@ namespace WebsocketsSimple.Server
                             {
                                 Connection = args.Connection,
                                 ConnectionEventType = args.ConnectionEventType,
-                                UserId = identity.Id
+                                UserId = identity.UserId
                             });
                         }
                         break;
@@ -466,7 +463,7 @@ namespace WebsocketsSimple.Server
                     Connection = args.Connection,
                     Exception = args.Exception,
                     Message = args.Message,
-                    UserId = identity.Id
+                    UserId = identity.UserId
                 });
             }
         }
@@ -482,13 +479,9 @@ namespace WebsocketsSimple.Server
                     Message = args.Message,
                     MessageEventType = args.MessageEventType,
                     Packet = args.Packet,
-                    UserId = identity.Id
+                    UserId = identity.UserId
                 });
             }
-        }
-        protected virtual async Task OnServerEvent(object sender, ServerEventArgs args)
-        {
-            await FireEventAsync(sender, args);
         }
         protected virtual void OnTimerPingTick(object state)
         {
@@ -523,7 +516,7 @@ namespace WebsocketsSimple.Server
                                     Connection = connection,
                                     Exception = ex,
                                     Message = ex.Message,
-                                    UserId = identity.Id
+                                    UserId = identity.UserId
                                 });
                             }
                         }
@@ -534,14 +527,6 @@ namespace WebsocketsSimple.Server
             }
         }
 
-        protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
-        {
-            if (_serverEvent != null)
-            {
-                await _serverEvent?.Invoke(sender, args);
-            }
-        }
-
         public override void Dispose()
         {
             if (_handler != null)
@@ -549,18 +534,12 @@ namespace WebsocketsSimple.Server
                 _handler.ConnectionEvent -= OnConnectionEvent;
                 _handler.MessageEvent -= OnMessageEvent;
                 _handler.ErrorEvent -= OnErrorEvent;
-                _handler.ServerEvent -= OnServerEvent;
             }
 
             if (_timerPing != null)
             {
                 _timerPing.Dispose();
             }
-
-            FireEventAsync(this, new ServerEventArgs
-            {
-                ServerEventType = ServerEventType.Stop
-            }).Wait();
 
             base.Dispose();
         }
@@ -579,16 +558,11 @@ namespace WebsocketsSimple.Server
                 return _connectionManager.GetAllIdentities();
             }
         }
-
-        public event NetworkingEventHandler<ServerEventArgs> ServerEvent
+        public WebsocketConnectionManagerAuth<T> ConnectionManager
         {
-            add
+            get
             {
-                _serverEvent += value;
-            }
-            remove
-            {
-                _serverEvent -= value;
+                return _connectionManager;
             }
         }
     }

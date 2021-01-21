@@ -1,31 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <ApplicationIcon>Logo.ico</ApplicationIcon>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Version>2.1.0</Version>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
-    <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
-    <Copyright>Copyright 2020</Copyright>
-    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
-    <RepositoryType>GitHub</RepositoryType>
-    <PackageIcon>Logo.png</PackageIcon>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>The client module for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
-    <Version>1.4.0</Version>
+    <Copyright>Copyright 2021</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
+    <PackageIcon>Logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
+    <RepositoryType>Github Public</RepositoryType>
+    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
+    <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
-
-  <ItemGroup>
-	<PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-	<PackageReference Include="WebsocketsSimple.Core" Version="1.*" />
-  </ItemGroup>
-
+	
 	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="12.*" />
+	</ItemGroup>
+	
+  <ItemGroup>
     <None Include="Logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebsocketsSimple.Core\WebsocketsSimple.Core.csproj" />
   </ItemGroup>
 
 </Project>

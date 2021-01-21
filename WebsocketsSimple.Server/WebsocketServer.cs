@@ -27,8 +27,6 @@ namespace WebsocketsSimple.Server
 
         private const int PING_INTERVAL_SEC = 120;
 
-        private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
-
         public WebsocketServer(IParamsWSServer parameters,
             WebsocketHandler handler = null)
         {
@@ -39,7 +37,6 @@ namespace WebsocketsSimple.Server
             _handler.ConnectionEvent += OnConnectionEvent;
             _handler.MessageEvent += OnMessageEvent;
             _handler.ErrorEvent += OnErrorEvent;
-            _handler.ServerEvent += OnServerEvent;
 
             _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
         }
@@ -222,10 +219,6 @@ namespace WebsocketsSimple.Server
         {
             await FireEventAsync(sender, args);
         }
-        protected virtual async Task OnServerEvent(object sender, ServerEventArgs args)
-        {
-            await FireEventAsync(sender, args);
-        }
         protected virtual void OnTimerPingTick(object state)
         {
             if (!_isPingRunning)
@@ -266,14 +259,6 @@ namespace WebsocketsSimple.Server
             }
         }
 
-        protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
-        {
-            if (_serverEvent != null)
-            {
-                await _serverEvent?.Invoke(sender, args);
-            }
-        }
-
         public override void Dispose()
         {
             if (_handler != null)
@@ -281,18 +266,12 @@ namespace WebsocketsSimple.Server
                 _handler.ConnectionEvent -= OnConnectionEvent;
                 _handler.MessageEvent -= OnMessageEvent;
                 _handler.ErrorEvent -= OnErrorEvent;
-                _handler.ServerEvent -= OnServerEvent;
             }
 
             if (_timerPing != null)
             {
                 _timerPing.Dispose();
             }
-
-            FireEventAsync(this, new ServerEventArgs
-            {
-                ServerEventType = ServerEventType.Stop
-            }).Wait();
 
             base.Dispose();
         }
@@ -304,16 +283,11 @@ namespace WebsocketsSimple.Server
                 return _connectionManager.GetAllConnections();
             }
         }
-
-        public event NetworkingEventHandler<ServerEventArgs> ServerEvent
+        public WebsocketConnectionManager ConnectionManager
         {
-            add
+            get
             {
-                _serverEvent += value;
-            }
-            remove
-            {
-                _serverEvent -= value;
+                return _connectionManager;
             }
         }
     }
