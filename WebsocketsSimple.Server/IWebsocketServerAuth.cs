@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
-using PHS.Networking.Events;
 using PHS.Networking.Models;
-using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Services;
 using WebsocketsSimple.Server.Events.Args;
+using WebsocketsSimple.Server.Managers;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server
@@ -27,8 +26,7 @@ namespace WebsocketsSimple.Server
         Task AuthorizeAndStartReceivingAsync(IConnectionServer connection, string oauthToken);
         
         IConnectionServer[] Connections { get; }
-        IUserConnections<T>[] UserConnections { get;
-        }
-        event NetworkingEventHandler<ServerEventArgs> ServerEvent;
+        IUserConnections<T>[] UserConnections { get; }
+        WebsocketConnectionManagerAuth<T> ConnectionManager { get; }
     }
 }
