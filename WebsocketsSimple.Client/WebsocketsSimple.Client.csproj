@@ -18,6 +18,7 @@
 	
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="12.*" />
+		<PackageReference Include="WebsocketsSimple.Core" Version="2.*" />
 	</ItemGroup>
 	
   <ItemGroup>
@@ -25,10 +26,6 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebsocketsSimple.Core\WebsocketsSimple.Core.csproj" />
   </ItemGroup>
 
 </Project>

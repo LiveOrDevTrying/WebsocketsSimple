@@ -16,11 +16,11 @@
     <PackageIcon>Logo.png</PackageIcon>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebsocketsSimple.Client\WebsocketsSimple.Client.csproj" />
-    <ProjectReference Include="..\WebsocketsSimple.Server\WebsocketsSimple.Server.csproj" />
-  </ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="WebsocketsSimple.Client" Version="2.*" />
+		<PackageReference Include="WebsocketsSimple.Server" Version="2.*" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <None Include="Logo.png">
