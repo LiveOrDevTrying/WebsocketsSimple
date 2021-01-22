@@ -17,7 +17,7 @@ namespace WebsocketsSimple.Client
         CoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>,
         IWebsocketClient
     {
-        protected IConnection _connection;
+        protected IConnectionWS _connection;
         protected IParamsWSClient _parameters;
         protected string _oauthToken;
 
@@ -57,9 +57,9 @@ namespace WebsocketsSimple.Client
 
                 if (client.State == WebSocketState.Open)
                 {
-                    _connection = new Connection
+                    _connection = new ConnectionWS
                     {
-                        Websocket = client
+                        Websocket = client,
                     };
 
                     await FireEventAsync(this, new WSConnectionClientEventArgs

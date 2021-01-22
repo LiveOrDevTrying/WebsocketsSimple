@@ -27,7 +27,7 @@ namespace WebsocketsSimple.Server.Middleware
             var token = context.Request.Path.ToString().Substring(1);
             var websocket = await context.WebSockets.AcceptWebSocketAsync();
 
-            var connection = new ConnectionServer
+            var connection = new ConnectionWSServer
             {
                 Websocket = websocket,
                 ConnectionId = Guid.NewGuid().ToString()

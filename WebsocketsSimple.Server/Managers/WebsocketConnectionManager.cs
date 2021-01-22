@@ -11,22 +11,22 @@ namespace WebsocketsSimple.Server.Managers
 {
     public class WebsocketConnectionManager
     {
-        protected ConcurrentDictionary<int, IConnectionServer> _connections =
-            new ConcurrentDictionary<int, IConnectionServer>();
+        protected ConcurrentDictionary<int, IConnectionWSServer> _connections =
+            new ConcurrentDictionary<int, IConnectionWSServer>();
 
-        public IConnectionServer[] GetAllConnections()
+        public IConnectionWSServer[] GetAllConnections()
         {
             return _connections.Values.ToArray();
         }
-        public IConnectionServer GetConnection(WebSocket websocket)
+        public IConnectionWSServer GetConnection(WebSocket websocket)
         {
             return _connections.TryGetValue(websocket.GetHashCode(), out var connection) ? connection : null;
         }
-        public bool AddConnection(IConnectionServer connection)
+        public bool AddConnection(IConnectionWSServer connection)
         {
             return !_connections.ContainsKey(connection.Websocket.GetHashCode()) ? _connections.TryAdd(connection.Websocket.GetHashCode(), connection) : false;
         }
-        public async Task RemoveConnectionAsync(IConnectionServer connection, bool disconnectConnection)
+        public async Task RemoveConnectionAsync(IConnectionWSServer connection, bool disconnectConnection)
         {
             if (_connections.TryRemove(connection.Websocket.GetHashCode(), out var instance) &&
                 disconnectConnection &&
@@ -36,7 +36,7 @@ namespace WebsocketsSimple.Server.Managers
                 instance.Websocket.Dispose();
             }
         }
-        public bool IsConnectionOpen(IConnectionServer connection)
+        public bool IsConnectionOpen(IConnectionWSServer connection)
         {
             return _connections.TryGetValue(connection.Websocket.GetHashCode(), out var instance) ? instance.Websocket.State == WebSocketState.Open : false;
         }

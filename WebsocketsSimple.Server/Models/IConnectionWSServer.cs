@@ -2,7 +2,7 @@
 
 namespace WebsocketsSimple.Server.Models
 {
-    public interface IConnectionServer : IConnection
+    public interface IConnectionWSServer : IConnectionWS
     {
         bool HasBeenPinged { get; set; }
         string ConnectionId { get; set; }

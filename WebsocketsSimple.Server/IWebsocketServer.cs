@@ -9,14 +9,14 @@ namespace WebsocketsSimple.Server
 {
     public interface IWebsocketServer : ICoreNetworking<WSConnectionServerEventArgs, WSMessageServerEventArgs, WSErrorServerEventArgs>
     {
-        Task<bool> SendToConnectionAsync<S>(S packet, IConnectionServer connection) where S : IPacket;
-        Task<bool> SendToConnectionAsync(string message, IConnectionServer connection);
-        Task<bool> SendToConnectionRawAsync(string message, IConnectionServer connection);
-        Task DisconnectConnectionAsync(IConnectionServer connection);
+        Task<bool> SendToConnectionAsync<S>(S packet, IConnectionWSServer connection) where S : IPacket;
+        Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection);
+        Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection);
+        Task DisconnectConnectionAsync(IConnectionWSServer connection);
 
-        Task StartReceivingAsync(IConnectionServer connection);
+        Task StartReceivingAsync(IConnectionWSServer connection);
         
-        IConnectionServer[] Connections { get; }
+        IConnectionWSServer[] Connections { get; }
         WebsocketConnectionManager ConnectionManager { get; }
     }
 }

@@ -68,7 +68,7 @@ namespace WebsocketsSimple.Server
                 Timestamp = DateTime.UtcNow
             });
         }
-        public virtual async Task BroadcastToAllUsersAsync<S>(S packet, IConnectionServer connectionSending) where S : IPacket
+        public virtual async Task BroadcastToAllUsersAsync<S>(S packet, IConnectionWSServer connectionSending) where S : IPacket
         {
             foreach (var identity in _connectionManager.GetAllIdentities())
             {
@@ -82,7 +82,7 @@ namespace WebsocketsSimple.Server
                 }
             }
         }
-        public virtual async Task BroadcastToAllUsersAsync(string message, IConnectionServer connectionSending)
+        public virtual async Task BroadcastToAllUsersAsync(string message, IConnectionWSServer connectionSending)
         {
             await BroadcastToAllUsersAsync(new Packet
             {
@@ -131,7 +131,7 @@ namespace WebsocketsSimple.Server
             }
         }
                 
-        public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionServer connection) where S : IPacket
+        public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionWSServer connection) where S : IPacket
         {
             if (_connectionManager.IsConnectionOpen(connection))
             {
@@ -207,7 +207,7 @@ namespace WebsocketsSimple.Server
            
             return false;
         }
-        public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionServer connection)
+        public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection)
         {
             return await SendToConnectionAsync(new Packet
             {
@@ -215,7 +215,7 @@ namespace WebsocketsSimple.Server
                 Timestamp = DateTime.UtcNow
             }, connection);
         }
-        public virtual async Task<bool> SendToConnectionRawAsync(string message, IConnectionServer connection)
+        public virtual async Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection)
         {
             if (_connectionManager.IsConnectionOpen(connection))
             {
@@ -300,7 +300,7 @@ namespace WebsocketsSimple.Server
             return false;
         }
                 
-        public virtual async Task DisconnectConnectionAsync(IConnectionServer connection)
+        public virtual async Task DisconnectConnectionAsync(IConnectionWSServer connection)
         {
             try
             {
@@ -342,7 +342,7 @@ namespace WebsocketsSimple.Server
             }
         }
                 
-        public virtual async Task AuthorizeAndStartReceivingAsync(IConnectionServer connection, string oauthToken)
+        public virtual async Task AuthorizeAndStartReceivingAsync(IConnectionWSServer connection, string oauthToken)
         {
             try
             {
@@ -544,14 +544,14 @@ namespace WebsocketsSimple.Server
             base.Dispose();
         }
 
-        public IConnectionServer[] Connections
+        public IConnectionWSServer[] Connections
         {
             get
             {
                 return _connectionManager.GetAllConnections();
             }
         }
-        public IUserConnections<T>[] UserConnections
+        public IUserConnectionsWS<T>[] UserConnections
         {
             get
             {
