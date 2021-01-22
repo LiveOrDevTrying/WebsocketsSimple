@@ -30,7 +30,7 @@ namespace WebsocketsSimple.Server.Handlers
             _parameters = parameters;
         }
 
-        public virtual async Task SendAsync<T>(T packet, IConnectionServer connection) where T : IPacket
+        public virtual async Task SendAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket
         {
             try
             {
@@ -63,7 +63,7 @@ namespace WebsocketsSimple.Server.Handlers
                 await DisconnectConnectionAsync(connection);
             }
         }
-        public virtual async Task SendAsync(string message, IConnectionServer connection)
+        public virtual async Task SendAsync(string message, IConnectionWSServer connection)
         {
             var packet = new Packet
             {
@@ -73,7 +73,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             await SendAsync(packet, connection);
         }
-        public virtual async Task SendRawAsync(string message, IConnectionServer connection)
+        public virtual async Task SendRawAsync(string message, IConnectionWSServer connection)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
         }
 
-        public virtual async Task StartReceivingAsync(IConnectionServer connection)
+        public virtual async Task StartReceivingAsync(IConnectionWSServer connection)
         {
             try
             {
@@ -160,7 +160,7 @@ namespace WebsocketsSimple.Server.Handlers
                 });
             }
         }
-        protected virtual async Task Receive(IConnectionServer connection, Action<WebSocketReceiveResult, string> handleMessage)
+        protected virtual async Task Receive(IConnectionWSServer connection, Action<WebSocketReceiveResult, string> handleMessage)
         {
             var buffer = new byte[1024 * 4];
 
@@ -185,7 +185,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
             }
         }
-        protected virtual IPacket MessageReceived(string message, IConnectionServer connection)
+        protected virtual IPacket MessageReceived(string message, IConnectionWSServer connection)
         {
             IPacket packet;
 
@@ -214,7 +214,7 @@ namespace WebsocketsSimple.Server.Handlers
             return packet;
         }
 
-        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionServer connection)
+        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection)
         {
             try
             {

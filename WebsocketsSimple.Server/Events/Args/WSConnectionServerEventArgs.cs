@@ -3,7 +3,7 @@ using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Events.Args
 {
-    public class WSConnectionServerEventArgs : WSConnectionEventArgs<IConnectionServer>
+    public class WSConnectionServerEventArgs : WSConnectionEventArgs<IConnectionWSServer>
     {
     }
 }

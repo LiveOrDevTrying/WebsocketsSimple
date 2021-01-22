@@ -41,7 +41,7 @@ namespace WebsocketsSimple.Server
             _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
         }
 
-        public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionServer connection) where S : IPacket
+        public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionWSServer connection) where S : IPacket
         {
             if (_connectionManager.IsConnectionOpen(connection))
             {
@@ -77,7 +77,7 @@ namespace WebsocketsSimple.Server
            
             return false;
         }
-        public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionServer connection)
+        public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection)
         {
             return await SendToConnectionAsync(new Packet
             {
@@ -85,7 +85,7 @@ namespace WebsocketsSimple.Server
                 Timestamp = DateTime.UtcNow
             }, connection);
         }
-        public virtual async Task<bool> SendToConnectionRawAsync(string message, IConnectionServer connection)
+        public virtual async Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection)
         {
             if (_connectionManager.IsConnectionOpen(connection))
             {
@@ -125,7 +125,7 @@ namespace WebsocketsSimple.Server
 
             return false;
         }
-        public virtual async Task DisconnectConnectionAsync(IConnectionServer connection)
+        public virtual async Task DisconnectConnectionAsync(IConnectionWSServer connection)
         {
             try
             {
@@ -152,7 +152,7 @@ namespace WebsocketsSimple.Server
                 });
             }
         }
-        public virtual async Task StartReceivingAsync(IConnectionServer connection)
+        public virtual async Task StartReceivingAsync(IConnectionWSServer connection)
         {
             try
             {
@@ -276,7 +276,7 @@ namespace WebsocketsSimple.Server
             base.Dispose();
         }
 
-        public IConnectionServer[] Connections
+        public IConnectionWSServer[] Connections
         {
             get
             {

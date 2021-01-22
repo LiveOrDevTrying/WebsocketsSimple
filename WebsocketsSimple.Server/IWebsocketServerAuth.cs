@@ -11,22 +11,22 @@ namespace WebsocketsSimple.Server
     {
         Task BroadcastToAllUsersAsync<S>(S packet) where S : IPacket;
         Task BroadcastToAllUsersAsync(string message);
-        Task BroadcastToAllUsersAsync<S>(S packet, IConnectionServer connectionSending) where S : IPacket;
-        Task BroadcastToAllUsersAsync(string message, IConnectionServer connectionSending);
+        Task BroadcastToAllUsersAsync<S>(S packet, IConnectionWSServer connectionSending) where S : IPacket;
+        Task BroadcastToAllUsersAsync(string message, IConnectionWSServer connectionSending);
         Task BroadcastToAllUsersRawAsync(string message);
         Task SendToUserAsync<S>(S packet, T userId) where S : IPacket;
         Task SendToUserAsync(string message, T userId);
         Task SendToUserRawAsync(string message, T userId);
 
-        Task<bool> SendToConnectionAsync<S>(S packet, IConnectionServer connection) where S : IPacket;
-        Task<bool> SendToConnectionAsync(string message, IConnectionServer connection);
-        Task<bool> SendToConnectionRawAsync(string message, IConnectionServer connection);
-        Task DisconnectConnectionAsync(IConnectionServer connection);
+        Task<bool> SendToConnectionAsync<S>(S packet, IConnectionWSServer connection) where S : IPacket;
+        Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection);
+        Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection);
+        Task DisconnectConnectionAsync(IConnectionWSServer connection);
 
-        Task AuthorizeAndStartReceivingAsync(IConnectionServer connection, string oauthToken);
+        Task AuthorizeAndStartReceivingAsync(IConnectionWSServer connection, string oauthToken);
         
-        IConnectionServer[] Connections { get; }
-        IUserConnections<T>[] UserConnections { get; }
+        IConnectionWSServer[] Connections { get; }
+        IUserConnectionsWS<T>[] UserConnections { get; }
         WebsocketConnectionManagerAuth<T> ConnectionManager { get; }
     }
 }

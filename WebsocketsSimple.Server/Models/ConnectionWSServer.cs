@@ -1,11 +1,10 @@
-﻿using System.Net.WebSockets;
+﻿using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Server.Models
 {
-    public struct ConnectionServer : IConnectionServer
+    public class ConnectionWSServer : ConnectionWS, IConnectionWSServer
     {
         public bool HasBeenPinged { get; set; }
-        public WebSocket Websocket { get; set; }
         public string ConnectionId { get; set; }
     }
 }

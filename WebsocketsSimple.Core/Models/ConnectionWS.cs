@@ -2,7 +2,7 @@
 
 namespace WebsocketsSimple.Core.Models
 {
-    public struct Connection : IConnection
+    public class ConnectionWS : IConnectionWS
     {
         public WebSocket Websocket { get; set; }
     }
