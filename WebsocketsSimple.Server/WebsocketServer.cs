@@ -19,11 +19,9 @@ namespace WebsocketsSimple.Server
         protected readonly WebsocketHandler _handler;
         protected readonly IParamsWSServer _parameters;
         protected readonly WebsocketConnectionManager _connectionManager;
-
-        private const int PING_INTERVAL_SEC = 120;
-        
         protected Timer _timerPing;
         protected volatile bool _isPingRunning;
+        protected const int PING_INTERVAL_SEC = 120;
 
         public WebsocketServer(IParamsWSServer parameters,
             WebsocketHandler handler = null,
