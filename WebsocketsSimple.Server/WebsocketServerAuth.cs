@@ -23,11 +23,9 @@ namespace WebsocketsSimple.Server
         protected readonly IParamsWSServerAuth _parameters;
         protected readonly IUserService<T> _userService;
         protected readonly WebsocketConnectionManagerAuth<T> _connectionManager;
-
-        private const int PING_INTERVAL_SEC = 120;
-
         protected Timer _timerPing;
         protected volatile bool _isPingRunning;
+        protected const int PING_INTERVAL_SEC = 120;
 
         public WebsocketServerAuth(IParamsWSServerAuth parameters,
             IUserService<T> userService,
