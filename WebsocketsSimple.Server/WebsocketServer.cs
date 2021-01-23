@@ -7,11 +7,8 @@ using PHS.Networking.Services;
 using WebsocketsSimple.Server.Handlers;
 using WebsocketsSimple.Server.Managers;
 using PHS.Networking.Models;
-using PHS.Networking.Events;
-using PHS.Networking.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 using PHS.Networking.Enums;
-using PHS.Networking.Server.Enums;
 
 namespace WebsocketsSimple.Server
 {
@@ -21,17 +18,19 @@ namespace WebsocketsSimple.Server
     {
         protected readonly WebsocketHandler _handler;
         protected readonly IParamsWSServer _parameters;
-        private readonly WebsocketConnectionManager _connectionManager;
-        private Timer _timerPing;
-        private volatile bool _isPingRunning;
+        protected readonly WebsocketConnectionManager _connectionManager;
 
         private const int PING_INTERVAL_SEC = 120;
+        
+        protected Timer _timerPing;
+        protected volatile bool _isPingRunning;
 
         public WebsocketServer(IParamsWSServer parameters,
-            WebsocketHandler handler = null)
+            WebsocketHandler handler = null,
+            WebsocketConnectionManager connectionManager = null)
         {
             _parameters = parameters;
-            _connectionManager = new WebsocketConnectionManager();
+            _connectionManager = connectionManager ?? new WebsocketConnectionManager();
 
             _handler = handler ?? new WebsocketHandler(parameters);
             _handler.ConnectionEvent += OnConnectionEvent;
