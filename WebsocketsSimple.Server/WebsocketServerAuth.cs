@@ -8,11 +8,8 @@ using PHS.Networking.Services;
 using WebsocketsSimple.Server.Handlers;
 using WebsocketsSimple.Server.Managers;
 using PHS.Networking.Models;
-using PHS.Networking.Events;
-using PHS.Networking.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 using PHS.Networking.Enums;
-using PHS.Networking.Server.Enums;
 using PHS.Networking.Server.Services;
 using System.Linq;
 
@@ -25,19 +22,21 @@ namespace WebsocketsSimple.Server
         protected readonly WebsocketHandler _handler;
         protected readonly IParamsWSServerAuth _parameters;
         protected readonly IUserService<T> _userService;
-        private readonly WebsocketConnectionManagerAuth<T> _connectionManager;
-        private Timer _timerPing;
-        private volatile bool _isPingRunning;
+        protected readonly WebsocketConnectionManagerAuth<T> _connectionManager;
 
         private const int PING_INTERVAL_SEC = 120;
 
+        protected Timer _timerPing;
+        protected volatile bool _isPingRunning;
+
         public WebsocketServerAuth(IParamsWSServerAuth parameters,
             IUserService<T> userService,
-            WebsocketHandler handler = null)
+            WebsocketHandler handler = null,
+            WebsocketConnectionManagerAuth<T> connectionManager = null)
         {
             _parameters = parameters;
             _userService = userService;
-            _connectionManager = new WebsocketConnectionManagerAuth<T>();
+            _connectionManager = connectionManager ?? new WebsocketConnectionManagerAuth<T>();
 
             _handler = handler ?? new WebsocketHandler(parameters);
             _handler.ConnectionEvent += OnConnectionEvent;
