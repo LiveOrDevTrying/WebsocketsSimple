@@ -1,6 +1,6 @@
-﻿namespace PHS.Tcp.Core.Async.Server.Models
+﻿namespace WebsocketsSimple.Server.Models
 {
-    public struct ParamsWSServer : IParamsWSServer
+    public class ParamsWSServer : IParamsWSServer
     {
         public string ConnectionSuccessString { get; set; }
     }

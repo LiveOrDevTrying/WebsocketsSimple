@@ -1,5 +1,4 @@
-﻿using PHS.Tcp.Core.Async.Server.Models;
-using System;
+﻿using System;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -406,7 +405,10 @@ namespace WebsocketsSimple.Server
             });
 
         }
-
+        public virtual async Task<IPacket> MessageReceivedAsync(string message, IConnectionWSServer connection)
+        {
+            return await _handler.MessageReceivedAsync(message, connection);
+        }
         protected virtual async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
         {
             try

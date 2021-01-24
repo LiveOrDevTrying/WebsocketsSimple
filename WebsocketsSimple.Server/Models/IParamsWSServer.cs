@@ -1,4 +1,4 @@
-﻿namespace PHS.Tcp.Core.Async.Server.Models
+﻿namespace WebsocketsSimple.Server.Models
 {
     public interface IParamsWSServer
     {
