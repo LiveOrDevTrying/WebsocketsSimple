@@ -9,7 +9,6 @@ using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 using PHS.Networking.Enums;
 using PHS.Networking.Models;
-using PHS.Tcp.Core.Async.Server.Models;
 using PHS.Networking.Events;
 using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Server.Enums;
@@ -114,7 +113,7 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 _numberOfConnections++;
 
-                await Receive(connection, async (result, message) =>
+                _ = Receive(connection, async (result, message) =>
                 {
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
@@ -126,15 +125,7 @@ namespace WebsocketsSimple.Server.Handlers
                             }
                             else
                             {
-                                var packet = MessageReceived(message, connection);
-
-                                await FireEventAsync(this, new WSMessageServerEventArgs
-                                {
-                                    Message = message,
-                                    MessageEventType = MessageEventType.Receive,
-                                    Packet = packet,
-                                    Connection = connection,
-                                });
+                                await MessageReceivedAsync(message, connection);
                             }
                         }
                     }
@@ -185,7 +176,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
             }
         }
-        protected virtual IPacket MessageReceived(string message, IConnectionWSServer connection)
+        public virtual async Task<IPacket> MessageReceivedAsync(string message, IConnectionWSServer connection)
         {
             IPacket packet;
 
@@ -210,6 +201,14 @@ namespace WebsocketsSimple.Server.Handlers
                     Timestamp = DateTime.UtcNow
                 };
             }
+
+            await FireEventAsync(this, new WSMessageServerEventArgs
+            {
+                Message = message,
+                MessageEventType = MessageEventType.Receive,
+                Packet = packet,
+                Connection = connection,
+            });
 
             return packet;
         }

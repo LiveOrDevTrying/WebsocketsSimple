@@ -1,8 +1,7 @@
-﻿namespace PHS.Tcp.Core.Async.Server.Models
+﻿namespace WebsocketsSimple.Server.Models
 {
-    public struct ParamsWSServerAuth : IParamsWSServerAuth
+    public class ParamsWSServerAuth : ParamsWSServer, IParamsWSServerAuth
     {
-        public string ConnectionSuccessString { get; set; }
         public string ConnectionUnauthorizedString { get; set; }
     }
 }
