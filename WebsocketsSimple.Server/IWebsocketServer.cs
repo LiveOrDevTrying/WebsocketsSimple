@@ -17,6 +17,5 @@ namespace WebsocketsSimple.Server
         Task StartReceivingAsync(IConnectionWSServer connection);
         
         IConnectionWSServer[] Connections { get; }
-        WebsocketConnectionManager ConnectionManager { get; }
     }
 }

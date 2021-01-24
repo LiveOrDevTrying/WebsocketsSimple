@@ -280,12 +280,5 @@ namespace WebsocketsSimple.Server
                 return _connectionManager.GetAllConnections();
             }
         }
-        public WebsocketConnectionManager ConnectionManager
-        {
-            get
-            {
-                return _connectionManager;
-            }
-        }
     }
 }
