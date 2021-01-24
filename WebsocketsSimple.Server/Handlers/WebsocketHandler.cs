@@ -113,7 +113,7 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 _numberOfConnections++;
 
-                _ = Receive(connection, async (result, message) =>
+                await ReceiveAsync(connection, async (result, message) =>
                 {
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
@@ -151,7 +151,7 @@ namespace WebsocketsSimple.Server.Handlers
                 });
             }
         }
-        protected virtual async Task Receive(IConnectionWSServer connection, Action<WebSocketReceiveResult, string> handleMessage)
+        protected virtual async Task ReceiveAsync(IConnectionWSServer connection, Action<WebSocketReceiveResult, string> handleMessage)
         {
             var buffer = new byte[1024 * 4];
 
