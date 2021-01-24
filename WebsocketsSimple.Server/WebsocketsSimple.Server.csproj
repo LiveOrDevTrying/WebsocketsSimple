@@ -26,8 +26,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.*" />
     <PackageReference Include="Newtonsoft.Json" Version="12.*" />
-	  <PackageReference Include="PHS.Networking.Server" Version="2.*" />
-	  <PackageReference Include="WebsocketsSimple.Core" Version="2.*" />
+	  <PackageReference Include="PHS.Networking.Server" Version="2.1.*" />
+	  <PackageReference Include="WebsocketsSimple.Core" Version="2.1.*" />
   </ItemGroup>
 
 </Project>
