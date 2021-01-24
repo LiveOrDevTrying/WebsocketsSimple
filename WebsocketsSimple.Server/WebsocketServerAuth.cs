@@ -555,12 +555,5 @@ namespace WebsocketsSimple.Server
                 return _connectionManager.GetAllIdentities();
             }
         }
-        public WebsocketConnectionManagerAuth<T> ConnectionManager
-        {
-            get
-            {
-                return _connectionManager;
-            }
-        }
     }
 }

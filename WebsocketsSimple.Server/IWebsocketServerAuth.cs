@@ -2,7 +2,6 @@
 using PHS.Networking.Models;
 using PHS.Networking.Services;
 using WebsocketsSimple.Server.Events.Args;
-using WebsocketsSimple.Server.Managers;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server
@@ -27,6 +26,5 @@ namespace WebsocketsSimple.Server
         
         IConnectionWSServer[] Connections { get; }
         IUserConnectionsWS<T>[] UserConnections { get; }
-        WebsocketConnectionManagerAuth<T> ConnectionManager { get; }
     }
 }
