@@ -154,13 +154,14 @@ namespace WebsocketsSimple.Server
             {
                 _connectionManager.AddConnection(connection);
                 await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
-                await _handler.StartReceivingAsync(connection);
 
                 await FireEventAsync(this, new WSConnectionServerEventArgs
                 {
                     Connection = connection,
                     ConnectionEventType = ConnectionEventType.Connected,
                 });
+
+                await _handler.StartReceivingAsync(connection);
             }
             catch (Exception ex)
             {
@@ -171,10 +172,6 @@ namespace WebsocketsSimple.Server
                     Message = ex.Message,
                 });
             }
-        }
-        public virtual async Task<IPacket> MessageReceivedAsync(string message, IConnectionWSServer connection)
-        {
-            return await _handler.MessageReceivedAsync(message, connection);
         }
 
         protected virtual async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)

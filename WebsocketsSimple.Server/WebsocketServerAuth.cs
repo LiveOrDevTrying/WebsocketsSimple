@@ -314,7 +314,7 @@ namespace WebsocketsSimple.Server
                 if (_connectionManager.IsConnectionAuthorized(connection))
                 {
                     var identity = _connectionManager.GetIdentity(connection);
-                    await _connectionManager.RemoveUserConnectionAsync(connection, true);
+                    await _connectionManager.RemoveIdentityAsync(connection, true);
 
                     await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                     {
@@ -370,7 +370,7 @@ namespace WebsocketsSimple.Server
                         return;
                     }
 
-                    _connectionManager.AddUserConnection(userId, connection);
+                    _connectionManager.AddIdentity(userId, connection);
                     await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
 
                     await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
@@ -405,10 +405,6 @@ namespace WebsocketsSimple.Server
             });
 
         }
-        public virtual async Task<IPacket> MessageReceivedAsync(string message, IConnectionWSServer connection)
-        {
-            return await _handler.MessageReceivedAsync(message, connection);
-        }
         protected virtual async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
         {
             try
@@ -429,7 +425,7 @@ namespace WebsocketsSimple.Server
 
                         if (identity != null)
                         {
-                            await _connectionManager.RemoveUserConnectionAsync(args.Connection, true);
+                            await _connectionManager.RemoveIdentityAsync(args.Connection, true);
                             await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                             {
                                 Connection = args.Connection,
