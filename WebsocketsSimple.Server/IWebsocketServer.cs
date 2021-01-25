@@ -15,7 +15,6 @@ namespace WebsocketsSimple.Server
         Task DisconnectConnectionAsync(IConnectionWSServer connection);
 
         Task StartReceivingAsync(IConnectionWSServer connection);
-        Task<IPacket> MessageReceivedAsync(string message, IConnectionWSServer connection);
 
         IConnectionWSServer[] Connections { get; }
     }

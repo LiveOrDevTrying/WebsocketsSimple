@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using PHS.Networking.Enums;
-using PHS.Tcp.Core.Async.Server.Models;
 using WebsocketsSimple.Server;
 using WebsocketsSimple.Server.Events.Args;
-using WebsocketsSimple.Server.Managers;
+using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.TestApps.Server
 {

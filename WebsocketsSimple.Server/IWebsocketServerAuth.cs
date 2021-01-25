@@ -23,7 +23,6 @@ namespace WebsocketsSimple.Server
         Task DisconnectConnectionAsync(IConnectionWSServer connection);
 
         Task AuthorizeAndStartReceivingAsync(IConnectionWSServer connection, string oauthToken);
-        Task<IPacket> MessageReceivedAsync(string message, IConnectionWSServer connection);
 
         IConnectionWSServer[] Connections { get; }
         IUserConnectionsWS<T>[] UserConnections { get; }
