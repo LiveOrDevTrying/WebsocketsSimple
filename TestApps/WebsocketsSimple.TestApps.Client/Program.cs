@@ -1,9 +1,11 @@
 ﻿using PHS.Networking.Enums;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebsocketsSimple.Client;
 using WebsocketsSimple.Client.Events.Args;
 using WebsocketsSimple.Client.Models;
+using WebsocketsSimple.Core;
 
 namespace WebsocketsSimple.TestApps.Client
 {
@@ -19,10 +21,13 @@ namespace WebsocketsSimple.TestApps.Client
 
             _client = new WebsocketClient(new ParamsWSClient
             {
-                IsWebsocketSecured = true,
-                Port = 44339,
-                Uri = "localhost"
-            }, oauthToken: "Test");
+                IsWebsocketSecured = false,
+                Port = 65214,
+                Uri = "localhost",
+                RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
+                RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
+                KeepAliveInterval = TimeSpan.FromSeconds(5)
+            }, token: "Test");
             _client.ConnectionEvent += OnConnectionEvent;
             _client.MessageEvent += OnMessageEvent;
             _client.ErrorEvent += OnErrorEvent;

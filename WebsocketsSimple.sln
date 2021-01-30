@@ -5,17 +5,17 @@ VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestApps", "TestApps", "{04B6949A-CED9-4EDA-A048-5D9756B7DF3E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.TestApps.Server", "TestApps\WebsocketsSimple.TestApps.Server\WebsocketsSimple.TestApps.Server.csproj", "{8D48462A-CFAF-47A9-99DF-0FA4C978E128}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.TestApps.Client", "TestApps\WebsocketsSimple.TestApps.Client\WebsocketsSimple.TestApps.Client.csproj", "{34F2D38E-7B9E-4ACC-A2DF-B192F6F907A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Core", "WebsocketsSimple.Core\WebsocketsSimple.Core.csproj", "{AFE72F68-A304-4D55-A262-EC193CC89451}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Core", "WebsocketsSimple.Core\WebsocketsSimple.Core.csproj", "{AFE72F68-A304-4D55-A262-EC193CC89451}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Client", "WebsocketsSimple.Client\WebsocketsSimple.Client.csproj", "{E923FE03-9C56-43D7-BED6-7E023A4230CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Client", "WebsocketsSimple.Client\WebsocketsSimple.Client.csproj", "{E923FE03-9C56-43D7-BED6-7E023A4230CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Server", "WebsocketsSimple.Server\WebsocketsSimple.Server.csproj", "{8EABA479-2E0D-4477-ACF7-511E22A1B498}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple", "WebsocketsSimple\WebsocketsSimple.csproj", "{07B6D7EF-CBF7-483E-929A-0837264A55DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple", "WebsocketsSimple\WebsocketsSimple.csproj", "{07B6D7EF-CBF7-483E-929A-0837264A55DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Server", "WebsocketsSimple.Server\WebsocketsSimple.Server.csproj", "{146204DA-0039-4755-9BD0-0361DB91525E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.TestApps.Server", "TestApps\WebsocketsSimple.TestApps.Server\WebsocketsSimple.TestApps.Server.csproj", "{5ED75709-F4BD-4901-B0BF-7A964493B959}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8D48462A-CFAF-47A9-99DF-0FA4C978E128}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D48462A-CFAF-47A9-99DF-0FA4C978E128}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D48462A-CFAF-47A9-99DF-0FA4C978E128}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D48462A-CFAF-47A9-99DF-0FA4C978E128}.Release|Any CPU.Build.0 = Release|Any CPU
 		{34F2D38E-7B9E-4ACC-A2DF-B192F6F907A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{34F2D38E-7B9E-4ACC-A2DF-B192F6F907A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34F2D38E-7B9E-4ACC-A2DF-B192F6F907A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,21 +35,25 @@ Global
 		{E923FE03-9C56-43D7-BED6-7E023A4230CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E923FE03-9C56-43D7-BED6-7E023A4230CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E923FE03-9C56-43D7-BED6-7E023A4230CA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8EABA479-2E0D-4477-ACF7-511E22A1B498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8EABA479-2E0D-4477-ACF7-511E22A1B498}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8EABA479-2E0D-4477-ACF7-511E22A1B498}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8EABA479-2E0D-4477-ACF7-511E22A1B498}.Release|Any CPU.Build.0 = Release|Any CPU
 		{07B6D7EF-CBF7-483E-929A-0837264A55DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{07B6D7EF-CBF7-483E-929A-0837264A55DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07B6D7EF-CBF7-483E-929A-0837264A55DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07B6D7EF-CBF7-483E-929A-0837264A55DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{146204DA-0039-4755-9BD0-0361DB91525E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{146204DA-0039-4755-9BD0-0361DB91525E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{146204DA-0039-4755-9BD0-0361DB91525E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{146204DA-0039-4755-9BD0-0361DB91525E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{8D48462A-CFAF-47A9-99DF-0FA4C978E128} = {04B6949A-CED9-4EDA-A048-5D9756B7DF3E}
 		{34F2D38E-7B9E-4ACC-A2DF-B192F6F907A3} = {04B6949A-CED9-4EDA-A048-5D9756B7DF3E}
+		{5ED75709-F4BD-4901-B0BF-7A964493B959} = {04B6949A-CED9-4EDA-A048-5D9756B7DF3E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1057192C-61B8-478E-9683-B71AD30C4CAC}

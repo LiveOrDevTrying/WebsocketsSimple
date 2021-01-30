@@ -7,3 +7,4 @@ namespace WebsocketsSimple.Server.Events.Args
     {
     }
 }
+

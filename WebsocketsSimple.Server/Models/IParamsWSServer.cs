@@ -1,7 +1,9 @@
 ﻿namespace WebsocketsSimple.Server.Models
-{
+{ 
     public interface IParamsWSServer
     {
-        string ConnectionSuccessString { get; set; }
+        int Port { get; }
+        string ConnectionSuccessString { get; }
+        string[] AvailableSubprotocols { get; }
     }
 }

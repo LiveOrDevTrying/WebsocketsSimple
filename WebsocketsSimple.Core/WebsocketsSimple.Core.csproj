@@ -7,7 +7,7 @@
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Copyright>Apache-2.0</Copyright>
-    <Description>The core module for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
+    <Description>The core module for a simple websocket server and client implementation with authentication.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
@@ -17,14 +17,14 @@
   </PropertyGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="PHS.Networking" Version="2.1.*" />
-	</ItemGroup>
-	
-	<ItemGroup>
 	  <None Include="Logo.png">
 	    <Pack>True</Pack>
 	    <PackagePath></PackagePath>
 	  </None>
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\..\PHS\Public\PHS.Networking\PHS.Networking.csproj" />
 	</ItemGroup>
 
 </Project>

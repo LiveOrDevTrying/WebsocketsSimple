@@ -8,7 +8,7 @@
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Copyright>Copyright 2021</Copyright>
-    <Description>the client and server modules combined for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
+    <Description>The client and server modules combined for a simple websocket server and client implementation with authentication.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>

@@ -4,7 +4,7 @@ using System.Net.WebSockets;
 
 namespace WebsocketsSimple.Server.Models
 {
-    public class UserConnectionsWS<T> : IUserConnectionsWS<T>
+    public class IdentityWS<T> : IIdentityWS<T>
     {
         public T UserId { get; set; }
 

@@ -1,15 +1,11 @@
-﻿using WebsocketsSimple.Server.Models;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.WebSockets;
-using System.Threading;
-using System.Threading.Tasks;
+using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Managers
 {
-    public class WebsocketConnectionManager
+    public class WSConnectionManager
     {
         protected ConcurrentDictionary<int, IConnectionWSServer> _connections =
             new ConcurrentDictionary<int, IConnectionWSServer>();
@@ -26,15 +22,9 @@ namespace WebsocketsSimple.Server.Managers
         {
             return !_connections.ContainsKey(connection.Websocket.GetHashCode()) ? _connections.TryAdd(connection.Websocket.GetHashCode(), connection) : false;
         }
-        public async Task RemoveConnectionAsync(IConnectionWSServer connection, bool disconnectConnection)
+        public void RemoveConnection(IConnectionWSServer connection)
         {
-            if (_connections.TryRemove(connection.Websocket.GetHashCode(), out var instance) &&
-                disconnectConnection &&
-                instance.Websocket != null)
-            {
-                await instance.Websocket.CloseAsync(WebSocketCloseStatus.Empty, "Connection closed", CancellationToken.None);
-                instance.Websocket.Dispose();
-            }
+            _connections.TryRemove(connection.Websocket.GetHashCode(), out var instance);
         }
         public bool IsConnectionOpen(IConnectionWSServer connection)
         {
