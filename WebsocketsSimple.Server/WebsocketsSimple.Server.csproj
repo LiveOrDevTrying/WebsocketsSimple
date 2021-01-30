@@ -4,30 +4,33 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
     <Version>2.1.0</Version>
-    <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
-    <Description>The server module for a simple websocket server and client implementation with authentication using Kestrel middleware.</Description>
+    <Authors>Rob Engel - LiveOrDevTrying</Authors>
+    <Description>The server module for a simple websocket server and client implementation with authentication.</Description>
     <Copyright>Copyright 2021</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
+    <PackageIcon>Logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <RepositoryType>Github Public</RepositoryType>
     <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
-    <PackageIcon>Logo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Logo.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
+    <PackageReference Include="Newtonsoft.Json" Version="12.*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.*" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.*" />
-	  <PackageReference Include="PHS.Networking.Server" Version="2.1.*" />
-	  <PackageReference Include="WebsocketsSimple.Core" Version="2.1.*" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="WebsocketsSimple.Core" Version="2.1.*" />
+		<PackageReference Include="PHS.Networking.Server" Version="2.1.*" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Logo.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>

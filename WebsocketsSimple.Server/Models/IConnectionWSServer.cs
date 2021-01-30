@@ -6,5 +6,6 @@ namespace WebsocketsSimple.Server.Models
     {
         bool HasBeenPinged { get; set; }
         string ConnectionId { get; set; }
+        string[] SubProtocols { get; set; }
     }
 }

@@ -1,112 +1,154 @@
-﻿using System;
-using System.Net.WebSockets;
+﻿using PHS.Networking.Enums;
+using PHS.Networking.Events;
+using PHS.Networking.Models;
+using PHS.Networking.Server.Enums;
+using PHS.Networking.Server.Events.Args;
+using PHS.Networking.Server.Services;
+using PHS.Networking.Services;
+using System;
+using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Server.Events.Args;
-using PHS.Networking.Services;
 using WebsocketsSimple.Server.Handlers;
 using WebsocketsSimple.Server.Managers;
-using PHS.Networking.Models;
 using WebsocketsSimple.Server.Models;
-using PHS.Networking.Enums;
-using PHS.Networking.Server.Services;
-using System.Linq;
 
 namespace WebsocketsSimple.Server
 {
     public class WebsocketServerAuth<T> :
-        CoreNetworking<WSConnectionServerAuthEventArgs<T>, WSMessageServerAuthEventArgs<T>, WSErrorServerAuthEventArgs<T>>,
+       CoreNetworking<WSConnectionServerAuthEventArgs<T>, WSMessageServerAuthEventArgs<T>, WSErrorServerAuthEventArgs<T>>, 
         IWebsocketServerAuth<T>
     {
-        protected readonly WebsocketHandler _handler;
+        protected readonly WebsocketHandlerAuth _handler;
         protected readonly IParamsWSServerAuth _parameters;
         protected readonly IUserService<T> _userService;
-        protected readonly WebsocketConnectionManagerAuth<T> _connectionManager;
+        protected readonly WSConnectionManagerAuth<T> _connectionManager;
         protected Timer _timerPing;
         protected volatile bool _isPingRunning;
         protected const int PING_INTERVAL_SEC = 120;
 
+        private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
+
         public WebsocketServerAuth(IParamsWSServerAuth parameters,
             IUserService<T> userService,
-            WebsocketHandler handler = null,
-            WebsocketConnectionManagerAuth<T> connectionManager = null)
+            WebsocketHandlerAuth handler = null,
+            WSConnectionManagerAuth<T> connectionManager = null)
         {
             _parameters = parameters;
             _userService = userService;
-            _connectionManager = connectionManager ?? new WebsocketConnectionManagerAuth<T>();
+            _connectionManager = connectionManager ?? new WSConnectionManagerAuth<T>();
 
-            _handler = handler ?? new WebsocketHandler(parameters);
-            _handler.ConnectionEvent += OnConnectionEvent;
-            _handler.MessageEvent += OnMessageEvent;
-            _handler.ErrorEvent += OnErrorEvent;
-
-            _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
+            _handler = handler ?? new WebsocketHandlerAuth(_parameters);
+            _handler.ConnectionEvent += OnConnectionEventAsync;
+            _handler.MessageEvent += OnMessageEventAsync;
+            _handler.ErrorEvent += OnErrorEventAsync;
+            _handler.ServerEvent += OnServerEventAsync;
+            _handler.AuthorizeEvent += OnAuthorizeEventAsync;
         }
 
-        public virtual async Task BroadcastToAllUsersAsync<S>(S packet) where S : IPacket
+        public WebsocketServerAuth(IParamsWSServerAuth parameters,
+            IUserService<T> userService,
+            byte[] certificate,
+            string certificatePassword,
+            WebsocketHandlerAuth handler = null,
+            WSConnectionManagerAuth<T> connectionManager = null)
         {
-            foreach (var identity in _connectionManager.GetAllIdentities())
+            _parameters = parameters;
+            _userService = userService;
+            _connectionManager = connectionManager ?? new WSConnectionManagerAuth<T>();
+
+            _handler = handler ?? new WebsocketHandlerAuth(_parameters, certificate, certificatePassword);
+            _handler.ConnectionEvent += OnConnectionEventAsync;
+            _handler.MessageEvent += OnMessageEventAsync;
+            _handler.ErrorEvent += OnErrorEventAsync;
+            _handler.ServerEvent += OnServerEventAsync;
+            _handler.AuthorizeEvent += OnAuthorizeEventAsync;
+        }
+
+        public virtual async Task StartAsync()
+        {
+            await _handler.StartAsync();
+        }
+        public virtual async Task StopAsync()
+        {
+            await _handler.StopAsync();
+        }
+        public virtual async Task BroadcastToAllAuthorizedUsersAsync<S>(S packet) where S : IPacket
+        {
+            if (_handler.IsServerRunning)
             {
-                foreach (var connection in identity.Connections.ToList())
+                foreach (var identity in _connectionManager.GetAllIdentities())
                 {
-                    if (connection.Websocket.State == WebSocketState.Open)
+                    foreach (var connection in identity.Connections.ToList())
                     {
                         await SendToConnectionAsync(packet, connection);
                     }
                 }
             }
         }
-        public virtual async Task BroadcastToAllUsersAsync(string message)
+        public virtual async Task BroadcastToAllAuthorizedUsersAsync(string message)
         {
-            await BroadcastToAllUsersAsync(new Packet
+            await BroadcastToAllAuthorizedUsersAsync(new Packet
             {
                 Data = message,
                 Timestamp = DateTime.UtcNow
             });
         }
-        public virtual async Task BroadcastToAllUsersAsync<S>(S packet, IConnectionWSServer connectionSending) where S : IPacket
+        public virtual async Task BroadcastToAllAuthorizedUsersAsync<S>(S packet, IConnectionWSServer connectionSending) where S : IPacket
         {
-            foreach (var identity in _connectionManager.GetAllIdentities())
+            if (_handler != null &&
+                _handler.IsServerRunning)
             {
-                foreach (var connection in identity.Connections.ToList())
+                foreach (var identity in _connectionManager.GetAllIdentities())
                 {
-                    if (connection.Websocket.State == WebSocketState.Open &&
-                        connection.Websocket.GetHashCode() != connection.Websocket.GetHashCode())
+                    foreach (var connection in identity.Connections.ToList())
                     {
-                        await SendToConnectionAsync(packet, connection);
+                        if (connection.Client.GetHashCode() != connection.Client.GetHashCode())
+                        {
+                            await SendToConnectionAsync(packet, connection);
+                        }
                     }
                 }
             }
         }
-        public virtual async Task BroadcastToAllUsersAsync(string message, IConnectionWSServer connectionSending)
+        public virtual async Task BroadcastToAllAuthorizedUsersAsync(string message, IConnectionWSServer connectionSending)
         {
-            await BroadcastToAllUsersAsync(new Packet
+            await BroadcastToAllAuthorizedUsersAsync(new Packet
             {
                 Data = message,
                 Timestamp = DateTime.UtcNow
             }, connectionSending);
         }
-        public virtual async Task BroadcastToAllUsersRawAsync(string message)
+
+        public virtual async Task BroadcastToAllAuthorizedUsersRawAsync(string message)
         {
-            foreach (var identity in _connectionManager.GetAllIdentities())
+            if (_handler != null &&
+                _handler.IsServerRunning)
             {
-                foreach (var connection in identity.Connections.ToList())
+                foreach (var identity in _connectionManager.GetAllIdentities())
                 {
-                    if (connection.Websocket.State == WebSocketState.Open)
+                    foreach (var connection in identity.Connections.ToList())
                     {
-                        await SendToConnectionAsync(message, connection);
+                        await SendToConnectionRawAsync(message, connection);
                     }
                 }
             }
         }
-                
+
         public virtual async Task SendToUserAsync<S>(S packet, T userId) where S : IPacket
         {
-            var identity = _connectionManager.GetIdentity(userId);
-
-            foreach (var connection in identity.Connections.ToList())
+            if (_handler != null &&
+                _handler.IsServerRunning &&
+                _connectionManager.IsUserConnected(userId))
             {
-                await SendToConnectionAsync(packet, connection);
+                var user = _connectionManager.GetIdentity(userId);
+
+                foreach (var connection in user.Connections.ToList())
+                {
+                    await SendToConnectionAsync(packet, connection);
+                }
             }
         }
         public virtual async Task SendToUserAsync(string message, T userId)
@@ -119,79 +161,50 @@ namespace WebsocketsSimple.Server
         }
         public virtual async Task SendToUserRawAsync(string message, T userId)
         {
-            var identity = _connectionManager.GetIdentity(userId);
-
-            foreach (var connection in identity.Connections.ToList())
+            if (_handler != null &&
+                _handler.IsServerRunning &&
+                _connectionManager.IsUserConnected(userId))
             {
-                await SendToConnectionRawAsync(message, connection);
+                var user = _connectionManager.GetIdentity(userId);
+
+                foreach (var connection in user.Connections)
+                {
+                    await SendToConnectionRawAsync(message, connection);
+                }
             }
         }
-                
+
         public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionWSServer connection) where S : IPacket
         {
-            if (_connectionManager.IsConnectionOpen(connection))
+            if (_handler.IsServerRunning)
             {
-                try
-                {
-                    await _handler.SendAsync(packet, connection);
-
-                    await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        Message = packet.Data,
-                        MessageEventType = MessageEventType.Sent,
-                        Packet = packet,
-                        UserId = default,
-                    });
-
-                    return true;
-
-                }
-                catch (Exception ex)
-                {
-                    await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        UserId = default,
-                        Exception = ex,
-                        Message = ex.Message
-                    });
-
-                    await DisconnectConnectionAsync(connection);
-
-                    return false;
-                }
-            }
-
-            if (_connectionManager.IsConnectionAuthorized(connection))
-            {
-                var identity = _connectionManager.GetAllIdentities().FirstOrDefault(s => s.Connections.Any(t => t.ConnectionId == connection.ConnectionId));
-                if (identity != null)
+                if (_connectionManager.IsConnectionOpen(connection))
                 {
                     try
                     {
-                        await _handler.SendAsync(packet, connection);
+                        if (!await _handler.SendAsync(packet, connection))
+                        {
+                            return false;
+                        }
 
                         await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                         {
-                            Connection = connection,
                             Message = packet.Data,
                             MessageEventType = MessageEventType.Sent,
+                            Connection = connection,
                             Packet = packet,
-                            UserId = identity.UserId,
+                            UserId = default
                         });
-
                         return true;
-
                     }
                     catch (Exception ex)
                     {
                         await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                         {
                             Connection = connection,
-                            UserId = identity.UserId,
                             Exception = ex,
-                            Message = ex.Message
+                            Message = ex.Message,
+                            UserId = default
                         });
 
                         await DisconnectConnectionAsync(connection);
@@ -199,8 +212,48 @@ namespace WebsocketsSimple.Server
                         return false;
                     }
                 }
+                
+                if (_connectionManager.IsConnectionAuthorized(connection))
+                {
+                    var identity = _connectionManager.GetAllIdentities().FirstOrDefault(s => s.Connections.Any(t => t.ConnectionId == connection.ConnectionId));
+                    if (identity != null)
+                    {
+                        try
+                        {
+                            if (!await _handler.SendAsync(packet, connection))
+                            {
+                                return false;
+                            }
+
+                            await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
+                            {
+                                Message = packet.Data,
+                                MessageEventType = MessageEventType.Sent,
+                                Packet = packet,
+                                UserId = identity.UserId,
+                                Connection = connection
+                            });
+
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
+                            {
+                                Connection = connection,
+                                Exception = ex,
+                                Message = ex.Message,
+                                UserId = identity.UserId
+                            });
+
+                            await DisconnectConnectionAsync(connection);
+
+                            return false;
+                        }
+                    }
+                }
             }
-           
+
             return false;
         }
         public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection)
@@ -213,56 +266,20 @@ namespace WebsocketsSimple.Server
         }
         public virtual async Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection)
         {
-            if (_connectionManager.IsConnectionOpen(connection))
+            if (_handler != null &&
+                _handler.IsServerRunning)
             {
-                try
-                {
-                    await _handler.SendRawAsync(message, connection);
-
-                    await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        Message = message,
-                        MessageEventType = MessageEventType.Sent,
-                        Packet = new Packet
-                        {
-                            Data = message,
-                            Timestamp = DateTime.UtcNow
-                        },
-                        UserId = default,
-                    });
-
-                    return true;
-
-                }
-                catch (Exception ex)
-                {
-                    await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        UserId = default,
-                        Exception = ex,
-                        Message = ex.Message
-                    });
-
-                    await DisconnectConnectionAsync(connection);
-
-                    return false;
-                }
-            }
-
-            if (_connectionManager.IsConnectionAuthorized(connection))
-            {
-                var identity = _connectionManager.GetAllIdentities().FirstOrDefault(s => s.Connections.Any(t => t.ConnectionId == connection.ConnectionId));
-                if (identity != null)
+                if (_connectionManager.IsConnectionOpen(connection))
                 {
                     try
                     {
-                        await _handler.SendRawAsync(message, connection);
+                        if (!await _handler.SendRawAsync(message, connection))
+                        {
+                            return false;
+                        }
 
                         await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                         {
-                            Connection = connection,
                             Message = message,
                             MessageEventType = MessageEventType.Sent,
                             Packet = new Packet
@@ -270,20 +287,20 @@ namespace WebsocketsSimple.Server
                                 Data = message,
                                 Timestamp = DateTime.UtcNow
                             },
-                            UserId = identity.UserId,
+                            Connection = connection,
+                            UserId = default
                         });
 
                         return true;
-
                     }
                     catch (Exception ex)
                     {
                         await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                         {
                             Connection = connection,
-                            UserId = identity.UserId,
                             Exception = ex,
-                            Message = ex.Message
+                            Message = ex.Message,
+                            UserId = default
                         });
 
                         await DisconnectConnectionAsync(connection);
@@ -291,149 +308,83 @@ namespace WebsocketsSimple.Server
                         return false;
                     }
                 }
+
+                if (_connectionManager.IsConnectionAuthorized(connection))
+                {
+                    var identity = _connectionManager.GetAllIdentities().FirstOrDefault(s => s.Connections.Any(t => t.ConnectionId == connection.ConnectionId));
+                    if (identity != null)
+                    {
+                        try
+                        {
+                            if (!await _handler.SendRawAsync(message, connection))
+                            {
+                                return false;
+                            }
+
+                            await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
+                            {
+                                Message = message,
+                                Packet = new Packet
+                                {
+                                    Data = message,
+                                    Timestamp = DateTime.UtcNow
+                                },
+                                UserId = identity.UserId,
+                                Connection = connection,
+                                MessageEventType = MessageEventType.Sent,
+                            });
+
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
+                            {
+                                Connection = connection,
+                                Exception = ex,
+                                Message = ex.Message,
+                                UserId = identity.UserId
+                            });
+
+                            await DisconnectConnectionAsync(connection);
+                        }
+                    }
+                }
             }
 
             return false;
         }
-                
-        public virtual async Task DisconnectConnectionAsync(IConnectionWSServer connection)
+        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection)
         {
-            try
-            {
-                if (_connectionManager.IsConnectionOpen(connection))
-                {
-                    await _connectionManager.RemoveConnectionAsync(connection, true);
-                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        UserId = default,
-                        Connection = connection,
-                        ConnectionEventType = ConnectionEventType.Disconnect,
-                    });
-                }
-
-                if (_connectionManager.IsConnectionAuthorized(connection))
-                {
-                    var identity = _connectionManager.GetIdentity(connection);
-                    await _connectionManager.RemoveIdentityAsync(connection, true);
-
-                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        UserId = identity.UserId,
-                        Connection = connection,
-                        ConnectionEventType = ConnectionEventType.Disconnect,
-                    });
-                }
-
-                await _handler.DisconnectConnectionAsync(connection);
-            }
-            catch (Exception ex)
-            {
-                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
-                {
-                    Connection = connection,
-                    Exception = ex,
-                    Message = ex.Message,
-                    UserId = default
-                });
-            }
+            return await _handler.DisconnectConnectionAsync(connection);
         }
-                
-        public virtual async Task AuthorizeAndStartReceivingAsync(IConnectionWSServer connection, string oauthToken)
+
+        protected virtual async Task<bool> CheckIfAuthorizedAsync(WSMessageServerEventArgs args)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(oauthToken))
+                // Check for token here
+                if (_connectionManager.IsConnectionOpen(args.Connection))
                 {
-                    await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
-                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        ConnectionEventType = ConnectionEventType.Disconnect,
-                        UserId = default
-                    });
-                    return;
-                }
+                    _connectionManager.RemoveConnection(args.Connection);
 
-                if (await _userService.IsValidTokenAsync(oauthToken))
-                {
-                    var userId = await _userService.GetIdAsync(oauthToken);
-
-                    if (userId == null)
+                    if (args.Message.Length < "oauth:".Length ||
+                        !args.Message.ToLower().StartsWith("oauth:"))
                     {
-                        await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
+                        await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, args.Connection);
+                        await DisconnectConnectionAsync(args.Connection);
+
                         await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
                         {
-                            Connection = connection,
                             ConnectionEventType = ConnectionEventType.Disconnect,
-                            UserId = default
+                            Connection = args.Connection
                         });
-                        return;
+                        return false;
                     }
 
-                    _connectionManager.AddIdentity(userId, connection);
-                    await SendToConnectionRawAsync(_parameters.ConnectionSuccessString, connection);
+                    var token = args.Message.Substring("oauth:".Length);
 
-                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        ConnectionEventType = ConnectionEventType.Connected,
-                        UserId = userId
-                    });
 
-                    await _handler.StartReceivingAsync(connection);
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
-                {
-                    Connection = connection,
-                    Exception = ex,
-                    Message = ex.Message,
-                    UserId = default
-                });
-            }
-
-            await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, connection);
-
-            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-            {
-                Connection = connection,
-                ConnectionEventType = ConnectionEventType.Disconnect,
-                UserId = default
-            });
-
-        }
-        protected virtual async Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
-        {
-            try
-            {
-                switch (args.ConnectionEventType)
-                {
-                    case ConnectionEventType.Connected:
-                    case ConnectionEventType.Connecting:
-                        await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                        {
-                            Connection = args.Connection,
-                            ConnectionEventType = args.ConnectionEventType,
-                            UserId = default
-                        });
-                        break;
-                    case ConnectionEventType.Disconnect:
-                        var identity = _connectionManager.GetIdentity(args.Connection);
-
-                        if (identity != null)
-                        {
-                            await _connectionManager.RemoveIdentityAsync(args.Connection, true);
-                            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                            {
-                                Connection = args.Connection,
-                                ConnectionEventType = args.ConnectionEventType,
-                                UserId = identity.UserId
-                            });
-                        }
-                        break;
                 }
             }
             catch (Exception ex)
@@ -446,36 +397,175 @@ namespace WebsocketsSimple.Server
                     UserId = default
                 });
             }
+
+            try
+            {
+                await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, args.Connection);
+                await DisconnectConnectionAsync(args.Connection);
+            }
+            catch
+            { }
+
+            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
+            {
+                ConnectionEventType = ConnectionEventType.Disconnect,
+                Connection = args.Connection,
+            });
+            return false;
         }
-        protected virtual async Task OnErrorEvent(object sender, WSErrorServerEventArgs args)
+
+        protected virtual async Task OnConnectionEventAsync(object sender, WSConnectionServerEventArgs args)
+        {
+            switch (args.ConnectionEventType)
+            {
+                case ConnectionEventType.Connected:
+                    break;
+                case ConnectionEventType.Disconnect:
+
+                    if (_connectionManager.IsConnectionAuthorized(args.Connection))
+                    {
+                        var identity = _connectionManager.GetIdentity(args.Connection);
+                        _connectionManager.RemoveIdentity(args.Connection);
+
+                        if (identity != null)
+                        {
+                            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
+                            {
+                                Connection = args.Connection,
+                                ConnectionEventType = args.ConnectionEventType,
+                                UserId = identity.UserId,
+                            });
+                        }
+                    }
+                    break;
+                case ConnectionEventType.Connecting:
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
+                    {
+                        ConnectionEventType = args.ConnectionEventType,
+                        Connection = args.Connection,
+                    });
+                    break;
+                default:
+                    break;
+            }
+        }
+        protected virtual async Task OnServerEventAsync(object sender, ServerEventArgs args)
+        {
+            switch (args.ServerEventType)
+            {
+                case ServerEventType.Start:
+                    if (_timerPing != null)
+                    {
+                        _timerPing.Dispose();
+                        _timerPing = null;
+                    }
+
+                    await FireEventAsync(this, args);
+                    _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
+                    break;
+                case ServerEventType.Stop:
+                    if (_timerPing != null)
+                    {
+                        _timerPing.Dispose();
+                        _timerPing = null;
+                    }
+
+                    await FireEventAsync(this, args);
+                    break;
+                default:
+                    break;
+            }
+        }
+        protected virtual async Task OnMessageEventAsync(object sender, WSMessageServerEventArgs args)
+        {
+            switch (args.MessageEventType)
+            {
+                case MessageEventType.Sent:
+                    await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
+                    {
+                        Message = args.Packet.Data,
+                        MessageEventType = MessageEventType.Sent,
+                        Packet = args.Packet,
+                        Connection = args.Connection,
+                    });
+                    break;
+                case MessageEventType.Receive:
+                    if (_connectionManager.IsConnectionAuthorized(args.Connection))
+                    {
+                        var identity = _connectionManager.GetIdentity(args.Connection);
+
+                        if (identity != null)
+                        {
+                            await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
+                            {
+                                Message = args.Packet.Data,
+                                MessageEventType = MessageEventType.Receive,
+                                Packet = args.Packet,
+                                UserId = identity.UserId,
+                                Connection = args.Connection,
+                            });
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        protected virtual async Task OnErrorEventAsync(object sender, WSErrorServerEventArgs args)
         {
             if (_connectionManager.IsConnectionAuthorized(args.Connection))
             {
                 var identity = _connectionManager.GetIdentity(args.Connection);
 
+                if (identity != null)
+                {
+                    await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
+                    {
+                        Exception = args.Exception,
+                        Message = args.Message,
+                        UserId = identity.UserId,
+                        Connection = args.Connection
+                    });
+                }
+            }
+            else
+            {
                 await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
                 {
-                    Connection = args.Connection,
                     Exception = args.Exception,
                     Message = args.Message,
-                    UserId = identity.UserId
+                    Connection = args.Connection
                 });
             }
         }
-        protected virtual async Task OnMessageEvent(object sender, WSMessageServerEventArgs args)
+        protected virtual async Task OnAuthorizeEventAsync(object sender, WSAuthorizeEventArgs args)
         {
-            var identity = _connectionManager.GetIdentity(args.Connection);
-
-            if (identity != null)
+            if (await _userService.IsValidTokenAsync(args.Token))
             {
-                await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
+                var userId = await _userService.GetIdAsync(args.Token);
+
+                if (userId == null)
                 {
-                    Connection = args.Connection,
-                    Message = args.Message,
-                    MessageEventType = args.MessageEventType,
-                    Packet = args.Packet,
-                    UserId = identity.UserId
-                });
+                    await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, args.Connection);
+                    await DisconnectConnectionAsync(args.Connection);
+
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
+                    {
+                        ConnectionEventType = ConnectionEventType.Disconnect,
+                        Connection = args.Connection
+                    });
+                }
+
+                if (await _handler.UpgradeConnectionCallbackAsync(args))
+                {
+                    var identity = _connectionManager.AddIdentity(userId, args.Connection);
+                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
+                    {
+                        ConnectionEventType = ConnectionEventType.Connected,
+                        UserId = identity.UserId,
+                        Connection = args.Connection,
+                    });
+                }
             }
         }
         protected virtual void OnTimerPingTick(object state)
@@ -503,7 +593,7 @@ namespace WebsocketsSimple.Server
                                     connection.HasBeenPinged = true;
                                     await SendToConnectionRawAsync("Ping", connection);
                                 }
-                            } 
+                            }
                             catch (Exception ex)
                             {
                                 await FireEventAsync(this, new WSErrorServerAuthEventArgs<T>
@@ -522,23 +612,74 @@ namespace WebsocketsSimple.Server
             }
         }
 
+        protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
+        {
+            if (_serverEvent != null)
+            {
+                await _serverEvent?.Invoke(sender, args);
+            }
+        }
+
         public override void Dispose()
         {
-            if (_handler != null)
+            foreach (var item in _connectionManager.GetAllConnections())
             {
-                _handler.ConnectionEvent -= OnConnectionEvent;
-                _handler.MessageEvent -= OnMessageEvent;
-                _handler.ErrorEvent -= OnErrorEvent;
+                try
+                {
+                    _connectionManager.RemoveConnection(item);
+                }
+                catch
+                { }
+            }
+
+            foreach (var item in _connectionManager.GetAllIdentities())
+            {
+                foreach (var connection in item.Connections.ToList())
+                {
+                    try
+                    {
+                        DisconnectConnectionAsync(connection).Wait();
+                    }
+                    catch
+                    { }
+                }
             }
 
             if (_timerPing != null)
             {
                 _timerPing.Dispose();
+                _timerPing = null;
+            }
+
+            if (_handler != null)
+            {
+                _handler.ConnectionEvent -= OnConnectionEventAsync;
+                _handler.MessageEvent -= OnMessageEventAsync;
+                _handler.ErrorEvent -= OnErrorEventAsync;
+                _handler.ServerEvent -= OnServerEventAsync;
+                _handler.AuthorizeEvent -= OnAuthorizeEventAsync;
+
+
+                _handler.Dispose();
             }
 
             base.Dispose();
         }
 
+        public TcpListener Server
+        {
+            get
+            {
+                return _handler != null ? _handler.Server : null;
+            }
+        }
+        public bool IsServerRunning
+        {
+            get
+            {
+                return _handler != null ? _handler.IsServerRunning : false;
+            }
+        }
         public IConnectionWSServer[] Connections
         {
             get
@@ -546,11 +687,23 @@ namespace WebsocketsSimple.Server
                 return _connectionManager.GetAllConnections();
             }
         }
-        public IUserConnectionsWS<T>[] UserConnections
+        public IIdentityWS<T>[] Identities
         {
             get
             {
                 return _connectionManager.GetAllIdentities();
+            }
+        }
+
+        public event NetworkingEventHandler<ServerEventArgs> ServerEvent
+        {
+            add
+            {
+                _serverEvent += value;
+            }
+            remove
+            {
+                _serverEvent -= value;
             }
         }
     }
