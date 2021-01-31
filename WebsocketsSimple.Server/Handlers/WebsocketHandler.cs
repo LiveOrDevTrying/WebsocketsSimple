@@ -153,7 +153,7 @@ namespace WebsocketsSimple.Server.Handlers
                     {
                         var connection = new ConnectionWSServer
                         {
-                            Websocket = WebSocket.CreateFromStream(sslStream, true, string.Empty, WebSocket.DefaultKeepAliveInterval),
+                            Websocket = WebSocket.CreateFromStream(sslStream, true, null, WebSocket.DefaultKeepAliveInterval),
                             ConnectionId = Guid.NewGuid().ToString(),
                             Client = client,
                             Stream = sslStream
