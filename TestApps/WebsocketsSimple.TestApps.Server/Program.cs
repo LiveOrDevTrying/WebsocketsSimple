@@ -17,7 +17,6 @@ namespace WebsocketsSimple.TestApps.Server
             _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth
             {
                 ConnectionSuccessString = "Connected Successfully",
-                EndOfLineCharacters = "\r\n",
                 Port = 65214,
                 ConnectionUnauthorizedString = "Not authorized",
                 AvailableSubprotocols = new string[] { "testProtocol", "test2", "test3", "another" }

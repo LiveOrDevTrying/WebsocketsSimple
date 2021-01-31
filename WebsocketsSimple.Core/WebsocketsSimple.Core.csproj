@@ -24,7 +24,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <ProjectReference Include="..\..\PHS\Public\PHS.Networking\PHS.Networking.csproj" />
+	  <PackageReference Include="PHS.Networking" Version="2.1.*" />
 	</ItemGroup>
 
 </Project>
