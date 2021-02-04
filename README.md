@@ -62,7 +62,7 @@ Once installed, we can create an instance of **`IWebsocketClient`** with the inc
 * `WebsocketClient(IParamsWSClient parameters, string oauthToken = "")`
 
     ``` c#
-        IWebsocketClient client = new WebsocketCient(new ParamsWSClient
+        IWebsocketClient client = new WebsocketClient(new ParamsWSClient
         {
             Uri = "connect.websocketssimple.com",
             Port = 8989,
@@ -128,7 +128,7 @@ To connect to a Websocket Server, invoke the function `ConnectAsync()`.
 #### **SSL**
 To enable SSL for [WebsocketsSimple Client](https://www.nuget.org/packages/WebsocketsSimple.Client/), set the **`IsSSL`** flag in **`IParamsWSClient`** to true. In order to connect successfully, the server must have a valid, non-expired SSL certificate where the certificate's issued hostname must match the Uri specified in **`IParamsWSClient`**. For example, the Uri in the above examples is [connect.websocketssimple.com](#), and the SSL certificate on the server must be issued to [connect.websocketssimple.com](#).
 
-> *Please note that a self-signed certificate or one from a non-trusted Certified Authority (CA) is not considered a valid SSL certificate.*
+> **Please note that a self-signed certificate or one from a non-trusted Certified Authority (CA) is not considered a valid SSL certificate.**
 
 #### **Send a Message to the Server**
 3 functions are exposed to send messages to the server:
@@ -149,7 +149,7 @@ An example call to send a message to the server could be:
     });
 ```
 
-More information about **`IPacket`** is available [here](#ipacket).
+> **More information about **`IPacket`** is available [here](#ipacket).**
 
 #### **Extending `IPacket`**
 **`IPacket`** can be extended with additional datatypes into a new struct / class and passed into the generic `SendToServerAsync<T>(T packet) where T : IPacket` function. Please note that **`Packet`** is a struct and cannot be inherited - please instead implement the interface **`IPacket`**.
@@ -178,7 +178,7 @@ More information about **`IPacket`** is available [here](#ipacket).
         string LastName { get; set; }
     }
 
-    await SendToServerAsync<IPacketExtended>(new PacketExtended 
+    await SendToServerAsync(new PacketExtended 
     {
         Data = "YourDataPayload",
         DateTime = DateTime.UtcNow,
@@ -189,7 +189,7 @@ More information about **`IPacket`** is available [here](#ipacket).
 ```
 
 #### **Receiving an Extended `IPacket`**
-If you want to extend **`IPacket`** to include additional fields, you will need to extend and override the **`WebsocketClient`** implementation to support the extended type(s). First define a new class that inherits **`WebsocketCient`**, override the protected method `MessageReceived(string message, IConnectionServer connection)`, and deserialize into the extended **`IPacket`** of your choice. An example of this logic is below:
+If you want to extend **`IPacket`** to include additional fields, you will need to extend and override the **`WebsocketClient`** implementation to support the extended type(s). First define a new class that inherits **`WebsocketClient`**, override the protected method `MessageReceivedAsync(string message)`, and deserialize into the extended **`IPacket`** of your choice. An example of this logic is below:
 
 ``` c#
     public class WebsocketClientExtended : WebsocketClient
@@ -267,7 +267,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
 If you are sending polymorphic objects, first deserialize the initial message into a class or struct that contains “common” fields, such as `PacketExtended` with a `PacketExtendedType` enum field. Then use the value of `PacketExtendedType` and deserialize a second time into the type the enum represents. Repeat until the your polymorphic object is completely deserialized.
 
 #### **`Ping`**
-A **`IWebsocketServer`** will send a raw message containing **`ping`** to every client every 120 seconds to verify which connections are still alive. If a client fails to respond with a raw message containing **`pong`**, during the the next ping cycle, the connection will be severed and disposed. However, if you are using **`IWebsocketClient`**, the ping / pong messages are digested and handled before reaching `MessageEvent(object sender, WSMessageClientEventArgs args)`. This means you do not need to worry about ping and pong messages if you are using **`IWebsocketClient`**. If you are creating your own Websocket connection, you should incorporate logic to listen for raw messages containing **`ping`**, and if received, immediately respond with a raw message containing **`pong`**. 
+A **`WebsocketServer`** will send a raw message containing **`ping`** to every client every 120 seconds to verify which connections are still alive. If a client fails to respond with a raw message containing **`pong`**, during the the next ping cycle, the connection will be severed and disposed. However, if you are using **`WebsocketClient`**, the ping / pong messages are digested and handled before reaching `MessageReceivedAsync(string message)`. This means you do not need to worry about ping and pong messages if you are using **`WebsocketClient`**. If you are creating your own Websocket connection, you should incorporate logic to listen for raw messages containing **`ping`**, and if received, immediately respond with a raw message containing **`pong`**. 
 
 > ***Note: Failure to implement this logic will result in a connection being disconnected and disposed in up to approximately 240 seconds.***
 
@@ -282,12 +282,13 @@ To disconnect from the server, invoke the function `DisconnectAsync()`.
 At the end of usage, be sure to call `Dispose()` on the **`IWebsocketClient`** to free all allocated memory and resources.
 
 ``` c#
-    client.Dispose());
+    client.Dispose();
 ```
 
 ---
 ## **Server**
 A Websocket Server module is included which can be used for non-SSL or SSL connections. To get started, create a new console application and install the [NuGet package](https://www.nuget.org/packages/WebsocketsSimple.Server/) using the [NuGet package manager](https://www.nuget.org/):
+
 > install-package WebsocketsSimple.Server
 
 This will add the most-recent version of the [WebsocketsSimple Server](https://www.nuget.org/packages/WebsocketsSimple.Server/) package to your specified project. 
@@ -384,9 +385,9 @@ In order to allow successful SSL connections, you must have a valid, non-expired
 * `SendToConnectionRawAsync(string message, IConnectionWSServer connection)`
     * Send the message to the specified connection directly without transforming it into a **`Packet`**.
 
-> More information about **`IPacket`** is available [here](#ipacket).
+> **More information about **`IPacket`** is available [here](#ipacket).**
 
-**`IConnectionWSServer`** represents a connncted client to the server. These are exposed in `ConnectionEvent` or can be retrieved from **`Connections`** inside of **`IWebsocketServer`**.
+**`IConnectionWSServer`** represents a connected client to the server. These are exposed in `ConnectionEvent` or can be retrieved from **`Connections`** inside of **`IWebsocketServer`**.
 
 An example call to send a message to a connection could be:
 
@@ -482,7 +483,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
 
 If you are sending polymorphic objects, first deserialize the initial message into a class or struct that contains “common” fields, such as `PacketExtended` with a `PacketExtendedType` enum field. Then use the value of `PacketExtendedType` and deserialize a second time into the type the enum represents. Repeat until the your polymorphic object is completely deserialized.
 
-Finally, when constructing your **`IWebsocketServer`**, pass in your new **`WebsocketHandlerExtended`** extended class you created. An example is below:
+Finally, when constructing your **`WebsocketServer`**, pass in your new **`WebsocketHandlerExtended`** extended class you created. An example is below:
 
 ``` c#
     IParamsWSServer parameters = new ParamsWSServer 
@@ -566,7 +567,7 @@ The [WebsocketsSimple Authentication Server](https://www.nuget.org/packages/Webs
 #### **`IUserService<T>`**
 This is an interface contained in [PHS.Networking.Server](https://www.nuget.org/packages/PHS.Networking.Server/). When creating a **`WebsocketServerAuth<T>`**, the interface **`IUserService<T>`** will need to be implemented into a concrete class. 
 
-> A default implementation is *not* included with [WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple). You will need to implement this interface and add logic here.
+> **A default implementation is *not* included with [WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple). You will need to implement this interface and add logic here.**
 
 An example implementation using [Entity Framework](https://docs.microsoft.com/en-us/ef/) is shown below:
 
