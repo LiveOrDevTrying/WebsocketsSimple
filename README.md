@@ -178,8 +178,6 @@ More information about **`IPacket`** is available [here](#ipacket).
         string LastName { get; set; }
     }
 
-    ---
-
     await SendToServerAsync<IPacketExtended>(new PacketExtended 
     {
         Data = "YourDataPayload",
@@ -563,7 +561,7 @@ The [WebsocketsSimple Authentication Server](https://www.nuget.org/packages/Webs
 * **`Certificate`** - *byte[]* - **Optional** - A byte array containing the exported SSL certificate with private key if the server will be hosted on Https.
 * **`CertificatePassword`** - *string* - **Optional** - The private key of the exported SSL certificate if the server will be hosted on Https.
 * **`WebsocketHandlerAuth`** - **Optional**. This object is optional. If you want to deserialize an extended **`IPacket`**, you could extend **`WebsocketHandlerAuth`** and override `MessageReceivedAsync(string message, IConnectionWSServer connection)` to deserialize the object into the class / struct of your choice. For more information, please see **[Receiving an Extended IPacket](#receiving-an-extended-ipacket)** below.
-* **`WSConnectionManagerAuth<T>`** - *Optional* - If you want to customize the connection manager, you can extend and use your own connection manager auth instance here.
+* **`WSConnectionManagerAuth<T>`** - **Optional** - If you want to customize the connection manager, you can extend and use your own connection manager auth instance here.
 
 #### **`IUserService<T>`**
 This is an interface contained in [PHS.Networking.Server](https://www.nuget.org/packages/PHS.Networking.Server/). When creating a **`WebsocketServerAuth<T>`**, the interface **`IUserService<T>`** will need to be implemented into a concrete class. 
