@@ -233,17 +233,49 @@ namespace WebsocketsSimple.Server.Handlers
                                 decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
                             }
 
-                            var message = Encoding.UTF8.GetString(decoded);
+                            var isDisconnect = false;
+                            byte[] selectedBytes = null;
 
-                            if (!string.IsNullOrWhiteSpace(message))
+                            for (int i = 0; i < decoded.Length; i++)
                             {
-                                if (message.Trim().ToLower() == "pong")
+                                // This checks for a disconnect
+                                if (decoded[i] == 0x03)
                                 {
-                                    connection.HasBeenPinged = false;
+                                    isDisconnect = true;
+
+                                    selectedBytes = new byte[i];
+                                    for (int j = 0; j < i; j++)
+                                    {
+                                        selectedBytes[j] = decoded[j];
+                                    }
+                                    break;
                                 }
-                                else
+                            }
+
+                            if (!isDisconnect)
+                            {
+                                selectedBytes = decoded;
+                            }
+
+                            if (selectedBytes != null)
+                            {
+                                var message = Encoding.UTF8.GetString(selectedBytes);
+
+                                if (!string.IsNullOrWhiteSpace(message))
                                 {
-                                    await MessageReceivedAsync(message, connection);
+                                    if (message.Trim().ToLower() == "pong")
+                                    {
+                                        connection.HasBeenPinged = false;
+                                    }
+                                    else
+                                    {
+                                        await MessageReceivedAsync(message, connection);
+                                    }
+                                }
+
+                                if (isDisconnect)
+                                {
+                                    await DisconnectConnectionAsync(connection);
                                 }
                             }
                         }

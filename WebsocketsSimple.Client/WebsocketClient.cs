@@ -70,29 +70,32 @@ namespace WebsocketsSimple.Client
                 {
                     (var subprotocol, var remainingMessages) = await ParseAndValidateConnectResponseAsync(_connection, webSocketAccept);
 
-                    _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.Stream,
-                        subprotocol,
-                        _parameters.ReceiveBufferSize,
-                        _parameters.SendBufferSize,
-                        _parameters.KeepAliveInterval,
-                        false,
-                        WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
-
-                    if (_connection.Websocket.State == WebSocketState.Open)
+                    if (_connection.Client.Connected && remainingMessages != null)
                     {
-                        await FireEventAsync(this, new WSConnectionClientEventArgs
-                        {
-                            ConnectionEventType = ConnectionEventType.Connected,
-                            Connection = _connection
-                        });
+                        _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.Stream,
+                            subprotocol,
+                            _parameters.ReceiveBufferSize,
+                            _parameters.SendBufferSize,
+                            _parameters.KeepAliveInterval,
+                            false,
+                            WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
 
-                        foreach (var item in remainingMessages)
+                        if (_connection.Websocket.State == WebSocketState.Open)
                         {
-                            await MessageReceivedAsync(item);
+                            await FireEventAsync(this, new WSConnectionClientEventArgs
+                            {
+                                ConnectionEventType = ConnectionEventType.Connected,
+                                Connection = _connection
+                            });
+
+                            foreach (var item in remainingMessages)
+                            {
+                                await MessageReceivedAsync(item.Trim());
+                            }
+
+                            _ = Task.Run(async () => { await ReceiveAsync(); });
+                            return true;
                         }
-
-                        _ = Task.Run(async () => { await ReceiveAsync(); });
-                        return true;
                     }
                 }
             }
@@ -105,6 +108,12 @@ namespace WebsocketsSimple.Client
                     Connection = _connection
                 });
             }
+
+            await FireEventAsync(this, new WSConnectionClientEventArgs
+            {
+                ConnectionEventType = ConnectionEventType.Disconnect,
+                Connection = _connection,
+            });
 
             await DisconnectAsync();
             return false;
@@ -306,7 +315,7 @@ namespace WebsocketsSimple.Client
                             }
                             else 
                             {
-                                await MessageReceivedAsync(message);
+                                await MessageReceivedAsync(message.Trim());
                             }
                         }
                     }
@@ -405,9 +414,24 @@ namespace WebsocketsSimple.Client
         }
         protected async Task<(string, string[])> ParseAndValidateConnectResponseAsync(IConnectionWS connection, string expectedSecWebSocketAccept)
         {
-            while (connection.Client.Available <= 0) ;
+            while (connection.Client.Connected)
+            {
+                if (connection.Client.Available > 0)
+                {
+                    break;
+                }
+            }
+
+            if (!connection.Client.Connected)
+            {
+                await DisconnectAsync();
+                return (null, null);
+            }
+
             var readBuffer = new byte[connection.Client.Available];
+
             await connection.Stream.ReadAsync(readBuffer, 0, readBuffer.Length);
+
             var message = Encoding.UTF8.GetString(readBuffer);
 
             var messagesSplit = message.Split("\r\n");
@@ -455,9 +479,9 @@ namespace WebsocketsSimple.Client
                 {
                     for (int j = i + 1; j < messagesSplit.Length; j++)
                     {
-                        if (!string.IsNullOrWhiteSpace(messagesSplit[j]))
+                        if (!string.IsNullOrWhiteSpace(RemoveBytesFromString(messagesSplit[j])))
                         {
-                            remainingMessages.Add(messagesSplit[j].Trim());
+                            remainingMessages.Add(RemoveBytesFromString(messagesSplit[j].Trim()));
                         }
                     }
 
@@ -508,6 +532,14 @@ namespace WebsocketsSimple.Client
             }
 
             return (subprotocol, remainingMessages.ToArray());
+        }
+
+        protected virtual string RemoveBytesFromString(string content)
+        {
+            return Encoding.ASCII.GetString(Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName,
+                new EncoderReplacementFallback(string.Empty),
+                new DecoderExceptionFallback()),
+                Encoding.UTF8.GetBytes(content)));
         }
         protected virtual void ValidateAndTrackHeader(
            string targetHeaderName, string targetHeaderValue,
