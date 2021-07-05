@@ -544,19 +544,8 @@ namespace WebsocketsSimple.Server
             {
                 var userId = await _userService.GetIdAsync(args.Token);
 
-                if (userId == null)
-                {
-                    await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, args.Connection);
-                    await DisconnectConnectionAsync(args.Connection);
-
-                    await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        ConnectionEventType = ConnectionEventType.Disconnect,
-                        Connection = args.Connection
-                    });
-                }
-
-                if (await _handler.UpgradeConnectionCallbackAsync(args))
+                if (userId != null &&
+                    await _handler.UpgradeConnectionCallbackAsync(args))
                 {
                     var identity = _connectionManager.AddIdentity(userId, args.Connection);
                     await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
@@ -565,8 +554,18 @@ namespace WebsocketsSimple.Server
                         UserId = identity.UserId,
                         Connection = args.Connection,
                     });
+                    return;
                 }
             }
+
+            await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, args.Connection);
+            await DisconnectConnectionAsync(args.Connection);
+
+            await FireEventAsync(this, new WSConnectionServerAuthEventArgs<T>
+            {
+                ConnectionEventType = ConnectionEventType.Disconnect,
+                Connection = args.Connection
+            });
         }
         protected virtual void OnTimerPingTick(object state)
         {
