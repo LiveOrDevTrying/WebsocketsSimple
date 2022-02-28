@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
-    <Version>6.0.0</Version>
+    <Version>5.0.0</Version>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Description>The server module for a simple websocket server and client implementation with authentication.</Description>
@@ -18,8 +18,8 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.*" />
-    <PackageReference Include="PHS.Networking.Server" Version="6.0.*" />
-    <PackageReference Include="WebsocketsSimple.Core" Version="6.0.*" />
+    <PackageReference Include="PHS.Networking.Server" Version="5.0.*" />
+    <PackageReference Include="WebsocketsSimple.Core" Version="5.0.*" />
   </ItemGroup>
 
 
