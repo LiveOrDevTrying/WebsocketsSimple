@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WebsocketsSimple.Client" Version="6.0.*" />
+    <PackageReference Include="WebsocketsSimple.Client" Version="3.0.*" />
   </ItemGroup>
 
 </Project>

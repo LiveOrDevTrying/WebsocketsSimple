@@ -15,10 +15,10 @@
     <copyright>Copyright 2022</copyright>
     <tags>Websocket Websockets server client websocketsharp tcpListener wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
-		<group targetFramework="net6.0">
+		<group targetFramework="netcoreapp3.0">
 			<dependency id="Newtonsoft.Json" version="[12,13)" />
-			<dependency id="WebsocketsSimple.Core" version="[6.0,6.1)" />
-			<dependency id="PHS.Networking.Server" version="[6.0,6.1)" />
+			<dependency id="WebsocketsSimple.Core" version="[3.0,3.1)" />
+			<dependency id="PHS.Networking.Server" version="[3.0,3.1)" />
 		</group>
     </dependencies>
   </metadata>
