@@ -1,25 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
     <PackageId>WebsocketsSimple</PackageId>
-    <Version>2.1.0</Version>
+    <Version>6.0.0</Version>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
-    <Copyright>Copyright 2021</Copyright>
+    <Copyright>Copyright 2022</Copyright>
     <Description>The client and server modules combined for a simple websocket server and client implementation with authentication.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <RepositoryType>Github Public</RepositoryType>
     <PackageIcon>Logo.png</PackageIcon>
-    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
+    <PackageTags>Websocket Websockets server client websocketsharp tcpListener wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
   </PropertyGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="WebsocketsSimple.Client" Version="2.1.*" />
-		<PackageReference Include="WebsocketsSimple.Server" Version="2.1.*" />
+		<PackageReference Include="WebsocketsSimple.Client" Version="6.0.*" />
+		<PackageReference Include="WebsocketsSimple.Server" Version="6.0.*" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -34,8 +34,5 @@ namespace WebsocketsSimple.Server
         IIdentityWS<T>[] Identities { get; }
 
         event NetworkingEventHandler<ServerEventArgs> ServerEvent;
-
-        void Dispose();
-        
     }
 }

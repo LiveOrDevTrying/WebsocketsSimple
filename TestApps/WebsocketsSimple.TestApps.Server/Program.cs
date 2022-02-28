@@ -59,9 +59,9 @@ namespace WebsocketsSimple.TestApps.Server
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.MessageEventType + ": " + args.Message);
+                    Console.WriteLine(args.MessageEventType + ": " + args.Packet.Data);
 
-                    await _authServer.SendToConnectionAsync(args.Message, args.Connection);
+                    await _authServer.SendToConnectionAsync(args.Packet.Data, args.Connection);
                     break;
                 default:
                     break;

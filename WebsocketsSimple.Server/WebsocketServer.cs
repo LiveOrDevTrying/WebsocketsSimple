@@ -81,7 +81,6 @@ namespace WebsocketsSimple.Server
 
                         await FireEventAsync(this, new WSMessageServerEventArgs
                         {
-                            Message = packet.Data,
                             MessageEventType = MessageEventType.Sent,
                             Connection = connection,
                             Packet = packet,
@@ -131,7 +130,6 @@ namespace WebsocketsSimple.Server
 
                         await FireEventAsync(this, new WSMessageServerEventArgs
                         {
-                            Message = message,
                             MessageEventType = MessageEventType.Sent,
                             Packet = new Packet
                             {

@@ -223,7 +223,6 @@ namespace WebsocketsSimple.Client
                     await FireEventAsync(this, new WSMessageClientEventArgs
                     {
                         MessageEventType = MessageEventType.Sent,
-                        Message = packet.Data,
                         Packet = packet,
                         Connection = _connection,
                     });
@@ -266,7 +265,6 @@ namespace WebsocketsSimple.Client
                     await FireEventAsync(this, new WSMessageClientEventArgs
                     {
                         MessageEventType = MessageEventType.Sent,
-                        Message = message,
                         Packet = new Packet
                         {
                             Data = message,
@@ -632,7 +630,6 @@ namespace WebsocketsSimple.Client
 
             await FireEventAsync(this, new WSMessageClientEventArgs
             {
-                Message = packet.Data,
                 Packet = packet,
                 Connection = _connection,
                 MessageEventType = MessageEventType.Receive
