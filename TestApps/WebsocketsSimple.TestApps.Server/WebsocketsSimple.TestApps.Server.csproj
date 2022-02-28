@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\WebsocketsSimple.Server\WebsocketsSimple.Server.csproj" />
-    <ProjectReference Include="..\WebsocketsSimple.TestApps.Client\WebsocketsSimple.TestApps.Client.csproj" />
   </ItemGroup>
 
 </Project>

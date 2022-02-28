@@ -6,13 +6,13 @@
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Description>The client module for a simple websocket server and client implementation with authentication.</Description>
-    <Copyright>Copyright 2021</Copyright>
+    <Copyright>Copyright 2022</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
     <PackageIcon>Logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</RepositoryUrl>
     <RepositoryType>Github Public</RepositoryType>
-    <PackageTags>Websocket Websockets server client websocketsharp kestrel middleware wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
+    <PackageTags>Websocket Websockets server client websocketsharp tcpListener wss WebsocketSimple WebsocketsSimple simple authentication auth</PackageTags>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
 	
