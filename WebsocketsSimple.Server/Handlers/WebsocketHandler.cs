@@ -96,17 +96,10 @@ namespace WebsocketsSimple.Server.Handlers
 
             _numberOfConnections = 0;
 
-            try
+            await FireEventAsync(this, new ServerEventArgs
             {
-                await FireEventAsync(this, new ServerEventArgs
-                {
-                    ServerEventType = ServerEventType.Stop
-                });
-            }
-            catch (Exception ex)
-            {
-
-            }
+                ServerEventType = ServerEventType.Stop
+            });
         }
  
         protected virtual async Task ListenForConnectionsAsync()
@@ -388,7 +381,6 @@ namespace WebsocketsSimple.Server.Handlers
             await FireEventAsync(this, new WSMessageServerEventArgs
             {
                 MessageEventType = MessageEventType.Receive,
-                Message = packet.Data,
                 Packet = packet,
                 Connection = connection
             });
@@ -410,7 +402,6 @@ namespace WebsocketsSimple.Server.Handlers
                 await FireEventAsync(this, new WSMessageServerEventArgs
                 {
                     MessageEventType = MessageEventType.Sent,
-                    Message = message,
                     Packet = packet,
                     Connection = connection,
                 });
@@ -455,7 +446,6 @@ namespace WebsocketsSimple.Server.Handlers
                 await FireEventAsync(this, new WSMessageServerEventArgs
                 {
                     MessageEventType = MessageEventType.Sent,
-                    Message = message,
                     Packet = new Packet
                     {
                         Data = message,

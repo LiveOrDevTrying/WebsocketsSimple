@@ -52,7 +52,7 @@ namespace WebsocketsSimple.TestApps.Client
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.Message);
+                    Console.WriteLine(args.Packet.Data);
                     break;
                 default:
                     break;

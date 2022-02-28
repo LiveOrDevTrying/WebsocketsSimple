@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.202
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestApps", "TestApps", "{04B6949A-CED9-4EDA-A048-5D9756B7DF3E}"
 EndProject
@@ -16,6 +16,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Server", "WebsocketsSimple.Server\WebsocketsSimple.Server.csproj", "{146204DA-0039-4755-9BD0-0361DB91525E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.TestApps.Server", "TestApps\WebsocketsSimple.TestApps.Server\WebsocketsSimple.TestApps.Server.csproj", "{5ED75709-F4BD-4901-B0BF-7A964493B959}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{2931DE98-61D7-4B7B-A2EA-DAB99356DF91}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PHS.Core", "Resources\PHS\PHS.Core\PHS.Core.csproj", "{0F46FC27-AEED-4C70-9388-99F24596FE88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PHS.Networking", "Resources\PHS\PHS.Networking\PHS.Networking.csproj", "{4395E3A7-FF45-48D7-A860-2A8392FBC144}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PHS.Networking.Server", "Resources\PHS\PHS.Networking.Server\PHS.Networking.Server.csproj", "{632ACD0B-EC51-4FE2-B9F9-4969714C0C63}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +55,18 @@ Global
 		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5ED75709-F4BD-4901-B0BF-7A964493B959}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F46FC27-AEED-4C70-9388-99F24596FE88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F46FC27-AEED-4C70-9388-99F24596FE88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F46FC27-AEED-4C70-9388-99F24596FE88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F46FC27-AEED-4C70-9388-99F24596FE88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4395E3A7-FF45-48D7-A860-2A8392FBC144}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4395E3A7-FF45-48D7-A860-2A8392FBC144}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4395E3A7-FF45-48D7-A860-2A8392FBC144}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4395E3A7-FF45-48D7-A860-2A8392FBC144}.Release|Any CPU.Build.0 = Release|Any CPU
+		{632ACD0B-EC51-4FE2-B9F9-4969714C0C63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{632ACD0B-EC51-4FE2-B9F9-4969714C0C63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{632ACD0B-EC51-4FE2-B9F9-4969714C0C63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{632ACD0B-EC51-4FE2-B9F9-4969714C0C63}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +74,9 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{34F2D38E-7B9E-4ACC-A2DF-B192F6F907A3} = {04B6949A-CED9-4EDA-A048-5D9756B7DF3E}
 		{5ED75709-F4BD-4901-B0BF-7A964493B959} = {04B6949A-CED9-4EDA-A048-5D9756B7DF3E}
+		{0F46FC27-AEED-4C70-9388-99F24596FE88} = {2931DE98-61D7-4B7B-A2EA-DAB99356DF91}
+		{4395E3A7-FF45-48D7-A860-2A8392FBC144} = {2931DE98-61D7-4B7B-A2EA-DAB99356DF91}
+		{632ACD0B-EC51-4FE2-B9F9-4969714C0C63} = {2931DE98-61D7-4B7B-A2EA-DAB99356DF91}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1057192C-61B8-478E-9683-B71AD30C4CAC}

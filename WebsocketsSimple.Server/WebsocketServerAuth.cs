@@ -189,7 +189,6 @@ namespace WebsocketsSimple.Server
 
                         await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                         {
-                            Message = packet.Data,
                             MessageEventType = MessageEventType.Sent,
                             Connection = connection,
                             Packet = packet,
@@ -227,7 +226,6 @@ namespace WebsocketsSimple.Server
 
                             await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                             {
-                                Message = packet.Data,
                                 MessageEventType = MessageEventType.Sent,
                                 Packet = packet,
                                 UserId = identity.UserId,
@@ -280,7 +278,6 @@ namespace WebsocketsSimple.Server
 
                         await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                         {
-                            Message = message,
                             MessageEventType = MessageEventType.Sent,
                             Packet = new Packet
                             {
@@ -323,7 +320,6 @@ namespace WebsocketsSimple.Server
 
                             await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                             {
-                                Message = message,
                                 Packet = new Packet
                                 {
                                     Data = message,
@@ -368,8 +364,8 @@ namespace WebsocketsSimple.Server
                 {
                     _connectionManager.RemoveConnection(args.Connection);
 
-                    if (args.Message.Length < "oauth:".Length ||
-                        !args.Message.ToLower().StartsWith("oauth:"))
+                    if (args.Packet.Data.Length < "oauth:".Length ||
+                        !args.Packet.Data.ToLower().StartsWith("oauth:"))
                     {
                         await SendToConnectionRawAsync(_parameters.ConnectionUnauthorizedString, args.Connection);
                         await DisconnectConnectionAsync(args.Connection);
@@ -382,7 +378,7 @@ namespace WebsocketsSimple.Server
                         return false;
                     }
 
-                    var token = args.Message.Substring("oauth:".Length);
+                    var token = args.Packet.Data.Substring("oauth:".Length);
 
 
                 }
@@ -483,7 +479,6 @@ namespace WebsocketsSimple.Server
                 case MessageEventType.Sent:
                     await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                     {
-                        Message = args.Packet.Data,
                         MessageEventType = MessageEventType.Sent,
                         Packet = args.Packet,
                         Connection = args.Connection,
@@ -498,7 +493,6 @@ namespace WebsocketsSimple.Server
                         {
                             await FireEventAsync(this, new WSMessageServerAuthEventArgs<T>
                             {
-                                Message = args.Packet.Data,
                                 MessageEventType = MessageEventType.Receive,
                                 Packet = args.Packet,
                                 UserId = identity.UserId,
