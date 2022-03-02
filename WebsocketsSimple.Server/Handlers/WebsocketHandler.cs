@@ -183,6 +183,8 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 while (connection.Client.Connected)
                 {
+                    await Task.Delay(1);
+
                     if (connection.Client.Available < 3)
                     {
                         continue;
