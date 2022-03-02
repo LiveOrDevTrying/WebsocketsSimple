@@ -338,13 +338,16 @@ namespace WebsocketsSimple.Client
         protected virtual (string, string) CreateSecKeyAndSecWebSocketAccept()
         {
             var secKey = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-            using var sha = SHA1.Create();
-            return (
-                secKey,
-                Convert.ToBase64String(
-                    sha.ComputeHash(Encoding.ASCII.GetBytes(secKey + Statics.WS_SERVER_GUID))
-                )
-            );
+            using (var sha = SHA1.Create())
+            {
+
+                return (
+                    secKey,
+                    Convert.ToBase64String(
+                        sha.ComputeHash(Encoding.ASCII.GetBytes(secKey + Statics.WS_SERVER_GUID))
+                    )
+                );
+            }
         }
         protected virtual byte[] BuildRequestHeader(string secKey)
         {
