@@ -82,7 +82,7 @@ namespace WebsocketsSimple.Client
 
                         if (_connection.Websocket.State == WebSocketState.Open)
                         {
-                            await FireEventAsync(this, new WSConnectionClientEventArgs
+                            FireEvent(this, new WSConnectionClientEventArgs
                             {
                                 ConnectionEventType = ConnectionEventType.Connected,
                                 Connection = _connection
@@ -90,7 +90,7 @@ namespace WebsocketsSimple.Client
 
                             foreach (var item in remainingMessages)
                             {
-                                await MessageReceivedAsync(item.Trim());
+                                MessageReceived(item.Trim());
                             }
 
                             _ = Task.Run(async () => { await ReceiveAsync(); });
@@ -101,7 +101,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorClientEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = $"Error during ConnectAsync() - {ex.Message}",
@@ -109,7 +109,7 @@ namespace WebsocketsSimple.Client
                 });
             }
 
-            await FireEventAsync(this, new WSConnectionClientEventArgs
+            FireEvent(this, new WSConnectionClientEventArgs
             {
                 ConnectionEventType = ConnectionEventType.Disconnect,
                 Connection = _connection,
@@ -184,7 +184,7 @@ namespace WebsocketsSimple.Client
                         _connection.Client.Dispose();
                     }
 
-                    await FireEventAsync(this, new WSConnectionClientEventArgs
+                    FireEvent(this, new WSConnectionClientEventArgs
                     {
                         ConnectionEventType = ConnectionEventType.Disconnect,
                         Connection = _connection
@@ -197,10 +197,10 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorClientEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
-                    Message = "Error in StopAsync()",
+                    Message = "Error in DisconnectAsync()",
                     Connection = _connection
                 });
             }
@@ -220,7 +220,7 @@ namespace WebsocketsSimple.Client
 
                     await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 
-                    await FireEventAsync(this, new WSMessageClientEventArgs
+                    FireEvent(this, new WSMessageClientEventArgs
                     {
                         MessageEventType = MessageEventType.Sent,
                         Packet = packet,
@@ -232,10 +232,10 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorClientEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
-                    Message = "Error during SendAsync()",
+                    Message = "Error during SendToServerAsync()",
                     Connection = _connection
                 });
             }
@@ -262,7 +262,7 @@ namespace WebsocketsSimple.Client
 
                     await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 
-                    await FireEventAsync(this, new WSMessageClientEventArgs
+                    FireEvent(this, new WSMessageClientEventArgs
                     {
                         MessageEventType = MessageEventType.Sent,
                         Packet = new Packet
@@ -278,10 +278,10 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorClientEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
-                    Message = "Error during SendAsync()",
+                    Message = "Error during SendToServerRawAsync()",
                     Connection = _connection
                 });
             }
@@ -313,7 +313,7 @@ namespace WebsocketsSimple.Client
                             }
                             else 
                             {
-                                await MessageReceivedAsync(message.Trim());
+                                MessageReceived(message.Trim());
                             }
                         }
                     }
@@ -326,7 +326,7 @@ namespace WebsocketsSimple.Client
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorClientEventArgs
+                FireEvent(this, new WSErrorClientEventArgs
                 {
                     Exception = ex,
                     Message = $"Error in ReceiveAsync() - {ex.Message}",
@@ -605,7 +605,7 @@ namespace WebsocketsSimple.Client
                 newLength == text.Length ? text :
                 text.Substring(startIndex, newLength);
         }
-        protected virtual async Task MessageReceivedAsync(string message)
+        protected virtual void MessageReceived(string message)
         {
             IPacket packet;
 
@@ -631,7 +631,7 @@ namespace WebsocketsSimple.Client
                 };
             }
 
-            await FireEventAsync(this, new WSMessageClientEventArgs
+            FireEvent(this, new WSMessageClientEventArgs
             {
                 Packet = packet,
                 Connection = _connection,
