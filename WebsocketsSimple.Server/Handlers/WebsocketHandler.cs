@@ -222,7 +222,6 @@ namespace WebsocketsSimple.Server.Handlers
                         }
                         else if (msglen == 127)
                         {
-                            Console.WriteLine("TODO: msglen == 127, needs qword to store msglen");
                             // i don't really know the byte order, please edit this
                             // msglen = BitConverter.ToUInt64(new byte[] { bytes[5], bytes[4], bytes[3], bytes[2], bytes[9], bytes[8], bytes[7], bytes[6] }, 0);
                             // offset = 10;
@@ -299,8 +298,6 @@ namespace WebsocketsSimple.Server.Handlers
         }
         protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
         {
-            Console.WriteLine("=====Handshaking from client=====\n{0}", message);
-
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
             // 3. Compute SHA-1 and Base64 hash of the new value
