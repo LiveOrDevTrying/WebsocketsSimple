@@ -12,7 +12,7 @@ namespace WebsocketsSimple.TestApps.Server
     {
         private static WebsocketServerAuth<Guid> _authServer;
 
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth
             {
@@ -25,7 +25,7 @@ namespace WebsocketsSimple.TestApps.Server
             _authServer.ServerEvent += OnServerEvent;
             _authServer.ConnectionEvent += OnConnectionEvent;
             _authServer.ErrorEvent += OnErrorEvent;
-            await _authServer.StartAsync();
+            _authServer.Start();
 
             while (true)
             {
@@ -33,26 +33,22 @@ namespace WebsocketsSimple.TestApps.Server
             }
         }
 
-        private static Task OnErrorEvent(object sender, WSErrorServerAuthEventArgs<Guid> args)
+        private static void OnErrorEvent(object sender, WSErrorServerAuthEventArgs<Guid> args)
         {
             Console.WriteLine(args.Message);
-            return Task.CompletedTask;
         }
 
-        private static Task OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<Guid> args)
+        private static void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<Guid> args)
         {
             Console.WriteLine(args.ConnectionEventType);
-
-            return Task.CompletedTask;
         }
 
-        private static Task OnServerEvent(object sender, ServerEventArgs args)
+        private static void OnServerEvent(object sender, ServerEventArgs args)
         {
             Console.WriteLine(args.ServerEventType);
-            return Task.CompletedTask;
         }
 
-        private static async Task OnMessageEvent(object sender, WSMessageServerAuthEventArgs<Guid> args)
+        private static void OnMessageEvent(object sender, WSMessageServerAuthEventArgs<Guid> args)
         {
             switch (args.MessageEventType)
             {
@@ -61,7 +57,11 @@ namespace WebsocketsSimple.TestApps.Server
                 case MessageEventType.Receive:
                     Console.WriteLine(args.MessageEventType + ": " + args.Packet.Data);
 
-                    await _authServer.SendToConnectionAsync(args.Packet.Data, args.Connection);
+                    Task.Run(async () =>
+                    {
+                        await _authServer.SendToConnectionAsync(args.Packet.Data, args.Connection);
+
+                    });
                     break;
                 default:
                     break;

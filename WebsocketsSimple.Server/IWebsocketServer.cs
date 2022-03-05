@@ -14,8 +14,8 @@ namespace WebsocketsSimple.Server
         bool IsServerRunning { get; }
         TcpListener Server { get; }
 
-        Task StartAsync();
-        Task StopAsync();
+        void Start();
+        void Stop();
 
         Task<bool> SendToConnectionAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket;
         Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection);
