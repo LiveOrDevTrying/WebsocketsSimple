@@ -39,13 +39,12 @@ namespace WebsocketsSimple.TestApps.Client
             }
         }
 
-        private static Task OnErrorEvent(object sender, WSErrorClientEventArgs args)
+        private static void OnErrorEvent(object sender, WSErrorClientEventArgs args)
         {
             Console.WriteLine(args.Message);
-            return Task.CompletedTask;
         }
 
-        private static Task OnMessageEvent(object sender, WSMessageClientEventArgs args)
+        private static void OnMessageEvent(object sender, WSMessageClientEventArgs args)
         {
             switch (args.MessageEventType)
             {
@@ -57,13 +56,11 @@ namespace WebsocketsSimple.TestApps.Client
                 default:
                     break;
             }
-            return Task.CompletedTask;
         }
 
-        private static Task OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
+        private static void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
             Console.WriteLine(args.ConnectionEventType.ToString());
-            return Task.CompletedTask;
         }
     }
 }

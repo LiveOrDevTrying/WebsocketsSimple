@@ -46,13 +46,13 @@ namespace WebsocketsSimple.Server.Handlers
             _certificatePassword = certificatePassword;
         }
 
-        public virtual async Task StartAsync()
+        public virtual void Start()
         {
             try
             {
                 if (_server != null)
                 {
-                    await StopAsync();
+                    Stop();
                 }
 
                 _isRunning = true;
@@ -61,7 +61,7 @@ namespace WebsocketsSimple.Server.Handlers
                 _server.Server.ReceiveTimeout = 60000;
                 _server.Start();
 
-                await FireEventAsync(this, new ServerEventArgs
+                FireEvent(this, new ServerEventArgs
                 {
                     ServerEventType = ServerEventType.Start
                 });
@@ -77,14 +77,14 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorServerEventArgs
+                FireEvent(this, new WSErrorServerEventArgs
                 {
                     Exception = ex,
                     Message = ex.Message,
                 });
             }
         }
-        public virtual async Task StopAsync()
+        public virtual void Stop()
         {
             _isRunning = false;
 
@@ -96,7 +96,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             _numberOfConnections = 0;
 
-            await FireEventAsync(this, new ServerEventArgs
+            FireEvent(this, new ServerEventArgs
             {
                 ServerEventType = ServerEventType.Stop
             });
@@ -123,7 +123,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
-                    await FireEventAsync(this, new WSErrorServerEventArgs
+                    FireEvent(this, new WSErrorServerEventArgs
                     {
                         Exception = ex,
                         Message = ex.Message,
@@ -157,7 +157,7 @@ namespace WebsocketsSimple.Server.Handlers
                     else
                     {
                         var certStatus = $"IsAuthenticated = {sslStream.IsAuthenticated} && IsEncripted == {sslStream.IsEncrypted}";
-                        await FireEventAsync(this, new WSErrorServerEventArgs
+                        FireEvent(this, new WSErrorServerEventArgs
                         {
                             Exception = new Exception(certStatus),
                             Message = certStatus
@@ -168,7 +168,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
-                    await FireEventAsync(this, new WSErrorServerEventArgs
+                    FireEvent(this, new WSErrorServerEventArgs
                     {
                         Exception = ex,
                         Message = ex.Message,
@@ -198,7 +198,7 @@ namespace WebsocketsSimple.Server.Handlers
                     {
                         if (await UpgradeConnectionAsync(data, connection))
                         {
-                            await FireEventAsync(this, new WSConnectionServerEventArgs
+                            FireEvent(this, new WSConnectionServerEventArgs
                             {
                                 Connection = connection,
                                 ConnectionEventType = ConnectionEventType.Connected,
@@ -275,7 +275,7 @@ namespace WebsocketsSimple.Server.Handlers
                                     }
                                     else
                                     {
-                                        await MessageReceivedAsync(message, connection);
+                                        MessageReceived(message, connection);
                                     }
                                 }
 
@@ -291,7 +291,7 @@ namespace WebsocketsSimple.Server.Handlers
             catch
             { }
 
-            await FireEventAsync(this, new WSConnectionServerEventArgs
+            FireEvent(this, new WSConnectionServerEventArgs
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Disconnect,
@@ -354,7 +354,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             return true;
         }
-        protected virtual async Task MessageReceivedAsync(string message, IConnectionWSServer connection)
+        protected virtual void MessageReceived(string message, IConnectionWSServer connection)
         {
             IPacket packet;
 
@@ -380,7 +380,7 @@ namespace WebsocketsSimple.Server.Handlers
                 };
             }
 
-            await FireEventAsync(this, new WSMessageServerEventArgs
+            FireEvent(this, new WSMessageServerEventArgs
             {
                 MessageEventType = MessageEventType.Receive,
                 Packet = packet,
@@ -401,7 +401,7 @@ namespace WebsocketsSimple.Server.Handlers
                     endOfMessage: true,
                     cancellationToken: CancellationToken.None);
 
-                await FireEventAsync(this, new WSMessageServerEventArgs
+                FireEvent(this, new WSMessageServerEventArgs
                 {
                     MessageEventType = MessageEventType.Sent,
                     Packet = packet,
@@ -412,7 +412,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorServerEventArgs
+                FireEvent(this, new WSErrorServerEventArgs
                 {
                     Exception = ex,
                     Message = ex.Message,
@@ -445,7 +445,7 @@ namespace WebsocketsSimple.Server.Handlers
                     endOfMessage: true,
                     cancellationToken: CancellationToken.None);
 
-                await FireEventAsync(this, new WSMessageServerEventArgs
+                FireEvent(this, new WSMessageServerEventArgs
                 {
                     MessageEventType = MessageEventType.Sent,
                     Packet = new Packet
@@ -461,7 +461,7 @@ namespace WebsocketsSimple.Server.Handlers
             catch (Exception ex)
             {
                 _numberOfConnections--;
-                await FireEventAsync(this, new WSErrorServerEventArgs
+                FireEvent(this, new WSErrorServerEventArgs
                 {
                     Connection = connection,
                     Exception = ex,
@@ -483,7 +483,7 @@ namespace WebsocketsSimple.Server.Handlers
                     await connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnect", CancellationToken.None);
                 }
 
-                await FireEventAsync(this, new WSConnectionServerEventArgs
+                FireEvent(this, new WSConnectionServerEventArgs
                 {
                     Connection = connection,
                     ConnectionEventType = ConnectionEventType.Disconnect
@@ -492,7 +492,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                await FireEventAsync(this, new WSErrorServerEventArgs
+                FireEvent(this, new WSErrorServerEventArgs
                 {
                     Connection = connection,
                     Exception = ex,
@@ -502,17 +502,14 @@ namespace WebsocketsSimple.Server.Handlers
             return false;
         }
 
-        protected virtual async Task FireEventAsync(object sender, ServerEventArgs args)
+        protected virtual void FireEvent(object sender, ServerEventArgs args)
         {
-            if (_serverEvent != null)
-            {
-                await _serverEvent?.Invoke(sender, args);
-            }
+            _serverEvent?.Invoke(sender, args);
         }
 
         public override void Dispose()
         {
-            StopAsync().Wait();
+            Stop();
 
             base.Dispose();
         }
