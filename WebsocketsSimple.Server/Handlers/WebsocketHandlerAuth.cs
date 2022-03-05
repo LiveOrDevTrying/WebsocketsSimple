@@ -9,7 +9,7 @@ using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Handlers
 {
-    public delegate Task WebsocketAuthorizeEvent(object sender, WSAuthorizeEventArgs args);
+    public delegate void WebsocketAuthorizeEvent(object sender, WSAuthorizeEventArgs args);
 
     public class WebsocketHandlerAuth : WebsocketHandler
     {
@@ -23,20 +23,20 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
+        protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
         {
             // Checking auth token
             var token = message.Substring(message.IndexOf("/") + 1);
             token = token.Substring(0, token.IndexOf(" "));
 
-            await FireEventAsync(this, new WSAuthorizeEventArgs
+            FireEvent(this, new WSAuthorizeEventArgs
             {
                 Connection = connection,
                 Token = token,
                 UpgradeData = message
             });
 
-            return true;
+            return Task.FromResult(true);
         }
         public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args)
         {
@@ -82,12 +82,9 @@ namespace WebsocketsSimple.Server.Handlers
             return true;
         }
 
-        protected virtual async Task FireEventAsync(object sender, WSAuthorizeEventArgs args)
+        protected virtual void FireEvent(object sender, WSAuthorizeEventArgs args)
         {
-            if (_authorizeEvent != null)
-            {
-                await _authorizeEvent?.Invoke(sender, args);
-            }
+            _authorizeEvent?.Invoke(sender, args);
         }
 
         public event WebsocketAuthorizeEvent AuthorizeEvent
