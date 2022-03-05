@@ -1,5 +1,5 @@
 # **[WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple)**<!-- omit in toc -->
-[WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple) provides an easy-to-use and customizable Websocket Server and Websocket Client. The server is created using a `TcpListener` and upgrades a successful connection to a `WebSocket`. The server and client can be used for non-SSL or SSL connections and authentication (including client and server SSL certification validation) is provided for identifying the clients connected to your server. Both client and server are created in [.NET Standard](https://docs.microsoft.com/en-us/dotnet/standard/net-standard) and use async await functionality. If you are not familiar with async await functionality, you can learn more by reviewing the information found at the [Microsoft Async Programming Concepts page](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/async/). All [WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple) packages referenced in this documentation are available on the [NuGet package manager](https://www.nuget.org/) in 1 aggregate package - [WebsocketsSimple](https://www.nuget.org/packages/websocketssimple/).
+[WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple) provides an easy-to-use and customizable Websocket Server and Websocket Client. The server is created using a `TcpListener` and upgrades a successful connection to a `WebSocket`. The server and client can be used for non-SSL or SSL connections and authentication (including client and server SSL certification validation) is provided for identifying the clients connected to your server. All [WebsocketsSimple](https://www.github.com/liveordevtrying/websocketssimple) packages referenced in this documentation are available on the [NuGet package manager](https://www.nuget.org/) in 1 aggregate package - [WebsocketsSimple](https://www.nuget.org/packages/websocketssimple/).
 
 ![Image of WebsocketsSimple Logo](https://pixelhorrorstudios.s3-us-west-2.amazonaws.com/Packages/WebsocketsSimple.png)
 
@@ -109,11 +109,11 @@ If you are using **`WebsocketClient`**, an optional parameter is included in the
     client.ErrorEvent += OnErrorEvent
 ```
 
-* `Task OnMessageEvent(object sender, WSMessageClientEventArgs args);`
+* `void OnMessageEvent(object sender, WSMessageClientEventArgs args);`
     * Invoked when a message is sent or received.
-* `Task OnConnectionEvent(object sender, WSConnectionClientEventArgs args);`
+* `void OnConnectionEvent(object sender, WSConnectionClientEventArgs args);`
     * Invoked when the [WebsocketsSimple Client](https://www.nuget.org/packages/WebsocketsSimple.Client/) is connecting, connects, or disconnects from the server.
-* `Task OnErrorEvent(object sender, WSErrorClientEventArgs args);`
+* `void OnErrorEvent(object sender, WSErrorClientEventArgs args);`
     * Wraps all internal logic with try catch statements and outputs the specific error(s).
 
 #### **Connect to a Websocket Server**
@@ -189,7 +189,7 @@ An example call to send a message to the server could be:
 ```
 
 #### **Receiving an Extended `IPacket`**
-If you want to extend **`IPacket`** to include additional fields, you will need to extend and override the **`WebsocketClient`** implementation to support the extended type(s). First define a new class that inherits **`WebsocketClient`**, override the protected method `MessageReceivedAsync(string message)`, and deserialize into the extended **`IPacket`** of your choice. An example of this logic is below:
+If you want to extend **`IPacket`** to include additional fields, you will need to extend and override the **`WebsocketClient`** implementation to support the extended type(s). First define a new class that inherits **`WebsocketClient`**, override the protected method `MessageReceived(string message)`, and deserialize into the extended **`IPacket`** of your choice. An example of this logic is below:
 
 ``` c#
     public class WebsocketClientExtended : WebsocketClient
@@ -198,7 +198,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
         {
         }
 
-        protected override async Task MessageReceivedAsync(string message)
+        protected override void MessageReceived(string message)
         {
             IPacket packet;
 
@@ -230,7 +230,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
                 };
             }
 
-            await FireEventAsync(this, new WSMessageClientEventArgs
+            FireEvent(this, new WSMessageClientEventArgs
             {
                 MessageEventType = MessageEventType.Receive,
                 Message = packet.Data,
@@ -267,7 +267,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
 If you are sending polymorphic objects, first deserialize the initial message into a class or struct that contains “common” fields, such as `PacketExtended` with a `PacketExtendedType` enum field. Then use the value of `PacketExtendedType` and deserialize a second time into the type the enum represents. Repeat until the your polymorphic object is completely deserialized.
 
 #### **`Ping`**
-A **`WebsocketServer`** will send a raw message containing **`ping`** to every client every 120 seconds to verify which connections are still alive. If a client fails to respond with a raw message containing **`pong`**, during the the next ping cycle, the connection will be severed and disposed. However, if you are using **`WebsocketClient`**, the ping / pong messages are digested and handled before reaching `MessageReceivedAsync(string message)`. This means you do not need to worry about ping and pong messages if you are using **`WebsocketClient`**. If you are creating your own Websocket connection, you should incorporate logic to listen for raw messages containing **`ping`**, and if received, immediately respond with a raw message containing **`pong`**. 
+A **`WebsocketServer`** will send a raw message containing **`ping`** to every client every 120 seconds to verify which connections are still alive. If a client fails to respond with a raw message containing **`pong`**, during the the next ping cycle, the connection will be severed and disposed. However, if you are using **`WebsocketClient`**, the ping / pong messages are digested and handled before reaching `MessageReceived(string message)`. This means you do not need to worry about ping and pong messages if you are using **`WebsocketClient`**. If you are creating your own Websocket connection, you should incorporate logic to listen for raw messages containing **`ping`**, and if received, immediately respond with a raw message containing **`pong`**. 
 
 > ***Note: Failure to implement this logic will result in a connection being disconnected and disposed in up to approximately 240 seconds.***
 
@@ -348,22 +348,22 @@ The [WebsocketsSimple Server](https://www.nuget.org/packages/WebsocketsSimple.Se
     server.ServerEvent += OnServerEvent;
 ```
 
-* `Task OnMessageEvent(object sender, WSMessageServerEventArgs args);`
+* `void OnMessageEvent(object sender, WSMessageServerEventArgs args);`
     * Invoked when a message is sent or received.
-* `Task OnConnectionEvent(object sender, WSConnectionServerEventArgs args);`
+* `void OnConnectionEvent(object sender, WSConnectionServerEventArgs args);`
     * Invoked when a Websocket client is connecting, connects, or disconnects from the server.
-* `Task OnErrorEvent(object sender, WSErrorServerEventArgs args);`
+* `void OnErrorEvent(object sender, WSErrorServerEventArgs args);`
     * Wraps all internal logic with try catch statements and outputs the specific error(s).
-* `Task OnServerEvent(object sender, ServerEventArgs args);`
+* `void OnServerEvent(object sender, ServerEventArgs args);`
     * Invoked when the Websocket server starts or stops.
 
 #### **Starting the Websocket Server**
-To start the `IWebsocketServer`, call the `StartAsync()` method to instruct the server to begin listening for messages. Likewise, you can stop the server by calling the `StopAsync()` method.
+To start the `IWebsocketServer`, call the `Start()` method to instruct the server to begin listening for messages. Likewise, you can stop the server by calling the `Stop()` method.
 
 ``` c#
-    await server.StartAsync();
+    server.Start();
     ...
-    await server.StopAsync();
+    server.Stop();
     server.Dispose();
 ```
 
@@ -402,7 +402,7 @@ An example call to send a message to a connection could be:
 ```
 
 #### **Receiving an Extended `IPacket`**
-If you want to extend **`IPacket`** to include additional fields, you will need to add the optional parameter **`WebsocketHandler`** that can be included with each constructor. The default **`WebsocketHandler`** has logic which is specific to deserialize messages of type **`Packet`**, but to receive your own extended **`IPacket`**, we will need to inherit / extend **`WebsocketHandler`** with our own class. Once **`WebsocketHandler`** has been extended, override the protected method `MessageReceivedAsync(string message, IConnectionWSServer connection)` and deserialize the message into an extended **`IPacket`** of your choice. An example of this logic is below:
+If you want to extend **`IPacket`** to include additional fields, you will need to add the optional parameter **`WebsocketHandler`** that can be included with each constructor. The default **`WebsocketHandler`** has logic which is specific to deserialize messages of type **`Packet`**, but to receive your own extended **`IPacket`**, we will need to inherit / extend **`WebsocketHandler`** with our own class. Once **`WebsocketHandler`** has been extended, override the protected method `MessageReceived(string message, IConnectionWSServer connection)` and deserialize the message into an extended **`IPacket`** of your choice. An example of this logic is below:
 
 ``` c#
     public class WebsocketHandlerExtended : WebsocketHandler
@@ -415,7 +415,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
         {
         }
 
-        protected override async Task MessageReceivedAsync(string message, IConnectionWSServer connection)
+        protected override void MessageReceived(string message, IConnectionWSServer connection)
         {
             IPacket packet;
 
@@ -447,7 +447,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
                 };
             }
 
-            await FireEventAsync(this, new WSMessageServerEventArgs
+            FireEvent(this, new WSMessageServerEventArgs
             {
                 MessageEventType = MessageEventType.Receive,
                 Message = packet.Data,
@@ -508,10 +508,10 @@ To disconnect a connection from the server, invoke the function `DisconnectConne
 **`IConnectionWServer`** represents a connected client to the server. These are exposed in `ConnectionEvent` or can be retrieved from **`Connections`** inside of **`IWebsocketServer`**.
 
 #### **Stop the Server and Disposal**
-To stop the server, call the `StopAsync()` method. If you are not going to start the server again, call the `Dispose()` method to free all allocated memory and resources.
+To stop the server, call the `Stop()` method. If you are not going to start the server again, call the `Dispose()` method to free all allocated memory and resources.
 
 ``` c#
-    await server.StopAsync();
+    server.Stop();
     server.Dispose();
 ```
 
@@ -607,22 +607,22 @@ Because you are responsible for creating the logic in `GetIdAsync(string oauthTo
     server.ServerEvent += OnServerEvent;
 ```
 
-* `Task OnMessageEvent(object sender, WSMessageServerAuthEventArgs<T> args);`
+* `void OnMessageEvent(object sender, WSMessageServerAuthEventArgs<T> args);`
     * Invoked when a message is sent or received.
-* `Task OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<T> args);`
+* `void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<T> args);`
     * Invoked when a Websocket client is connecting, connects, or disconnects from the server.
-* `Task OnErrorEvent(object sender, WSErrorServerAuthEventArgs<T> args);`
+* `void OnErrorEvent(object sender, WSErrorServerAuthEventArgs<T> args);`
     * Wraps all internal logic with try catch statements and outputs the specific error(s).
-* `Task OnServerEvent(object sender, ServerEventArgs args);`
+* `void OnServerEvent(object sender, ServerEventArgs args);`
     * Invoked when the Websocket server starts or stops.
 
 #### **Starting the Websocket Authentication Server**
-To start the [WebsocketsSimple Authentication Server](https://www.nuget.org/packages/WebsocketsSimple/), call the `StartAsync()` method to instruct the server to begin listening for messages. Likewise, you can stop the server by calling the `StopAsync()` method.
+To start the [WebsocketsSimple Authentication Server](https://www.nuget.org/packages/WebsocketsSimple/), call the `Start()` method to instruct the server to begin listening for messages. Likewise, you can stop the server by calling the `Stop()` method.
 
 ``` c#
-    await server.StartAsync();
+    server.Start();
     ...
-    await server.StopAsync();
+    server.Stop();
     server.Dispose();
 ```
 
@@ -677,7 +677,7 @@ An example call to send a message to a connection could be:
 ```
 
 #### **Receiving an Extended `IPacket`**
-If you want to extend **`IPacket`** to include additional fields, you will need to add the optional parameter **`WebsocketHandlerAuth`** that can be included with each constructor. The included **`WebsocketHandlerAuth`** has logic which is specific to deserialize messages of type **`Packet`**, but to receive your own extended **`IPacket`**, we will need to inherit / extend **`WebsocketHandlerAuth`**. Once **`WebsocketHandlerAuth`** has been extended, override the protected method `MessageReceivedAsync(string message, IConnectionWSServer connection)` and deserialize into the extended **`IPacket`** of your choice. An example of this logic is below:
+If you want to extend **`IPacket`** to include additional fields, you will need to add the optional parameter **`WebsocketHandlerAuth`** that can be included with each constructor. The included **`WebsocketHandlerAuth`** has logic which is specific to deserialize messages of type **`Packet`**, but to receive your own extended **`IPacket`**, we will need to inherit / extend **`WebsocketHandlerAuth`**. Once **`WebsocketHandlerAuth`** has been extended, override the protected method `MessageReceived(string message, IConnectionWSServer connection)` and deserialize into the extended **`IPacket`** of your choice. An example of this logic is below:
 
 ``` c#
     public class WebsocketHandlerAuthExtended : WebsocketHandlerAuth
@@ -691,7 +691,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
         }
 
 
-        protected override async Task MessageReceivedAsync(string message, IConnectionWSServer connection)
+        protected override void MessageReceived(string message, IConnectionWSServer connection)
         {
             IPacket packet;
 
@@ -723,7 +723,7 @@ If you want to extend **`IPacket`** to include additional fields, you will need 
                 };
             }
 
-            await FireEventAsync(this, new WSMessageServerEventArgs
+            FireEvent(this, new WSMessageServerEventArgs
             {
                 MessageEventType = MessageEventType.Receive,
                 Message = packet.Data,
@@ -785,10 +785,10 @@ To disconnect a connection from the server, invoke the function `DisconnectConne
 **`IConnectionWSServer`** represents a connected client to the server. These are exposed in the `ConnectionEvent` or can be retrieved from **`Connections`** or **`Identities`** inside of **`IWebsocketServerAuth<T>`**. If a logged-in user disconnects from all connections, that user is automatically removed from **`Identities`**.
 
 #### **Stop the Server and Disposal**
-To stop the server, call the `StopAsync()` method. If you are not going to start the server again, call the `Dispose()` method to free all allocated memory and resources.
+To stop the server, call the `Stop()` method. If you are not going to start the server again, call the `Dispose()` method to free all allocated memory and resources.
 
 ``` c#
-    await server.StopAsync();
+    server.Stop();
     server.Dispose();
 ```
 
