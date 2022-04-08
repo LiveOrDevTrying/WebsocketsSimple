@@ -25,7 +25,8 @@ namespace WebsocketsSimple.Server
         protected Timer _timerPing;
         protected volatile bool _isPingRunning;
         protected const int PING_INTERVAL_SEC = 120;
-        
+        protected CancellationToken _cancellationToken;
+
         private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
 
         public WebsocketServer(IParamsWSServer parameters, 
@@ -57,9 +58,10 @@ namespace WebsocketsSimple.Server
             _handler.ServerEvent += OnServerEvent;
         }
 
-        public virtual void Start()
+        public virtual void Start(CancellationToken cancellationToken = default)
         {
-            _handler.Start();
+            _cancellationToken = cancellationToken;
+            _handler.Start(cancellationToken);
         }
         public virtual void Stop()
         {
@@ -74,7 +76,7 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendAsync(packet, connection))
+                        if (!await _handler.SendAsync(packet, connection, _cancellationToken))
                         {
                             return false;
                         }
@@ -123,7 +125,7 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendRawAsync(message, connection))
+                        if (!await _handler.SendRawAsync(message, connection, _cancellationToken))
                         {
                             return false;
                         }
