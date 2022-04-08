@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
@@ -23,7 +24,7 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
+        protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             // Checking auth token
             var token = message.Substring(message.IndexOf("/") + 1);
@@ -38,7 +39,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             return Task.FromResult(true);
         }
-        public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args)
+        public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -75,7 +76,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             _numberOfConnections++;
 
-            await SendRawAsync(_parameters.ConnectionSuccessString, args.Connection);
+            await SendRawAsync(_parameters.ConnectionSuccessString, args.Connection, cancellationToken);
 
             return true;
         }
