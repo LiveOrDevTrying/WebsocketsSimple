@@ -30,16 +30,19 @@ namespace WebsocketsSimple.Client
         protected IParamsWSClient _parameters;
         protected string _token;
         protected Uri _uri;
+        protected CancellationToken _cancellationToken;
 
         public WebsocketClient(IParamsWSClient parameters, string token = "")
         {
             _parameters = parameters;
             _token = token;
         }
-        public virtual async Task<bool> ConnectAsync()
+        public virtual async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
         {
             try
             {
+                _cancellationToken = cancellationToken;
+
                 if (_connection != null)
                 {
                     await DisconnectAsync();
@@ -64,9 +67,9 @@ namespace WebsocketsSimple.Client
                 var requestHeader = BuildRequestHeader(secKey);
 
                 // Write out the header to the connection
-                await _connection.Stream.WriteAsync(requestHeader, 0, requestHeader.Length, CancellationToken.None);
+                await _connection.Stream.WriteAsync(requestHeader, 0, requestHeader.Length, _cancellationToken);
 
-                if (_connection.Client.Connected)
+                if (_connection.Client.Connected && !_cancellationToken.IsCancellationRequested)
                 {
                     (var subprotocol, var remainingMessages) = await ParseAndValidateConnectResponseAsync(_connection, webSocketAccept);
 
@@ -151,9 +154,15 @@ namespace WebsocketsSimple.Client
             }
 
             var sslStream = new SslStream(client.GetStream());
-            await sslStream.AuthenticateAsClientAsync(_parameters.Uri, clientCertificates, _parameters.EnabledSslProtocols, false);;
+            await sslStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
+            {
+                TargetHost = _parameters.Uri,
+                ClientCertificates = clientCertificates,
+                EnabledSslProtocols = _parameters.EnabledSslProtocols,
+                CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+            }, _cancellationToken);
 
-            if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
+            if (sslStream.IsAuthenticated && sslStream.IsEncrypted && !_cancellationToken.IsCancellationRequested)
             {
                 _connection = new ConnectionWS
                 {
@@ -175,7 +184,7 @@ namespace WebsocketsSimple.Client
                     if (_connection.Websocket != null &&
                         _connection.Websocket.State == WebSocketState.Open)
                     {
-                        await _connection.Websocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                        await _connection.Websocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", _cancellationToken);
                     }
 
                     if (_connection.Client.Connected)
@@ -214,11 +223,12 @@ namespace WebsocketsSimple.Client
             {
                 if (_connection != null &&
                     _connection.Websocket != null &&
-                    _connection.Websocket.State == WebSocketState.Open)
+                    _connection.Websocket.State == WebSocketState.Open &&
+                    !_cancellationToken.IsCancellationRequested)
                 {
                     var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(packet));
 
-                    await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                    await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _cancellationToken);
 
                     FireEvent(this, new WSMessageClientEventArgs
                     {
@@ -256,11 +266,12 @@ namespace WebsocketsSimple.Client
             {
                 if (_connection != null &&
                     _connection.Websocket != null &&
-                    _connection.Websocket.State == WebSocketState.Open)
+                    _connection.Websocket.State == WebSocketState.Open &&
+                    !_cancellationToken.IsCancellationRequested)
                 {
                     var bytes = Encoding.UTF8.GetBytes(message);
 
-                    await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                    await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _cancellationToken);
 
                     FireEvent(this, new WSMessageClientEventArgs
                     {
@@ -299,7 +310,7 @@ namespace WebsocketsSimple.Client
 
                 while (isRunning)
                 {
-                    var result = await _connection.Websocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    var result = await _connection.Websocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cancellationToken);
 
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
@@ -340,7 +351,6 @@ namespace WebsocketsSimple.Client
             var secKey = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             using (var sha = SHA1.Create())
             {
-
                 return (
                     secKey,
                     Convert.ToBase64String(
@@ -431,7 +441,7 @@ namespace WebsocketsSimple.Client
 
             var readBuffer = new byte[connection.Client.Available];
 
-            await connection.Stream.ReadAsync(readBuffer, 0, readBuffer.Length);
+            await connection.Stream.ReadAsync(readBuffer, 0, readBuffer.Length, _cancellationToken);
 
             var message = Encoding.UTF8.GetString(readBuffer);
 
