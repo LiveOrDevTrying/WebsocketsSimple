@@ -3,6 +3,7 @@ using PHS.Networking.Models;
 using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Services;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
@@ -14,7 +15,7 @@ namespace WebsocketsSimple.Server
         bool IsServerRunning { get; }
         TcpListener Server { get; }
 
-        void Start();
+        void Start(CancellationToken cancellationToken = default);
         void Stop();
 
         Task<bool> SendToConnectionAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket;
