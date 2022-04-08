@@ -46,7 +46,7 @@ namespace WebsocketsSimple.Server.Handlers
             _certificatePassword = certificatePassword;
         }
 
-        public virtual void Start()
+        public virtual void Start(CancellationToken cancellationToken)
         {
             try
             {
@@ -68,11 +68,11 @@ namespace WebsocketsSimple.Server.Handlers
 
                 if (_certificate == null)
                 {
-                    _ = Task.Run(async () => { await ListenForConnectionsAsync(); });
+                    _ = Task.Run(async () => { await ListenForConnectionsAsync(cancellationToken); });
                 }
                 else
                 {
-                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(); });
+                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(cancellationToken); });
                 }
             }
             catch (Exception ex)
@@ -102,13 +102,13 @@ namespace WebsocketsSimple.Server.Handlers
             });
         }
  
-        protected virtual async Task ListenForConnectionsAsync()
+        protected virtual async Task ListenForConnectionsAsync(CancellationToken cancellationToken)
         {
-            while (_isRunning)
+            while (_isRunning && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync();
+                    var client = await _server.AcceptTcpClientAsync(cancellationToken);
                     var stream = client.GetStream();
 
                     var connection = new ConnectionWSServer
@@ -119,7 +119,7 @@ namespace WebsocketsSimple.Server.Handlers
                         Client = client
                     };
 
-                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection); });
+                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken); });
                 }
                 catch (Exception ex)
                 {
@@ -132,15 +132,18 @@ namespace WebsocketsSimple.Server.Handlers
 
             }
         }
-        protected virtual async Task ListenForConnectionsSSLAsync()
+        protected virtual async Task ListenForConnectionsSSLAsync(CancellationToken cancellationToken)
         {
-            while (_isRunning)
+            while (_isRunning && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync();
+                    var client = await _server.AcceptTcpClientAsync(cancellationToken);
                     var sslStream = new SslStream(client.GetStream());
-                    await sslStream.AuthenticateAsServerAsync(new X509Certificate2(_certificate, _certificatePassword));
+                    await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
+                    {
+                        ServerCertificate = new X509Certificate2(_certificate, _certificatePassword)
+                    }, cancellationToken);
 
                     if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
                     {
@@ -152,7 +155,7 @@ namespace WebsocketsSimple.Server.Handlers
                             Stream = sslStream
                         };
 
-                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection); }) ;
+                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken); }) ;
                     }
                     else
                     {
@@ -177,7 +180,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             }
         }
-        protected virtual async Task StartReceivingMessagesAsync(IConnectionWSServer connection)
+        protected virtual async Task StartReceivingMessagesAsync(IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             try
             {
@@ -191,96 +194,100 @@ namespace WebsocketsSimple.Server.Handlers
                     }; // match against "get"
 
                     var bytes = new byte[connection.Client.Available];
-                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available);
-                    var data = Encoding.UTF8.GetString(bytes);
+                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
 
-                    if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
+                    if (!cancellationToken.IsCancellationRequested)
                     {
-                        if (await UpgradeConnectionAsync(data, connection))
+                        var data = Encoding.UTF8.GetString(bytes);
+
+                        if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                         {
-                            FireEvent(this, new WSConnectionServerEventArgs
+                            if (await UpgradeConnectionAsync(data, connection, cancellationToken))
                             {
-                                Connection = connection,
-                                ConnectionEventType = ConnectionEventType.Connected,
-                            });
+                                FireEvent(this, new WSConnectionServerEventArgs
+                                {
+                                    Connection = connection,
+                                    ConnectionEventType = ConnectionEventType.Connected,
+                                });
+                            }
                         }
-                    }
-                    else
-                    {
-                        bool fin = (bytes[0] & 0b10000000) != 0,
-                            mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
-
-                        int opcode = bytes[0] & 0b00001111, // expecting 1 - text message
-                            msglen = bytes[1] - 128, // & 0111 1111
-                            offset = 2;
-
-                        if (msglen == 126)
+                        else
                         {
-                            // was ToUInt16(bytes, offset) but the result is incorrect
-                            msglen = BitConverter.ToUInt16(new byte[] { bytes[3], bytes[2] }, 0);
-                            offset = 4;
-                        }
-                        else if (msglen == 127)
-                        {
-                            // i don't really know the byte order, please edit this
-                            // msglen = BitConverter.ToUInt64(new byte[] { bytes[5], bytes[4], bytes[3], bytes[2], bytes[9], bytes[8], bytes[7], bytes[6] }, 0);
-                            // offset = 10;
-                        }
+                            bool fin = (bytes[0] & 0b10000000) != 0,
+                                mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
 
-                        if (msglen > 0 && mask)
-                        {
-                            var decoded = new byte[msglen];
-                            var masks = new byte[4] { bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3] };
-                            offset += 4;
+                            int opcode = bytes[0] & 0b00001111, // expecting 1 - text message
+                                msglen = bytes[1] - 128, // & 0111 1111
+                                offset = 2;
 
-                            for (int i = 0; i < msglen; ++i)
+                            if (msglen == 126)
                             {
-                                decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
+                                // was ToUInt16(bytes, offset) but the result is incorrect
+                                msglen = BitConverter.ToUInt16(new byte[] { bytes[3], bytes[2] }, 0);
+                                offset = 4;
+                            }
+                            else if (msglen == 127)
+                            {
+                                // i don't really know the byte order, please edit this
+                                // msglen = BitConverter.ToUInt64(new byte[] { bytes[5], bytes[4], bytes[3], bytes[2], bytes[9], bytes[8], bytes[7], bytes[6] }, 0);
+                                // offset = 10;
                             }
 
-                            var isDisconnect = false;
-                            byte[] selectedBytes = null;
-
-                            for (int i = 0; i < decoded.Length; i++)
+                            if (msglen > 0 && mask)
                             {
-                                // This checks for a disconnect
-                                if (decoded[i] == 0x03)
-                                {
-                                    isDisconnect = true;
+                                var decoded = new byte[msglen];
+                                var masks = new byte[4] { bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3] };
+                                offset += 4;
 
-                                    selectedBytes = new byte[i];
-                                    for (int j = 0; j < i; j++)
-                                    {
-                                        selectedBytes[j] = decoded[j];
-                                    }
-                                    break;
+                                for (int i = 0; i < msglen; ++i)
+                                {
+                                    decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
                                 }
-                            }
 
-                            if (!isDisconnect)
-                            {
-                                selectedBytes = decoded;
-                            }
+                                var isDisconnect = false;
+                                byte[] selectedBytes = null;
 
-                            if (selectedBytes != null)
-                            {
-                                var message = Encoding.UTF8.GetString(selectedBytes);
-
-                                if (!string.IsNullOrWhiteSpace(message))
+                                for (int i = 0; i < decoded.Length; i++)
                                 {
-                                    if (message.Trim().ToLower() == "pong")
+                                    // This checks for a disconnect
+                                    if (decoded[i] == 0x03)
                                     {
-                                        connection.HasBeenPinged = false;
-                                    }
-                                    else
-                                    {
-                                        MessageReceived(message, connection);
+                                        isDisconnect = true;
+
+                                        selectedBytes = new byte[i];
+                                        for (int j = 0; j < i; j++)
+                                        {
+                                            selectedBytes[j] = decoded[j];
+                                        }
+                                        break;
                                     }
                                 }
 
-                                if (isDisconnect)
+                                if (!isDisconnect)
                                 {
-                                    await DisconnectConnectionAsync(connection);
+                                    selectedBytes = decoded;
+                                }
+
+                                if (selectedBytes != null)
+                                {
+                                    var message = Encoding.UTF8.GetString(selectedBytes);
+
+                                    if (!string.IsNullOrWhiteSpace(message))
+                                    {
+                                        if (message.Trim().ToLower() == "pong")
+                                        {
+                                            connection.HasBeenPinged = false;
+                                        }
+                                        else
+                                        {
+                                            MessageReceived(message, connection);
+                                        }
+                                    }
+
+                                    if (isDisconnect)
+                                    {
+                                        await DisconnectConnectionAsync(connection);
+                                    }
                                 }
                             }
                         }
@@ -296,7 +303,7 @@ namespace WebsocketsSimple.Server.Handlers
                 ConnectionEventType = ConnectionEventType.Disconnect,
             });
         }
-        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
+        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -331,7 +338,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             _numberOfConnections++;
 
-            await SendRawAsync(_parameters.ConnectionSuccessString, connection);
+            await SendRawAsync(_parameters.ConnectionSuccessString, connection, cancellationToken);
 
             return true;
         }
@@ -385,7 +392,7 @@ namespace WebsocketsSimple.Server.Handlers
             });
         }
        
-        public virtual async Task<bool> SendAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket
+        public virtual async Task<bool> SendAsync<T>(T packet, IConnectionWSServer connection, CancellationToken cancellationToken) where T : IPacket
         {
             try
             {
@@ -396,7 +403,7 @@ namespace WebsocketsSimple.Server.Handlers
                     count: message.Length),
                     messageType: WebSocketMessageType.Text,
                     endOfMessage: true,
-                    cancellationToken: CancellationToken.None);
+                    cancellationToken: cancellationToken);
 
                 FireEvent(this, new WSMessageServerEventArgs
                 {
@@ -421,7 +428,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             return false;
         }
-        public virtual async Task<bool> SendAsync(string message, IConnectionWSServer connection)
+        public virtual async Task<bool> SendAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             var packet = new Packet
             {
@@ -429,9 +436,9 @@ namespace WebsocketsSimple.Server.Handlers
                 Timestamp = DateTime.UtcNow
             };
 
-            return await SendAsync(packet, connection);
+            return await SendAsync(packet, connection, cancellationToken);
         }
-        public virtual async Task<bool> SendRawAsync(string message, IConnectionWSServer connection)
+        public virtual async Task<bool> SendRawAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             try
             {
@@ -440,7 +447,7 @@ namespace WebsocketsSimple.Server.Handlers
                     count: message.Length),
                     messageType: WebSocketMessageType.Text,
                     endOfMessage: true,
-                    cancellationToken: CancellationToken.None);
+                    cancellationToken: cancellationToken);
 
                 FireEvent(this, new WSMessageServerEventArgs
                 {

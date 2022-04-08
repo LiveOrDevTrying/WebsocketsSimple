@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using PHS.Networking.Models;
 using PHS.Networking.Services;
 using WebsocketsSimple.Client.Events.Args;
@@ -12,7 +13,7 @@ namespace WebsocketsSimple.Client
         Task<bool> SendToServerAsync(string message);
         Task<bool> SendToServerRawAsync(string message);
 
-        Task<bool> ConnectAsync();
+        Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
         Task<bool> DisconnectAsync();
 
         bool IsRunning { get; }
