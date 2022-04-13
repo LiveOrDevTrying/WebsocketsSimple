@@ -32,6 +32,7 @@ namespace WebsocketsSimple.Server.Handlers
         protected int _numberOfConnections;
         protected TcpListener _server;
         protected volatile bool _isRunning;
+        protected CancellationToken _cancellationToken;
 
         private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
 
@@ -46,8 +47,10 @@ namespace WebsocketsSimple.Server.Handlers
             _certificatePassword = certificatePassword;
         }
 
-        public virtual void Start(CancellationToken cancellationToken)
+        public virtual void Start(CancellationToken cancellationToken = default)
         {
+            _cancellationToken = cancellationToken;
+
             try
             {
                 if (_server != null)
@@ -68,11 +71,11 @@ namespace WebsocketsSimple.Server.Handlers
 
                 if (_certificate == null)
                 {
-                    _ = Task.Run(async () => { await ListenForConnectionsAsync(cancellationToken); });
+                    _ = Task.Run(async () => { await ListenForConnectionsAsync(); });
                 }
                 else
                 {
-                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(cancellationToken); });
+                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(); });
                 }
             }
             catch (Exception ex)
@@ -102,13 +105,13 @@ namespace WebsocketsSimple.Server.Handlers
             });
         }
  
-        protected virtual async Task ListenForConnectionsAsync(CancellationToken cancellationToken)
+        protected virtual async Task ListenForConnectionsAsync()
         {
-            while (_isRunning && !cancellationToken.IsCancellationRequested)
+            while (_isRunning && !_cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(cancellationToken);
+                    var client = await _server.AcceptTcpClientAsync(_cancellationToken);
                     var stream = client.GetStream();
 
                     var connection = new ConnectionWSServer
@@ -119,7 +122,7 @@ namespace WebsocketsSimple.Server.Handlers
                         Client = client
                     };
 
-                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken); });
+                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection); });
                 }
                 catch (Exception ex)
                 {
@@ -132,18 +135,18 @@ namespace WebsocketsSimple.Server.Handlers
 
             }
         }
-        protected virtual async Task ListenForConnectionsSSLAsync(CancellationToken cancellationToken)
+        protected virtual async Task ListenForConnectionsSSLAsync()
         {
-            while (_isRunning && !cancellationToken.IsCancellationRequested)
+            while (_isRunning && !_cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(cancellationToken);
+                    var client = await _server.AcceptTcpClientAsync(_cancellationToken);
                     var sslStream = new SslStream(client.GetStream());
                     await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
                     {
                         ServerCertificate = new X509Certificate2(_certificate, _certificatePassword)
-                    }, cancellationToken);
+                    }, _cancellationToken);
 
                     if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
                     {
@@ -155,7 +158,7 @@ namespace WebsocketsSimple.Server.Handlers
                             Stream = sslStream
                         };
 
-                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken); }) ;
+                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection); }) ;
                     }
                     else
                     {
@@ -180,7 +183,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             }
         }
-        protected virtual async Task StartReceivingMessagesAsync(IConnectionWSServer connection, CancellationToken cancellationToken)
+        protected virtual async Task StartReceivingMessagesAsync(IConnectionWSServer connection)
         {
             try
             {
@@ -194,15 +197,15 @@ namespace WebsocketsSimple.Server.Handlers
                     }; // match against "get"
 
                     var bytes = new byte[connection.Client.Available];
-                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
+                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, _cancellationToken);
 
-                    if (!cancellationToken.IsCancellationRequested)
+                    if (!_cancellationToken.IsCancellationRequested)
                     {
                         var data = Encoding.UTF8.GetString(bytes);
 
                         if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                         {
-                            if (await UpgradeConnectionAsync(data, connection, cancellationToken))
+                            if (await UpgradeConnectionAsync(data, connection))
                             {
                                 FireEvent(this, new WSConnectionServerEventArgs
                                 {
@@ -303,7 +306,7 @@ namespace WebsocketsSimple.Server.Handlers
                 ConnectionEventType = ConnectionEventType.Disconnect,
             });
         }
-        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
+        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -338,7 +341,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             _numberOfConnections++;
 
-            await SendRawAsync(_parameters.ConnectionSuccessString, connection, cancellationToken);
+            await SendRawAsync(_parameters.ConnectionSuccessString, connection);
 
             return true;
         }
@@ -392,7 +395,7 @@ namespace WebsocketsSimple.Server.Handlers
             });
         }
        
-        public virtual async Task<bool> SendAsync<T>(T packet, IConnectionWSServer connection, CancellationToken cancellationToken) where T : IPacket
+        public virtual async Task<bool> SendAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket
         {
             try
             {
@@ -403,7 +406,7 @@ namespace WebsocketsSimple.Server.Handlers
                     count: message.Length),
                     messageType: WebSocketMessageType.Text,
                     endOfMessage: true,
-                    cancellationToken: cancellationToken);
+                    cancellationToken: _cancellationToken);
 
                 FireEvent(this, new WSMessageServerEventArgs
                 {
@@ -428,7 +431,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             return false;
         }
-        public virtual async Task<bool> SendAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
+        public virtual async Task<bool> SendAsync(string message, IConnectionWSServer connection)
         {
             var packet = new Packet
             {
@@ -436,9 +439,9 @@ namespace WebsocketsSimple.Server.Handlers
                 Timestamp = DateTime.UtcNow
             };
 
-            return await SendAsync(packet, connection, cancellationToken);
+            return await SendAsync(packet, connection);
         }
-        public virtual async Task<bool> SendRawAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
+        public virtual async Task<bool> SendRawAsync(string message, IConnectionWSServer connection)
         {
             try
             {
@@ -447,7 +450,7 @@ namespace WebsocketsSimple.Server.Handlers
                     count: message.Length),
                     messageType: WebSocketMessageType.Text,
                     endOfMessage: true,
-                    cancellationToken: cancellationToken);
+                    cancellationToken: _cancellationToken);
 
                 FireEvent(this, new WSMessageServerEventArgs
                 {
