@@ -184,7 +184,7 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendAsync(packet, connection, _cancellationToken))
+                        if (!await _handler.SendAsync(packet, connection))
                         {
                             return false;
                         }
@@ -221,7 +221,7 @@ namespace WebsocketsSimple.Server
                     {
                         try
                         {
-                            if (!await _handler.SendAsync(packet, connection, _cancellationToken))
+                            if (!await _handler.SendAsync(packet, connection))
                             {
                                 return false;
                             }
@@ -273,7 +273,7 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendRawAsync(message, connection, _cancellationToken))
+                        if (!await _handler.SendRawAsync(message, connection))
                         {
                             return false;
                         }
@@ -315,7 +315,7 @@ namespace WebsocketsSimple.Server
                     {
                         try
                         {
-                            if (!await _handler.SendRawAsync(message, connection, _cancellationToken))
+                            if (!await _handler.SendRawAsync(message, connection))
                             {
                                 return false;
                             }
@@ -543,7 +543,7 @@ namespace WebsocketsSimple.Server
                     var userId = await _userService.GetIdAsync(args.Token);
 
                     if (userId != null &&
-                        await _handler.UpgradeConnectionCallbackAsync(args, _cancellationToken))
+                        await _handler.UpgradeConnectionCallbackAsync(args))
                     {
                         var identity = _connectionManager.AddIdentity(userId, args.Connection);
                         FireEvent(this, new WSConnectionServerAuthEventArgs<T>
