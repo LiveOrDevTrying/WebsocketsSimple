@@ -76,7 +76,7 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendAsync(packet, connection, _cancellationToken))
+                        if (!await _handler.SendAsync(packet, connection))
                         {
                             return false;
                         }
@@ -125,7 +125,7 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendRawAsync(message, connection, _cancellationToken))
+                        if (!await _handler.SendRawAsync(message, connection))
                         {
                             return false;
                         }
