@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
@@ -27,8 +28,18 @@ namespace WebsocketsSimple.Server.Handlers
         protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
         {
             // Checking auth token
-            var token = message.Substring(message.IndexOf("/") + 1);
-            token = token.Substring(0, token.IndexOf(" "));
+            if (message.IndexOf("?") <= 0)
+            {
+                return Task.FromResult(false);
+            }
+            var qs = HttpUtility.ParseQueryString(message.Substring(message.IndexOf("?")));
+
+            var token = qs.Get("token");
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return Task.FromResult(false);
+            }
 
             FireEvent(this, new WSAuthorizeEventArgs
             {

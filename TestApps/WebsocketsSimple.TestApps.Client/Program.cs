@@ -23,7 +23,7 @@ namespace WebsocketsSimple.TestApps.Client
             {
                 IsWebsocketSecured = false,
                 Port = 65214,
-                Uri = "localhost",
+                Host = "localhost",
                 RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
                 RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
                 KeepAliveInterval = TimeSpan.FromSeconds(5)
