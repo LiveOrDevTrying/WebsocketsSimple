@@ -57,10 +57,7 @@ namespace WebsocketsSimple.Client
                     await CreateConnectionAsync();
                 }
 
-                var prefix = _parameters.IsWebsocketSecured ? "wss" : "ws";
-                _uri = string.IsNullOrWhiteSpace(_token)
-                    ? new Uri($"{prefix}://{_parameters.Uri}:{_parameters.Port}")
-                    : new Uri($"{prefix}://{_parameters.Uri}:{_parameters.Port}/{_token}");
+                _uri = new Uri(ConstructURI());
 
                 // Create the security key and expected response, then build all of the request headers
                 (var secKey, var webSocketAccept) = CreateSecKeyAndSecWebSocketAccept();
@@ -121,9 +118,52 @@ namespace WebsocketsSimple.Client
             await DisconnectAsync();
             return false;
         }
+        protected virtual string ConstructURI()
+        {
+            var prefix = _parameters.IsWebsocketSecured ? "wss" : "ws";
+
+            string path = _parameters.Path == null ? "/" : !_parameters.Path.StartsWith("/") ? $"/{_parameters.Path}" : _parameters.Path;
+            var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+            
+            if (!string.IsNullOrWhiteSpace(_token))
+            {
+                qs.Add("token", _token);
+            }
+
+            if (_parameters.QueryStringParameters != null)
+            {
+                foreach (var item in _parameters.QueryStringParameters)
+                {
+                    if (item.Key == "token" && !string.IsNullOrWhiteSpace(_token))
+                    {
+                        throw new Exception("Duplicate query string parameter - token. Please remove from QueryStringParameters");
+                    }
+
+                    qs.Add(item.Key, item.Value);
+                }
+            }
+
+            var fullPath = new StringBuilder();
+            fullPath.Append($"{prefix}://{_parameters.Host}");
+
+            if ((_parameters.IsWebsocketSecured && _parameters.Port != 0 && _parameters.Port != 443) ||
+                !_parameters.IsWebsocketSecured && _parameters.Port != 0 && _parameters.Port != 80)
+            {
+                fullPath.Append($":{_parameters.Port}");
+            }
+
+            fullPath.Append(path);
+
+            if (qs.Count > 0)
+            {
+                fullPath.Append($"?{qs.ToString()}");
+            }
+
+            return fullPath.ToString();
+        }
         protected virtual Task CreateConnectionAsync()
         {
-            var client = new TcpClient(_parameters.Uri, _parameters.Port)
+            var client = new TcpClient(_parameters.Host, _parameters.Port)
             {
                 ReceiveTimeout = 60000
             };
@@ -139,7 +179,7 @@ namespace WebsocketsSimple.Client
         }
         protected virtual async Task CreateSSLConnectionAsync()
         {
-            var client = new TcpClient(_parameters.Uri, _parameters.Port)
+            var client = new TcpClient(_parameters.Host, _parameters.Port)
             {
                 ReceiveTimeout = 60000
             };
@@ -156,7 +196,7 @@ namespace WebsocketsSimple.Client
             var sslStream = new SslStream(client.GetStream());
             await sslStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
             {
-                TargetHost = _parameters.Uri,
+                TargetHost = _parameters.Host,
                 ClientCertificates = clientCertificates,
                 EnabledSslProtocols = _parameters.EnabledSslProtocols,
                 CertificateRevocationCheckMode = X509RevocationMode.NoCheck
