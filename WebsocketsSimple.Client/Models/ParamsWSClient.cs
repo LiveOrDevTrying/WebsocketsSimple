@@ -8,8 +8,10 @@ namespace WebsocketsSimple.Client.Models
 {
     public class ParamsWSClient : IParamsWSClient
     {
-        public string Uri { get; set; }
+        public string Host { get; set; }
         public int Port { get; set; }
+        public string Path { get; set; }
+        public KeyValuePair<string, string>[] QueryStringParameters { get; set; }
         public bool IsWebsocketSecured { get; set; }
         public IDictionary<string, string> RequestHeaders { get; set; }
         public string[] RequestedSubProtocols { get; set; }
