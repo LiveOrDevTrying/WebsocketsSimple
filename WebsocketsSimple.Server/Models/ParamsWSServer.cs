@@ -1,6 +1,6 @@
 ﻿namespace WebsocketsSimple.Server.Models
 {
-    public class ParamsWSServer : IParamsWSServer
+    public class ParamsWSServer
     {
         public int Port { get; set; }
         public string ConnectionSuccessString { get; set; }
