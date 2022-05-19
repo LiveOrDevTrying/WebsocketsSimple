@@ -3,18 +3,16 @@ using System.Threading.Tasks;
 using PHS.Networking.Models;
 using PHS.Networking.Services;
 using WebsocketsSimple.Client.Events.Args;
-using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client
 {
     public interface IWebsocketClient : ICoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>
     {
-        Task<bool> SendToServerAsync<T>(T packet) where T : IPacket;
-        Task<bool> SendToServerAsync(string message);
-        Task<bool> SendToServerRawAsync(string message);
+        Task<bool> SendToServerAsync(string message, CancellationToken cancellationToken = default);
+        Task<bool> SendToServerAsync(byte[] message, CancellationToken cancellationToken = default);
 
         Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
-        Task<bool> DisconnectAsync();
+        Task<bool> DisconnectAsync(CancellationToken cancellationToken = default);
 
         bool IsRunning { get; }
         IConnection Connection { get; }
