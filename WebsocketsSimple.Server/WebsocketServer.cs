@@ -20,7 +20,7 @@ namespace WebsocketsSimple.Server
         IWebsocketServer
     {
         protected readonly WebsocketHandler _handler;
-        protected readonly IParamsWSServer _parameters;
+        protected readonly ParamsWSServer _parameters;
         protected readonly WSConnectionManager _connectionManager;
         protected Timer _timerPing;
         protected volatile bool _isPingRunning;
@@ -29,7 +29,7 @@ namespace WebsocketsSimple.Server
 
         private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
 
-        public WebsocketServer(IParamsWSServer parameters, 
+        public WebsocketServer(ParamsWSServer parameters, 
             WebsocketHandler handler = null, 
             WSConnectionManager connectionManager = null)
         {
@@ -42,7 +42,7 @@ namespace WebsocketsSimple.Server
             _handler.ErrorEvent += OnErrorEvent;
             _handler.ServerEvent += OnServerEvent;
         }
-        public WebsocketServer(IParamsWSServer parameters,
+        public WebsocketServer(ParamsWSServer parameters,
             byte[] certificate,
             string certificatePassword,
             WebsocketHandler handler = null,
@@ -68,55 +68,7 @@ namespace WebsocketsSimple.Server
             _handler.Stop();
         }
 
-        public virtual async Task<bool> SendToConnectionAsync<S>(S packet, IConnectionWSServer connection) where S : IPacket
-        {
-            if (_handler.IsServerRunning)
-            {
-                if (_connectionManager.IsConnectionOpen(connection))
-                {
-                    try
-                    {
-                        if (!await _handler.SendAsync(packet, connection))
-                        {
-                            return false;
-                        }
-
-                        FireEvent(this, new WSMessageServerEventArgs
-                        {
-                            MessageEventType = MessageEventType.Sent,
-                            Connection = connection,
-                            Packet = packet,
-                        });
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        FireEvent(this, new WSErrorServerEventArgs
-                        {
-                            Connection = connection,
-                            Exception = ex,
-                            Message = ex.Message,
-                        });
-
-                        await DisconnectConnectionAsync(connection);
-
-                        return false;
-                    }
-                }
-            }
-
-            return false;
-        }
-    
-        public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection)
-        {
-            return await SendToConnectionAsync(new Packet
-            {
-                Data = message,
-                Timestamp = DateTime.UtcNow
-            }, connection);
-        }
-        public virtual async Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection)
+        public virtual async Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken = default)
         {
             if (_handler != null &&
                 _handler.IsServerRunning)
@@ -125,21 +77,10 @@ namespace WebsocketsSimple.Server
                 {
                     try
                     {
-                        if (!await _handler.SendRawAsync(message, connection))
+                        if (!await _handler.SendAsync(message, connection, cancellationToken))
                         {
                             return false;
                         }
-
-                        FireEvent(this, new WSMessageServerEventArgs
-                        {
-                            MessageEventType = MessageEventType.Sent,
-                            Packet = new Packet
-                            {
-                                Data = message,
-                                Timestamp = DateTime.UtcNow
-                            },
-                            Connection = connection,
-                        });
 
                         return true;
                     }
@@ -152,7 +93,40 @@ namespace WebsocketsSimple.Server
                             Message = ex.Message,
                         });
 
-                        await DisconnectConnectionAsync(connection);
+                        await DisconnectConnectionAsync(connection, cancellationToken);
+
+                    }
+                }
+            }
+            
+            return false;
+        }
+        public virtual async Task<bool> SendToConnectionAsync(byte[] message, IConnectionWSServer connection, CancellationToken cancellationToken = default)
+        {
+            if (_handler != null &&
+                _handler.IsServerRunning)
+            {
+                if (_connectionManager.IsConnectionOpen(connection))
+                {
+                    try
+                    {
+                        if (!await _handler.SendAsync(message, connection, cancellationToken))
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        FireEvent(this, new WSErrorServerEventArgs
+                        {
+                            Connection = connection,
+                            Exception = ex,
+                            Message = ex.Message,
+                        });
+
+                        await DisconnectConnectionAsync(connection, cancellationToken);
 
                     }
                 }
@@ -161,9 +135,9 @@ namespace WebsocketsSimple.Server
             return false;
         }
 
-        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection)
+        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection, CancellationToken cancellationToken = default)
         {
-            return await _handler.DisconnectConnectionAsync(connection);
+            return await _handler.DisconnectConnectionAsync(connection, cancellationToken);
         }
 
         protected virtual void OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
@@ -195,8 +169,6 @@ namespace WebsocketsSimple.Server
                         _timerPing = null;
                     }
 
-                    FireEvent(sender, args);
-
                     _timerPing = new Timer(OnTimerPingTick, null, PING_INTERVAL_SEC * 1000, PING_INTERVAL_SEC * 1000);
                     break;
                 case ServerEventType.Stop:
@@ -205,12 +177,12 @@ namespace WebsocketsSimple.Server
                         _timerPing.Dispose();
                         _timerPing = null;
                     }
-
-                    FireEvent(sender, args);
                     break;
                 default:
                     break;
             }
+
+            FireEvent(sender, args);
         }
         protected virtual void OnMessageEvent(object sender, WSMessageServerEventArgs args)
         {
@@ -236,13 +208,13 @@ namespace WebsocketsSimple.Server
                             if (connection.HasBeenPinged)
                             {
                                 // Already been pinged, no response, disconnect
-                                await SendToConnectionRawAsync("No ping response - disconnected.", connection);
-                                await DisconnectConnectionAsync(connection);
+                                await SendToConnectionAsync("No ping response - disconnected.", connection, _cancellationToken);
+                                await DisconnectConnectionAsync(connection, _cancellationToken);
                             }
                             else
                             {
                                 connection.HasBeenPinged = true;
-                                await SendToConnectionRawAsync("Ping", connection);
+                                await SendToConnectionAsync("Ping", connection, _cancellationToken);
                             }
                         }
                         catch (Exception ex)

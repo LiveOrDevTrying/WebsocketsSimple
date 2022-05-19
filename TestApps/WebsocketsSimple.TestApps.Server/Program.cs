@@ -55,11 +55,11 @@ namespace WebsocketsSimple.TestApps.Server
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.MessageEventType + ": " + args.Packet.Data);
+                    Console.WriteLine(args.MessageEventType + ": " + args.Message);
 
                     Task.Run(async () =>
                     {
-                        await _authServer.SendToConnectionAsync(args.Packet.Data, args.Connection);
+                        await _authServer.SendToConnectionAsync(args.Message, args.Connection);
 
                     });
                     break;

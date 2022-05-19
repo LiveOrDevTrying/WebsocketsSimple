@@ -51,7 +51,7 @@ namespace WebsocketsSimple.TestApps.Client
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.Packet.Data);
+                    Console.WriteLine(args.Message);
                     break;
                 default:
                     break;

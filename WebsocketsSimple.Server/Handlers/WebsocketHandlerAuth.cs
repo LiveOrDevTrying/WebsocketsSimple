@@ -17,15 +17,15 @@ namespace WebsocketsSimple.Server.Handlers
     {
         private event WebsocketAuthorizeEvent _authorizeEvent;
 
-        public WebsocketHandlerAuth(IParamsWSServer parameters) : base(parameters)
+        public WebsocketHandlerAuth(ParamsWSServer parameters) : base(parameters)
         {
         }
-        public WebsocketHandlerAuth(IParamsWSServer parameters, byte[] certificate, string certificatePassword)
+        public WebsocketHandlerAuth(ParamsWSServer parameters, byte[] certificate, string certificatePassword)
             : base(parameters, certificate, certificatePassword)
         {
         }
 
-        protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
+        protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             // Checking auth token
             if (message.IndexOf("?") <= 0)
@@ -50,7 +50,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             return Task.FromResult(true);
         }
-        public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args)
+        public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -67,8 +67,8 @@ namespace WebsocketsSimple.Server.Handlers
                 if (!AreSubprotocolsRequestedValid(requestedSubprotocols))
                 {
                     var bytes = Encoding.UTF8.GetBytes("Invalid subprotocols requested");
-                    await args.Connection.Stream.WriteAsync(bytes);
-                    await DisconnectConnectionAsync(args.Connection);
+                    await args.Connection.Stream.WriteAsync(bytes, cancellationToken);
+                    await DisconnectConnectionAsync(args.Connection, cancellationToken);
                     return false;
                 }
             }
@@ -83,11 +83,9 @@ namespace WebsocketsSimple.Server.Handlers
                 $"{selectedSubProtocol}\r\n");
 
             args.Connection.SubProtocols = requestedSubprotocols;
-            await args.Connection.Stream.WriteAsync(response, 0, response.Length);
+            await args.Connection.Stream.WriteAsync(response, 0, response.Length, cancellationToken);
 
-            _numberOfConnections++;
-
-            await SendRawAsync(_parameters.ConnectionSuccessString, args.Connection);
+            await SendAsync(_parameters.ConnectionSuccessString, args.Connection, cancellationToken);
 
             return true;
         }
