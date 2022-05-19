@@ -196,14 +196,7 @@ namespace WebsocketsSimple.Server.Handlers
 
                     if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                     {
-                        if (await UpgradeConnectionAsync(data, connection, cancellationToken))
-                        {
-                            FireEvent(this, new WSConnectionServerEventArgs
-                            {
-                                Connection = connection,
-                                ConnectionEventType = ConnectionEventType.Connected,
-                            });
-                        }
+                        await UpgradeConnectionAsync(data, connection, cancellationToken);
                     }
                     else
                     {
@@ -315,7 +308,7 @@ namespace WebsocketsSimple.Server.Handlers
                 ConnectionEventType = ConnectionEventType.Disconnect,
             });
         }
-        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
+        protected virtual async Task UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -334,7 +327,7 @@ namespace WebsocketsSimple.Server.Handlers
                     var bytes = Encoding.UTF8.GetBytes("Invalid subprotocols requested");
                     await connection.Stream.WriteAsync(bytes, cancellationToken);
                     await DisconnectConnectionAsync(connection, cancellationToken);
-                    return false;
+                    return;
                 }
             }
 
@@ -353,7 +346,11 @@ namespace WebsocketsSimple.Server.Handlers
 
             await SendAsync(_parameters.ConnectionSuccessString, connection, cancellationToken);
 
-            return true;
+            FireEvent(this, new WSConnectionServerEventArgs
+            {
+                Connection = connection,
+                ConnectionEventType = ConnectionEventType.Connected,
+            });
         }
         protected virtual bool AreSubprotocolsRequestedValid(string[] subprotocols)
         {
