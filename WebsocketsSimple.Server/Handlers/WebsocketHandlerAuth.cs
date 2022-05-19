@@ -32,7 +32,9 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 return Task.CompletedTask;
             }
-            var qs = HttpUtility.ParseQueryString(message.Substring(message.IndexOf("?")));
+            var substring = message.Substring(message.IndexOf("?"));
+            substring = substring.Substring(0, substring.IndexOf(" "));
+            var qs = HttpUtility.ParseQueryString(substring);
 
             var token = qs.Get("token");
 
