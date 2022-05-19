@@ -25,12 +25,12 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
+        protected override Task UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             // Checking auth token
             if (message.IndexOf("?") <= 0)
             {
-                return Task.FromResult(false);
+                return Task.CompletedTask;
             }
             var qs = HttpUtility.ParseQueryString(message.Substring(message.IndexOf("?")));
 
@@ -38,7 +38,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                return Task.FromResult(false);
+                return Task.CompletedTask;
             }
 
             FireEvent(this, new WSAuthorizeEventArgs
@@ -48,7 +48,7 @@ namespace WebsocketsSimple.Server.Handlers
                 UpgradeData = message
             });
 
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
         public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args, CancellationToken cancellationToken)
         {
