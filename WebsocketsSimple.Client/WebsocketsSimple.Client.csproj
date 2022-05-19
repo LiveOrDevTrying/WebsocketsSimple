@@ -16,10 +16,6 @@
     <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
 	
-	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="12.*" />
-	</ItemGroup>
-	
   <ItemGroup>
     <None Include="Logo.png">
       <Pack>True</Pack>
