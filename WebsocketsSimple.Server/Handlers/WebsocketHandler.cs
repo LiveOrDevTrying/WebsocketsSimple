@@ -28,19 +28,17 @@ namespace WebsocketsSimple.Server.Handlers
     {
         protected readonly byte[] _certificate;
         protected readonly string _certificatePassword;
-        protected readonly IParamsWSServer _parameters;
-        protected int _numberOfConnections;
+        protected readonly ParamsWSServer _parameters;
         protected TcpListener _server;
         protected volatile bool _isRunning;
-        protected CancellationToken _cancellationToken;
 
         private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
 
-        public WebsocketHandler(IParamsWSServer parameters)
+        public WebsocketHandler(ParamsWSServer parameters)
         {
             _parameters = parameters;
         }
-        public WebsocketHandler(IParamsWSServer parameters, byte[] certificate, string certificatePassword)
+        public WebsocketHandler(ParamsWSServer parameters, byte[] certificate, string certificatePassword)
         {
             _parameters = parameters;
             _certificate = certificate;
@@ -49,8 +47,6 @@ namespace WebsocketsSimple.Server.Handlers
 
         public virtual void Start(CancellationToken cancellationToken = default)
         {
-            _cancellationToken = cancellationToken;
-
             try
             {
                 if (_server != null)
@@ -71,11 +67,11 @@ namespace WebsocketsSimple.Server.Handlers
 
                 if (_certificate == null)
                 {
-                    _ = Task.Run(async () => { await ListenForConnectionsAsync(); });
+                    _ = Task.Run(async () => { await ListenForConnectionsAsync(cancellationToken); }, cancellationToken);
                 }
                 else
                 {
-                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(); });
+                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(cancellationToken); }, cancellationToken);
                 }
             }
             catch (Exception ex)
@@ -97,21 +93,19 @@ namespace WebsocketsSimple.Server.Handlers
                 _server = null;
             }
 
-            _numberOfConnections = 0;
-
             FireEvent(this, new ServerEventArgs
             {
                 ServerEventType = ServerEventType.Stop
             });
         }
  
-        protected virtual async Task ListenForConnectionsAsync()
+        protected virtual async Task ListenForConnectionsAsync(CancellationToken cancellationToken)
         {
-            while (_isRunning && !_cancellationToken.IsCancellationRequested)
+            while (_isRunning && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(_cancellationToken);
+                    var client = await _server.AcceptTcpClientAsync(cancellationToken);
                     var stream = client.GetStream();
 
                     var connection = new ConnectionWSServer
@@ -122,7 +116,7 @@ namespace WebsocketsSimple.Server.Handlers
                         Client = client
                     };
 
-                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection); });
+                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken); }, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -135,18 +129,18 @@ namespace WebsocketsSimple.Server.Handlers
 
             }
         }
-        protected virtual async Task ListenForConnectionsSSLAsync()
+        protected virtual async Task ListenForConnectionsSSLAsync(CancellationToken cancellationToken)
         {
-            while (_isRunning && !_cancellationToken.IsCancellationRequested)
+            while (_isRunning && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(_cancellationToken);
+                    var client = await _server.AcceptTcpClientAsync(cancellationToken);
                     var sslStream = new SslStream(client.GetStream());
                     await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
                     {
                         ServerCertificate = new X509Certificate2(_certificate, _certificatePassword)
-                    }, _cancellationToken);
+                    }, cancellationToken);
 
                     if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
                     {
@@ -158,11 +152,11 @@ namespace WebsocketsSimple.Server.Handlers
                             Stream = sslStream
                         };
 
-                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection); }) ;
+                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken); }, cancellationToken) ;
                     }
                     else
                     {
-                        var certStatus = $"IsAuthenticated = {sslStream.IsAuthenticated} && IsEncripted == {sslStream.IsEncrypted}";
+                        var certStatus = $"IsAuthenticated = {sslStream.IsAuthenticated} && IsEncrypted == {sslStream.IsEncrypted}";
                         FireEvent(this, new WSErrorServerEventArgs
                         {
                             Exception = new Exception(certStatus),
@@ -183,13 +177,13 @@ namespace WebsocketsSimple.Server.Handlers
 
             }
         }
-        protected virtual async Task StartReceivingMessagesAsync(IConnectionWSServer connection)
+        protected virtual async Task StartReceivingMessagesAsync(IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             try
             {
-                while (connection.Client.Connected)
+                while (connection.Client.Connected && !cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(1, cancellationToken);
 
                     if (connection.Client.Available < 3)
                     {
@@ -197,15 +191,16 @@ namespace WebsocketsSimple.Server.Handlers
                     }; // match against "get"
 
                     var bytes = new byte[connection.Client.Available];
-                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, _cancellationToken);
 
-                    if (!_cancellationToken.IsCancellationRequested)
+                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
+
+                    if (!cancellationToken.IsCancellationRequested)
                     {
                         var data = Encoding.UTF8.GetString(bytes);
 
                         if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                         {
-                            if (await UpgradeConnectionAsync(data, connection))
+                            if (await UpgradeConnectionAsync(data, connection, cancellationToken))
                             {
                                 FireEvent(this, new WSConnectionServerEventArgs
                                 {
@@ -219,7 +214,7 @@ namespace WebsocketsSimple.Server.Handlers
                             bool fin = (bytes[0] & 0b10000000) != 0,
                                 mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
 
-                            int opcode = bytes[0] & 0b00001111, // expecting 1 - text message
+                            int opcode = bytes[0] & 0b00001111, // expecting 1 - text message, 2 is for binary
                                 msglen = bytes[1] - 128, // & 0111 1111
                                 offset = 2;
 
@@ -247,49 +242,68 @@ namespace WebsocketsSimple.Server.Handlers
                                     decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
                                 }
 
-                                var isDisconnect = false;
-                                byte[] selectedBytes = null;
-
-                                for (int i = 0; i < decoded.Length; i++)
+                                if (opcode == 2)
                                 {
-                                    // This checks for a disconnect
-                                    if (decoded[i] == 0x03)
+                                    // This is binary
+                                    FireEvent(this, new WSMessageServerEventArgs
                                     {
-                                        isDisconnect = true;
+                                        MessageEventType = MessageEventType.Receive,
+                                        Bytes = decoded,
+                                        Connection = connection
+                                    });
+                                }
+                                else
+                                {
+                                    var isDisconnect = false;
+                                    byte[] selectedBytes = null;
 
-                                        selectedBytes = new byte[i];
-                                        for (int j = 0; j < i; j++)
+                                    for (int i = 0; i < decoded.Length; i++)
+                                    {
+                                        // This checks for a disconnect
+                                        if (decoded[i] == 0x03)
                                         {
-                                            selectedBytes[j] = decoded[j];
+                                            isDisconnect = true;
+
+                                            selectedBytes = new byte[i];
+                                            for (int j = 0; j < i; j++)
+                                            {
+                                                selectedBytes[j] = decoded[j];
+                                            }
+                                            break;
                                         }
-                                        break;
                                     }
-                                }
 
-                                if (!isDisconnect)
-                                {
-                                    selectedBytes = decoded;
-                                }
-
-                                if (selectedBytes != null)
-                                {
-                                    var message = Encoding.UTF8.GetString(selectedBytes);
-
-                                    if (!string.IsNullOrWhiteSpace(message))
+                                    if (!isDisconnect)
                                     {
-                                        if (message.Trim().ToLower() == "pong")
+                                        selectedBytes = decoded;
+                                    }
+
+                                    if (selectedBytes != null)
+                                    {
+                                        var message = Encoding.UTF8.GetString(selectedBytes);
+
+                                        if (!string.IsNullOrWhiteSpace(message))
                                         {
-                                            connection.HasBeenPinged = false;
-                                        }
-                                        else
-                                        {
-                                            MessageReceived(message, connection);
+                                            if (message.Trim().ToLower() == "pong")
+                                            {
+                                                connection.HasBeenPinged = false;
+                                            }
+                                            else
+                                            {
+                                                FireEvent(this, new WSMessageServerEventArgs
+                                                {
+                                                    MessageEventType = MessageEventType.Receive,
+                                                    Message = message,
+                                                    Bytes = selectedBytes,
+                                                    Connection = connection
+                                                });
+                                            }
                                         }
                                     }
 
                                     if (isDisconnect)
                                     {
-                                        await DisconnectConnectionAsync(connection);
+                                        await DisconnectConnectionAsync(connection, cancellationToken);
                                     }
                                 }
                             }
@@ -306,7 +320,7 @@ namespace WebsocketsSimple.Server.Handlers
                 ConnectionEventType = ConnectionEventType.Disconnect,
             });
         }
-        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection)
+        protected virtual async Task<bool> UpgradeConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -323,25 +337,26 @@ namespace WebsocketsSimple.Server.Handlers
                 if (!AreSubprotocolsRequestedValid(requestedSubprotocols))
                 {
                     var bytes = Encoding.UTF8.GetBytes("Invalid subprotocols requested");
-                    await connection.Stream.WriteAsync(bytes);
-                    await DisconnectConnectionAsync(connection);
+                    await connection.Stream.WriteAsync(bytes, cancellationToken);
+                    await DisconnectConnectionAsync(connection, cancellationToken);
                     return false;
                 }
             }
+
+            var selectedSubProtocol = requestedSubprotocols.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray().Length > 0 ? $"{HttpKnownHeaderNames.SecWebSocketProtocol}: {requestedSubprotocols[0]}\r\n" : string.Empty;
 
             // HTTP/1.1 defines the sequence CR LF as the end-of-line marker
             var response = Encoding.UTF8.GetBytes(
                 "HTTP/1.1 101 Switching Protocols\r\n" +
                 $"{HttpKnownHeaderNames.Connection}: Upgrade\r\n" +
                 $"{HttpKnownHeaderNames.Upgrade}: websocket\r\n" +
-                $"{HttpKnownHeaderNames.SecWebSocketAccept}: " + swkaSha1Base64 + "\r\n\r\n");
+                $"{HttpKnownHeaderNames.SecWebSocketAccept}: " + swkaSha1Base64 + "\r\n\r\n" +
+                $"{selectedSubProtocol}\r\n");
 
             connection.SubProtocols = requestedSubprotocols;
-            await connection.Stream.WriteAsync(response, 0, response.Length);
+            await connection.Stream.WriteAsync(response, 0, response.Length, cancellationToken);
 
-            _numberOfConnections++;
-
-            await SendRawAsync(_parameters.ConnectionSuccessString, connection);
+            await SendAsync(_parameters.ConnectionSuccessString, connection, cancellationToken);
 
             return true;
         }
@@ -361,57 +376,24 @@ namespace WebsocketsSimple.Server.Handlers
             }
             return true;
         }
-        protected virtual void MessageReceived(string message, IConnectionWSServer connection)
-        {
-            IPacket packet;
-
-            try
-            {
-                packet = JsonConvert.DeserializeObject<Packet>(message);
-
-                if (string.IsNullOrWhiteSpace(packet.Data))
-                {
-                    packet = new Packet
-                    {
-                        Data = message,
-                        Timestamp = DateTime.UtcNow
-                    };
-                }
-            }
-            catch
-            {
-                packet = new Packet
-                {
-                    Data = message,
-                    Timestamp = DateTime.UtcNow
-                };
-            }
-
-            FireEvent(this, new WSMessageServerEventArgs
-            {
-                MessageEventType = MessageEventType.Receive,
-                Packet = packet,
-                Connection = connection
-            });
-        }
        
-        public virtual async Task<bool> SendAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket
+        public virtual async Task<bool> SendAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             try
             {
-                var message = JsonConvert.SerializeObject(packet);
-
-                await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: Encoding.UTF8.GetBytes(message),
+                var bytes = Encoding.UTF8.GetBytes(message);
+                await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: bytes,
                     offset: 0,
                     count: message.Length),
                     messageType: WebSocketMessageType.Text,
                     endOfMessage: true,
-                    cancellationToken: _cancellationToken);
+                    cancellationToken: cancellationToken);
 
                 FireEvent(this, new WSMessageServerEventArgs
                 {
                     MessageEventType = MessageEventType.Sent,
-                    Packet = packet,
+                    Message = message,
+                    Bytes = bytes,
                     Connection = connection,
                 });
 
@@ -426,40 +408,26 @@ namespace WebsocketsSimple.Server.Handlers
                     Connection = connection,
                 });
 
-                await DisconnectConnectionAsync(connection);
+                await DisconnectConnectionAsync(connection, cancellationToken);
             }
 
             return false;
         }
-        public virtual async Task<bool> SendAsync(string message, IConnectionWSServer connection)
-        {
-            var packet = new Packet
-            {
-                Data = message,
-                Timestamp = DateTime.UtcNow
-            };
-
-            return await SendAsync(packet, connection);
-        }
-        public virtual async Task<bool> SendRawAsync(string message, IConnectionWSServer connection)
+        public virtual async Task<bool> SendAsync(byte[] message, IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             try
             {
-                await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: Encoding.UTF8.GetBytes(message),
+                await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: message,
                     offset: 0,
                     count: message.Length),
-                    messageType: WebSocketMessageType.Text,
+                    messageType: WebSocketMessageType.Binary,
                     endOfMessage: true,
-                    cancellationToken: _cancellationToken);
+                    cancellationToken: cancellationToken);
 
                 FireEvent(this, new WSMessageServerEventArgs
                 {
                     MessageEventType = MessageEventType.Sent,
-                    Packet = new Packet
-                    {
-                        Data = message,
-                        Timestamp = DateTime.UtcNow
-                    },
+                    Bytes = message,
                     Connection = connection,
                 });
 
@@ -467,7 +435,6 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                _numberOfConnections--;
                 FireEvent(this, new WSErrorServerEventArgs
                 {
                     Connection = connection,
@@ -479,15 +446,13 @@ namespace WebsocketsSimple.Server.Handlers
             return false;
         }
 
-        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection)
+        public virtual async Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection, CancellationToken cancellationToken)
         {
             try
             {
-                _numberOfConnections--;
-
                 if (connection.Websocket.State == WebSocketState.Open)
                 {
-                    await connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnect", CancellationToken.None);
+                    await connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnect", cancellationToken);
                 }
 
                 FireEvent(this, new WSConnectionServerEventArgs
@@ -521,13 +486,6 @@ namespace WebsocketsSimple.Server.Handlers
             base.Dispose();
         }
 
-        public int NumberOfConnections
-        {
-            get
-            {
-                return _numberOfConnections;
-            }
-        }
         public TcpListener Server
         {
             get

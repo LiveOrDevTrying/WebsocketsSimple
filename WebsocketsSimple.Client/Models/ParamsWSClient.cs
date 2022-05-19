@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace WebsocketsSimple.Client.Models
 {
-    public class ParamsWSClient : IParamsWSClient
+    public class ParamsWSClient
     {
         public string Host { get; set; }
         public int Port { get; set; }
