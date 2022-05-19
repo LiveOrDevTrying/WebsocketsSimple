@@ -1,11 +1,9 @@
-﻿using Newtonsoft.Json;
-using PHS.Networking.Enums;
+﻿using PHS.Networking.Enums;
 using PHS.Networking.Models;
 using PHS.Networking.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -41,64 +39,67 @@ namespace WebsocketsSimple.Client
         {
             try
             {
-                if (_connection != null)
+                if (!cancellationToken.IsCancellationRequested)
                 {
-                    await DisconnectAsync(cancellationToken);
-                }
-
-                if (_parameters.IsWebsocketSecured)
-                {
-                    await CreateSSLConnectionAsync(cancellationToken);
-                }
-                else
-                {
-                    CreateConnection();
-                }
-
-                _uri = new Uri(ConstructURI());
-
-                // Create the security key and expected response, then build all of the request headers
-                (var secKey, var webSocketAccept) = CreateSecKeyAndSecWebSocketAccept();
-                var requestHeader = BuildRequestHeader(secKey);
-
-                // Write out the header to the connection
-                await _connection.Stream.WriteAsync(requestHeader, 0, requestHeader.Length, cancellationToken);
-
-                if (_connection.Client.Connected && !cancellationToken.IsCancellationRequested)
-                {
-                    (var subprotocol, var remainingMessages) = await ParseAndValidateConnectResponseAsync(_connection, webSocketAccept, cancellationToken);
-
-                    if (_connection.Client.Connected && remainingMessages != null && !cancellationToken.IsCancellationRequested)
+                    if (_connection != null)
                     {
-                        _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.Stream,
-                            subprotocol,
-                            _parameters.ReceiveBufferSize,
-                            _parameters.SendBufferSize,
-                            _parameters.KeepAliveInterval,
-                            false,
-                            WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
+                        await DisconnectAsync(cancellationToken);
+                    }
 
-                        if (_connection.Websocket.State == WebSocketState.Open)
+                    if (_parameters.IsWebsocketSecured)
+                    {
+                        await CreateSSLConnectionAsync(cancellationToken);
+                    }
+                    else
+                    {
+                        CreateConnection();
+                    }
+
+                    _uri = new Uri(ConstructURI());
+
+                    // Create the security key and expected response, then build all of the request headers
+                    (var secKey, var webSocketAccept) = CreateSecKeyAndSecWebSocketAccept();
+                    var requestHeader = BuildRequestHeader(secKey);
+
+                    // Write out the header to the connection
+                    await _connection.Stream.WriteAsync(requestHeader, 0, requestHeader.Length, cancellationToken);
+
+                    if (_connection.Client.Connected && !cancellationToken.IsCancellationRequested)
+                    {
+                        (var subprotocol, var remainingMessages) = await ParseAndValidateConnectResponseAsync(_connection, webSocketAccept, cancellationToken);
+
+                        if (_connection.Client.Connected && remainingMessages != null && !cancellationToken.IsCancellationRequested)
                         {
-                            FireEvent(this, new WSConnectionClientEventArgs
-                            {
-                                ConnectionEventType = ConnectionEventType.Connected,
-                                Connection = _connection
-                            });
+                            _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.Stream,
+                                subprotocol,
+                                _parameters.ReceiveBufferSize,
+                                _parameters.SendBufferSize,
+                                _parameters.KeepAliveInterval,
+                                false,
+                                WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
 
-                            foreach (var bytes in remainingMessages)
+                            if (_connection.Websocket.State == WebSocketState.Open)
                             {
-                                FireEvent(this, new WSMessageClientEventArgs
+                                FireEvent(this, new WSConnectionClientEventArgs
                                 {
-                                    Bytes = bytes,
-                                    Message = Encoding.UTF8.GetString(bytes),
-                                    Connection = _connection,
-                                    MessageEventType = MessageEventType.Receive
+                                    ConnectionEventType = ConnectionEventType.Connected,
+                                    Connection = _connection
                                 });
-                            }
 
-                            _ = Task.Run(async () => { await ReceiveAsync(cancellationToken); }, cancellationToken);
-                            return true;
+                                foreach (var bytes in remainingMessages)
+                                {
+                                    FireEvent(this, new WSMessageClientEventArgs
+                                    {
+                                        Bytes = bytes,
+                                        Message = Encoding.UTF8.GetString(bytes),
+                                        Connection = _connection,
+                                        MessageEventType = MessageEventType.Receive
+                                    });
+                                }
+
+                                _ = Task.Run(async () => { await ReceiveAsync(cancellationToken); }, cancellationToken);
+                                return true;
+                            }
                         }
                     }
                 }
@@ -119,7 +120,7 @@ namespace WebsocketsSimple.Client
                 Connection = _connection,
             });
 
-            await DisconnectAsync();
+            await DisconnectAsync(cancellationToken);
             return false;
         }
         public virtual async Task<bool> DisconnectAsync(CancellationToken cancellationToken = default)
@@ -481,7 +482,7 @@ namespace WebsocketsSimple.Client
 
             if (!connection.Client.Connected || cancellationToken.IsCancellationRequested)
             {
-                await DisconnectAsync();
+                await DisconnectAsync(cancellationToken);
                 return (null, null);
             }
 
@@ -593,11 +594,6 @@ namespace WebsocketsSimple.Client
         }
         protected virtual byte[] ConvertUTF8ToASCIIBytes(string content)
         {
-            //return Encoding.ASCII.GetString(Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName,
-            //    new EncoderReplacementFallback(string.Empty),
-            //    new DecoderExceptionFallback()),
-            //    Encoding.UTF8.GetBytes(content)));
-
             return Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName,
                 new EncoderReplacementFallback(string.Empty),
                 new DecoderExceptionFallback()),
