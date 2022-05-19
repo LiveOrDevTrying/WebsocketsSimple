@@ -48,7 +48,7 @@ namespace WebsocketsSimple.Server.Handlers
                 UpgradeData = message
             });
 
-            return Task.FromResult(true);
+            return Task.CompletedTask;
         }
         public virtual async Task<bool> UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs args, CancellationToken cancellationToken)
         {
