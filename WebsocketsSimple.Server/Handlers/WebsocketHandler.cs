@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using PHS.Networking.Enums;
+﻿using PHS.Networking.Enums;
 using PHS.Networking.Events;
-using PHS.Networking.Models;
 using PHS.Networking.Server.Enums;
 using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Services;
@@ -194,117 +192,114 @@ namespace WebsocketsSimple.Server.Handlers
 
                     await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
 
-                    if (!cancellationToken.IsCancellationRequested)
-                    {
-                        var data = Encoding.UTF8.GetString(bytes);
+                    var data = Encoding.UTF8.GetString(bytes);
 
-                        if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
+                    if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
+                    {
+                        if (await UpgradeConnectionAsync(data, connection, cancellationToken))
                         {
-                            if (await UpgradeConnectionAsync(data, connection, cancellationToken))
+                            FireEvent(this, new WSConnectionServerEventArgs
                             {
-                                FireEvent(this, new WSConnectionServerEventArgs
+                                Connection = connection,
+                                ConnectionEventType = ConnectionEventType.Connected,
+                            });
+                        }
+                    }
+                    else
+                    {
+                        bool fin = (bytes[0] & 0b10000000) != 0,
+                            mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
+
+                        int opcode = bytes[0] & 0b00001111, // expecting 1 - text message, 2 is for binary
+                            msglen = bytes[1] - 128, // & 0111 1111
+                            offset = 2;
+
+                        if (msglen == 126)
+                        {
+                            // was ToUInt16(bytes, offset) but the result is incorrect
+                            msglen = BitConverter.ToUInt16(new byte[] { bytes[3], bytes[2] }, 0);
+                            offset = 4;
+                        }
+                        else if (msglen == 127)
+                        {
+                            // i don't really know the byte order, please edit this
+                            // msglen = BitConverter.ToUInt64(new byte[] { bytes[5], bytes[4], bytes[3], bytes[2], bytes[9], bytes[8], bytes[7], bytes[6] }, 0);
+                            // offset = 10;
+                        }
+
+                        if (msglen > 0 && mask)
+                        {
+                            var decoded = new byte[msglen];
+                            var masks = new byte[4] { bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3] };
+                            offset += 4;
+
+                            for (int i = 0; i < msglen; ++i)
+                            {
+                                decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
+                            }
+
+                            if (opcode == 2)
+                            {
+                                // This is binary
+                                FireEvent(this, new WSMessageServerEventArgs
                                 {
-                                    Connection = connection,
-                                    ConnectionEventType = ConnectionEventType.Connected,
+                                    MessageEventType = MessageEventType.Receive,
+                                    Bytes = decoded,
+                                    Connection = connection
                                 });
                             }
-                        }
-                        else
-                        {
-                            bool fin = (bytes[0] & 0b10000000) != 0,
-                                mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
-
-                            int opcode = bytes[0] & 0b00001111, // expecting 1 - text message, 2 is for binary
-                                msglen = bytes[1] - 128, // & 0111 1111
-                                offset = 2;
-
-                            if (msglen == 126)
+                            else
                             {
-                                // was ToUInt16(bytes, offset) but the result is incorrect
-                                msglen = BitConverter.ToUInt16(new byte[] { bytes[3], bytes[2] }, 0);
-                                offset = 4;
-                            }
-                            else if (msglen == 127)
-                            {
-                                // i don't really know the byte order, please edit this
-                                // msglen = BitConverter.ToUInt64(new byte[] { bytes[5], bytes[4], bytes[3], bytes[2], bytes[9], bytes[8], bytes[7], bytes[6] }, 0);
-                                // offset = 10;
-                            }
+                                var isDisconnect = false;
+                                byte[] selectedBytes = null;
 
-                            if (msglen > 0 && mask)
-                            {
-                                var decoded = new byte[msglen];
-                                var masks = new byte[4] { bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3] };
-                                offset += 4;
-
-                                for (int i = 0; i < msglen; ++i)
+                                for (int i = 0; i < decoded.Length; i++)
                                 {
-                                    decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
+                                    // This checks for a disconnect
+                                    if (decoded[i] == 0x03)
+                                    {
+                                        isDisconnect = true;
+
+                                        selectedBytes = new byte[i];
+                                        for (int j = 0; j < i; j++)
+                                        {
+                                            selectedBytes[j] = decoded[j];
+                                        }
+                                        break;
+                                    }
                                 }
 
-                                if (opcode == 2)
+                                if (!isDisconnect)
                                 {
-                                    // This is binary
-                                    FireEvent(this, new WSMessageServerEventArgs
-                                    {
-                                        MessageEventType = MessageEventType.Receive,
-                                        Bytes = decoded,
-                                        Connection = connection
-                                    });
+                                    selectedBytes = decoded;
                                 }
-                                else
+
+                                if (selectedBytes != null)
                                 {
-                                    var isDisconnect = false;
-                                    byte[] selectedBytes = null;
+                                    var message = Encoding.UTF8.GetString(selectedBytes);
 
-                                    for (int i = 0; i < decoded.Length; i++)
+                                    if (!string.IsNullOrWhiteSpace(message))
                                     {
-                                        // This checks for a disconnect
-                                        if (decoded[i] == 0x03)
+                                        if (message.Trim().ToLower() == "pong")
                                         {
-                                            isDisconnect = true;
-
-                                            selectedBytes = new byte[i];
-                                            for (int j = 0; j < i; j++)
+                                            connection.HasBeenPinged = false;
+                                        }
+                                        else
+                                        {
+                                            FireEvent(this, new WSMessageServerEventArgs
                                             {
-                                                selectedBytes[j] = decoded[j];
-                                            }
-                                            break;
+                                                MessageEventType = MessageEventType.Receive,
+                                                Message = message,
+                                                Bytes = selectedBytes,
+                                                Connection = connection
+                                            });
                                         }
                                     }
+                                }
 
-                                    if (!isDisconnect)
-                                    {
-                                        selectedBytes = decoded;
-                                    }
-
-                                    if (selectedBytes != null)
-                                    {
-                                        var message = Encoding.UTF8.GetString(selectedBytes);
-
-                                        if (!string.IsNullOrWhiteSpace(message))
-                                        {
-                                            if (message.Trim().ToLower() == "pong")
-                                            {
-                                                connection.HasBeenPinged = false;
-                                            }
-                                            else
-                                            {
-                                                FireEvent(this, new WSMessageServerEventArgs
-                                                {
-                                                    MessageEventType = MessageEventType.Receive,
-                                                    Message = message,
-                                                    Bytes = selectedBytes,
-                                                    Connection = connection
-                                                });
-                                            }
-                                        }
-                                    }
-
-                                    if (isDisconnect)
-                                    {
-                                        await DisconnectConnectionAsync(connection, cancellationToken);
-                                    }
+                                if (isDisconnect)
+                                {
+                                    await DisconnectConnectionAsync(connection, cancellationToken);
                                 }
                             }
                         }
