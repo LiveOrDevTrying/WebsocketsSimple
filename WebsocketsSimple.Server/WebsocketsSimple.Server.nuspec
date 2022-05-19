@@ -16,7 +16,6 @@
     <tags>Websocket Websockets server client websocketsharp tcpListener wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
 		<group targetFramework="netcoreapp3.0">
-			<dependency id="Newtonsoft.Json" version="[12,13)" />
 			<dependency id="WebsocketsSimple.Core" version="[3.0,3.1)" />
 			<dependency id="PHS.Networking.Server" version="[3.0,3.1)" />
 		</group>
