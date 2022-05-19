@@ -12,19 +12,19 @@ namespace WebsocketsSimple.Server
 {
     public interface IWebsocketServer : ICoreNetworking<WSConnectionServerEventArgs, WSMessageServerEventArgs, WSErrorServerEventArgs>
     {
-        bool IsServerRunning { get; }
-        TcpListener Server { get; }
-
+        event NetworkingEventHandler<ServerEventArgs> ServerEvent;
+        
         void Start(CancellationToken cancellationToken = default);
         void Stop();
 
-        Task<bool> SendToConnectionAsync<T>(T packet, IConnectionWSServer connection) where T : IPacket;
-        Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection);
-        Task<bool> SendToConnectionRawAsync(string message, IConnectionWSServer connection);
-        Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection);
+        Task<bool> SendToConnectionAsync(string message, IConnectionWSServer connection, CancellationToken cancellationToken = default);
+        Task<bool> SendToConnectionAsync(byte[] message, IConnectionWSServer connection, CancellationToken cancellationToken = default);
+
+        Task<bool> DisconnectConnectionAsync(IConnectionWSServer connection, CancellationToken cancellationToken = default);
 
         IConnectionWSServer[] Connections { get; }
+        bool IsServerRunning { get; }
+        TcpListener Server { get; }
 
-        event NetworkingEventHandler<ServerEventArgs> ServerEvent;
     }
 }
