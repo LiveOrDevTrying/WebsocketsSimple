@@ -1,77 +1,60 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Managers
 {
-    public class WSConnectionManagerAuth<T> : WSConnectionManager
+    public class WSConnectionManagerAuth<T> : WSConnectionManager<IdentityWSServer<T>>
     {
-        protected ConcurrentDictionary<T, IIdentityWS<T>> _identities =
-            new ConcurrentDictionary<T, IIdentityWS<T>>();
+        protected ConcurrentDictionary<T, WSConnectionManager<IdentityWSServer<T>>> _users =
+            new ConcurrentDictionary<T, WSConnectionManager<IdentityWSServer<T>>>();
 
-        public IIdentityWS<T> GetIdentity(T userId)
+        public virtual bool Add(IdentityWSServer<T> identity)
         {
-            return _identities.TryGetValue(userId, out var clientAuthorized) ? clientAuthorized : (default);
-        }
-        public IIdentityWS<T> GetIdentity(IConnectionWSServer connection)
-        {
-            return _identities.Any(p => p.Value.Connections.Any(t => t != null && t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
-                ? _identities.Values.FirstOrDefault(s => s.Connections.Any(t => t != null && t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()))
-                : (default);
-        }
-        public IIdentityWS<T>[] GetAllIdentities()
-        {
-            return _identities.Values.Where(s => s != null).ToArray();
-        }
+            Add(identity.ConnectionId, identity);
 
-        public IIdentityWS<T> AddIdentity(T userId, IConnectionWSServer connection)
-        {
-            if (!_identities.TryGetValue(userId, out var instance))
+            if (!_users.TryGetValue(identity.UserId, out var userOriginal))
             {
-                instance = new IdentityWS<T>
+                userOriginal = new WSConnectionManager<IdentityWSServer<T>>();
+                if (!_users.TryAdd(identity.UserId, userOriginal))
                 {
-                    UserId = userId,
-                    Connections = new List<IConnectionWSServer>()
-                };
-                _identities.TryAdd(userId, instance);
+                    return false;
+                }
             }
 
-            if (!instance.Connections.Any(s => s != null && s.Websocket.GetHashCode() == instance.GetHashCode()))
-            {
-                instance.Connections.Add(connection);
-                return instance;
-            }
-
-            return null;
+            var userNew = new WSConnectionManager<IdentityWSServer<T>>(userOriginal.GetAll());
+            userNew.Add(identity.ConnectionId, identity);
+            return _users.TryUpdate(identity.UserId, userNew, userOriginal);
         }
-        public void RemoveIdentity(IConnectionWSServer connection)
+        public override bool Remove(string id)
         {
-            var udebtuty = _identities.Values.FirstOrDefault(s => s.Connections.Any(t => t != null && t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()));
+            _connections.TryRemove(id, out var _);
 
-            if (udebtuty != null)
+            try
             {
-                var instance = udebtuty.Connections.FirstOrDefault(s => s != null && s.Websocket.GetHashCode() == connection.Websocket.GetHashCode());
-
-                if (instance != null)
+                foreach (var user in _users)
                 {
-                    udebtuty.Connections.Remove(instance);
-
-                    if (!udebtuty.Connections.Where(s => s != null).Any())
+                    if (user.Value.Remove(id))
                     {
-                        _identities.TryRemove(udebtuty.UserId, out udebtuty);
+                        return true;
                     }
                 }
             }
-        }
+            catch (Exception ex)
+            {
+            }
 
-        public bool IsConnectionAuthorized(IConnectionWSServer connection)
-        {
-            return _identities.Values.Any(s => s.Connections.Any(t => t != null && t.Websocket.GetHashCode() == connection.Websocket.GetHashCode()));
+            return false;
         }
-        public bool IsUserConnected(T userId)
+        public IEnumerable<IdentityWSServer<T>> GetAll(T id)
         {
-            return _identities.ContainsKey(userId);
+            if (_users.TryGetValue(id, out var user))
+            {
+                return user.GetAll();
+            }
+
+            return null;
         }
     }
 }

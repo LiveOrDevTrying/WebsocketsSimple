@@ -11,6 +11,7 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Client.Events.Args;
@@ -24,7 +25,7 @@ namespace WebsocketsSimple.Client
         CoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>,
         IWebsocketClient
     {
-        protected IConnectionWS _connection;
+        protected ConnectionWS _connection;
         protected ParamsWSClient _parameters;
         protected string _token;
         protected Uri _uri;
@@ -88,10 +89,11 @@ namespace WebsocketsSimple.Client
 
                                 foreach (var bytes in remainingMessages)
                                 {
+                                    var message = Encoding.UTF8.GetString(bytes).Replace("\u0016", "");
                                     FireEvent(this, new WSMessageClientEventArgs
                                     {
                                         Bytes = bytes,
-                                        Message = Encoding.UTF8.GetString(bytes),
+                                        Message = message,
                                         Connection = _connection,
                                         MessageEventType = MessageEventType.Receive
                                     });
@@ -113,12 +115,6 @@ namespace WebsocketsSimple.Client
                     Connection = _connection
                 });
             }
-
-            FireEvent(this, new WSConnectionClientEventArgs
-            {
-                ConnectionEventType = ConnectionEventType.Disconnect,
-                Connection = _connection,
-            });
 
             await DisconnectAsync(cancellationToken);
             return false;
@@ -470,7 +466,7 @@ namespace WebsocketsSimple.Client
             // Return the bytes for the built up header
             return Encoding.ASCII.GetBytes(builder.ToString());
         }
-        protected async Task<(string, byte[][])> ParseAndValidateConnectResponseAsync(IConnectionWS connection, string expectedSecWebSocketAccept, CancellationToken cancellationToken)
+        protected async Task<(string, byte[][])> ParseAndValidateConnectResponseAsync(ConnectionWS connection, string expectedSecWebSocketAccept, CancellationToken cancellationToken)
         {
             while (connection.Client.Connected && !cancellationToken.IsCancellationRequested)
             {
@@ -598,6 +594,13 @@ namespace WebsocketsSimple.Client
                 new EncoderReplacementFallback(string.Empty),
                 new DecoderExceptionFallback()),
                 Encoding.UTF8.GetBytes(content));
+        }
+        protected virtual byte[] ConvertUTF8ToASCIIBytes(byte[] bytes)
+        {
+            return Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName,
+                new EncoderReplacementFallback(string.Empty),
+                new DecoderExceptionFallback()),
+                bytes);
         }
         protected virtual void ValidateAndTrackHeader(
            string targetHeaderName, string targetHeaderValue,

@@ -1,34 +1,71 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net.WebSockets;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Managers
 {
-    public class WSConnectionManager
+    public class WSConnectionManager<T> where T : ConnectionWSServer
     {
-        protected ConcurrentDictionary<int, IConnectionWSServer> _connections =
-            new ConcurrentDictionary<int, IConnectionWSServer>();
+        protected ConcurrentDictionary<string, T> _connections =
+           new ConcurrentDictionary<string, T>();
 
-        public IConnectionWSServer[] GetAllConnections()
+        public WSConnectionManager()
         {
-            return _connections.Values.ToArray();
         }
-        public IConnectionWSServer GetConnection(WebSocket websocket)
+
+        public WSConnectionManager(IEnumerable<T> connections)
         {
-            return _connections.TryGetValue(websocket.GetHashCode(), out var connection) ? connection : null;
+            _connections = new ConcurrentDictionary<string, T>();
+            foreach (var item in connections)
+            {
+                _connections.TryAdd(item.ConnectionId, item);
+            }
         }
-        public bool AddConnection(IConnectionWSServer connection)
+
+        public virtual IEnumerable<T> GetAll()
         {
-            return !_connections.ContainsKey(connection.Websocket.GetHashCode()) ? _connections.TryAdd(connection.Websocket.GetHashCode(), connection) : false;
+            return _connections.Values;
         }
-        public void RemoveConnection(IConnectionWSServer connection)
+        public virtual T Get(string id)
         {
-            _connections.TryRemove(connection.Websocket.GetHashCode(), out var instance);
+            return _connections.TryGetValue(id, out var connection) ? connection : default;
         }
-        public bool IsConnectionOpen(IConnectionWSServer connection)
+        public virtual bool Remove(string id)
         {
-            return _connections.TryGetValue(connection.Websocket.GetHashCode(), out var instance) ? instance.Websocket.State == WebSocketState.Open : false;
+            return _connections.TryRemove(id, out var _);
+        }
+
+        public virtual bool Add(string id, T connection)
+        {
+            return _connections.TryAdd(id, connection);
+        }
+        public virtual int Count()
+        {
+            return _connections.Skip(0).Count();
+        }
+
+        public virtual IEnumerable<T> GetPingedConnections()
+        {
+            return _connections
+                .Select(x => x.Value)
+                .Where(x => x.HasBeenPinged);
+        }
+        public virtual IEnumerable<T> GetPingableConnections(int maxNumberOfConnectionsToReturn)
+        {
+            var ts = DateTime.UtcNow;
+            var query = _connections
+                .Select(x => x.Value)
+                .Where(x => !x.HasBeenPinged && ts >= x.NextPingTime)
+                .OrderBy(x => x.NextPingTime);
+
+            if (maxNumberOfConnectionsToReturn > 0)
+            {
+                return query.Take(maxNumberOfConnectionsToReturn);
+            }
+
+            return query;
         }
     }
 }
