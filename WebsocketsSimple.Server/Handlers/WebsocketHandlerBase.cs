@@ -24,8 +24,8 @@ using WebsocketsSimple.Server.Models;
 namespace WebsocketsSimple.Server.Handlers
 {
     public abstract class WebsocketHandlerBase<T> : 
-        CoreNetworking<WSConnectionServerEventArgs<T>, WSMessageServerEventArgs<T>, WSErrorServerEventArgs<T>>, 
-        ICoreNetworking<WSConnectionServerEventArgs<T>, WSMessageServerEventArgs<T>, WSErrorServerEventArgs<T>> 
+        CoreNetworking<WSConnectionServerBaseEventArgs<T>, WSMessageServerBaseEventArgs<T>, WSErrorServerBaseEventArgs<T>>, 
+        ICoreNetworking<WSConnectionServerBaseEventArgs<T>, WSMessageServerBaseEventArgs<T>, WSErrorServerBaseEventArgs<T>> 
         where T : ConnectionWSServer
     {
         protected readonly byte[] _certificate;
@@ -80,7 +80,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs<T>
+                FireEvent(this, new WSErrorServerBaseEventArgs<T>
                 {
                     Exception = ex,
                     Message = ex.Message,
@@ -108,7 +108,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs<T>
+                FireEvent(this, new WSErrorServerBaseEventArgs<T>
                 {
                     Exception = ex,
                     Message = ex.Message,
@@ -133,7 +133,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerEventArgs<T>
+                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
                     {
                         Exception = ex,
                         Message = ex.Message,
@@ -164,7 +164,7 @@ namespace WebsocketsSimple.Server.Handlers
                     else
                     {
                         var certStatus = $"IsAuthenticated = {sslStream.IsAuthenticated} && IsEncrypted == {sslStream.IsEncrypted}";
-                        FireEvent(this, new WSErrorServerEventArgs<T>
+                        FireEvent(this, new WSErrorServerBaseEventArgs<T>
                         {
                             Exception = new Exception(certStatus),
                             Message = certStatus
@@ -175,7 +175,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerEventArgs<T>
+                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
                     {
                         Exception = ex,
                         Message = ex.Message,
@@ -247,7 +247,7 @@ namespace WebsocketsSimple.Server.Handlers
                             if (opcode == 2)
                             {
                                 // This is binary
-                                FireEvent(this, new WSMessageServerEventArgs<T>
+                                FireEvent(this, new WSMessageServerBaseEventArgs<T>
                                 {
                                     MessageEventType = MessageEventType.Receive,
                                     Bytes = decoded,
@@ -292,7 +292,7 @@ namespace WebsocketsSimple.Server.Handlers
                                         }
                                         else
                                         {
-                                            FireEvent(this, new WSMessageServerEventArgs<T>
+                                            FireEvent(this, new WSMessageServerBaseEventArgs<T>
                                             {
                                                 MessageEventType = MessageEventType.Receive,
                                                 Message = message,
@@ -315,7 +315,7 @@ namespace WebsocketsSimple.Server.Handlers
             catch
             { }
 
-            FireEvent(this, new WSConnectionServerEventArgs<T>
+            FireEvent(this, new WSConnectionServerBaseEventArgs<T>
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Disconnect,
@@ -365,7 +365,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             await SendAsync(_parameters.ConnectionSuccessString, connection, cancellationToken);
 
-            FireEvent(this, new WSConnectionServerEventArgs<T>
+            FireEvent(this, new WSConnectionServerBaseEventArgs<T>
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Connected,
@@ -424,7 +424,7 @@ namespace WebsocketsSimple.Server.Handlers
                         endOfMessage: true,
                         cancellationToken: cancellationToken);
 
-                    FireEvent(this, new WSMessageServerEventArgs<T>
+                    FireEvent(this, new WSMessageServerBaseEventArgs<T>
                     {
                         MessageEventType = MessageEventType.Sent,
                         Message = message,
@@ -437,7 +437,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs<T>
+                FireEvent(this, new WSErrorServerBaseEventArgs<T>
                 {
                     Exception = ex,
                     Message = ex.Message,
@@ -462,7 +462,7 @@ namespace WebsocketsSimple.Server.Handlers
                         endOfMessage: true,
                         cancellationToken: cancellationToken);
 
-                    FireEvent(this, new WSMessageServerEventArgs<T>
+                    FireEvent(this, new WSMessageServerBaseEventArgs<T>
                     {
                         MessageEventType = MessageEventType.Sent,
                         Bytes = message,
@@ -474,7 +474,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerEventArgs<T>
+                FireEvent(this, new WSErrorServerBaseEventArgs<T>
                 {
                     Connection = connection,
                     Exception = ex,
@@ -492,7 +492,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             catch (Exception ex) 
             {
-                FireEvent(this, new WSErrorServerEventArgs<T>
+                FireEvent(this, new WSErrorServerBaseEventArgs<T>
                 {
                     Connection = connection,
                     Exception = ex,
@@ -509,7 +509,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerEventArgs<T>
+                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
                     {
                         Connection = connection,
                         Exception = ex,
@@ -527,7 +527,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerEventArgs<T>
+                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
                     {
                         Connection = connection,
                         Exception = ex,

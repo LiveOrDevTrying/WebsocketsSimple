@@ -3,11 +3,11 @@ using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server
 {
-    public interface IWebsocketServer 
-        : IWebsocketServerBase<
-            WSConnectionServerEventArgs<ConnectionWSServer>, 
-            WSMessageServerEventArgs<ConnectionWSServer>, 
-            WSErrorServerEventArgs<ConnectionWSServer>, 
+    public interface IWebsocketServer : 
+        IWebsocketServerBase<
+            WSConnectionServerEventArgs, 
+            WSMessageServerEventArgs, 
+            WSErrorServerEventArgs, 
             ConnectionWSServer>
     {
     }

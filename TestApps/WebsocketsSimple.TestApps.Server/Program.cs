@@ -15,21 +15,10 @@ namespace WebsocketsSimple.TestApps.Server
 
         static void Main(string[] args)
         {
-            //_server = new WebsocketServer(new ParamsWSServer
-            //{
-            //    ConnectionSuccessString = "Connected Successfully",
-            //    Port = 65214,
-            //    AvailableSubprotocols = new string[] { "testProtocol", "test2", "test3", "another" }
-            //});
-            //_server.MessageEvent += OnMessageEventReg; ;
-            //_server.ServerEvent += OnServerEvent;
-            //_server.ConnectionEvent += OnConnectionEventReg;
-            //_server.ErrorEvent += OnErrorEventReg;
-            //_server.Start();
-
-            _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServer
+            _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth
             {
                 ConnectionSuccessString = "Connected Successfully",
+                ConnectionUnauthorizedString = "Unauthorized",
                 Port = 65214,
                 AvailableSubprotocols = new string[] { "testProtocol", "test2", "test3", "another" }
             }, new MockUserService());
@@ -45,42 +34,12 @@ namespace WebsocketsSimple.TestApps.Server
             }
         }
 
-        //private static void OnErrorEventReg(object sender, WSErrorServerEventArgs args)
-        //{
-        //    Console.WriteLine(args.Message);
-        //}
-
-        //private static void OnConnectionEventReg(object sender, WSConnectionServerEventArgs args)
-        //{
-        //    Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
-        //}
-
-        //private static void OnMessageEventReg(object sender, WSMessageServerEventArgs args)
-        //{
-        //    switch (args.MessageEventType)
-        //    {
-        //        case MessageEventType.Sent:
-        //            break;
-        //        case MessageEventType.Receive:
-        //            Console.WriteLine(args.MessageEventType + ": " + args.Message);
-
-        //            Task.Run(async () =>
-        //            {
-        //                await _server.BroadcastToAllConnectionsAsync(args.Message, args.Connection);
-
-        //            });
-        //            break;
-        //        default:
-        //            break;
-        //    }
-        //}
-
-        private static void OnErrorEvent(object sender, WSErrorServerEventArgs<IdentityWSServer<Guid>> args)
+        private static void OnErrorEvent(object sender, WSErrorServerAuthEventArgs<Guid> args)
         {
             Console.WriteLine(args.Message);
         }
 
-        private static void OnConnectionEvent(object sender, WSConnectionServerEventArgs<IdentityWSServer<Guid>> args)
+        private static void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<Guid> args)
         {
             Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
         }
@@ -90,7 +49,7 @@ namespace WebsocketsSimple.TestApps.Server
             Console.WriteLine(args.ServerEventType);
         }
 
-        private static void OnMessageEvent(object sender, WSMessageServerEventArgs<IdentityWSServer<Guid>> args)
+        private static void OnMessageEvent(object sender, WSMessageServerAuthEventArgs<Guid> args)
         {
             switch (args.MessageEventType)
             {

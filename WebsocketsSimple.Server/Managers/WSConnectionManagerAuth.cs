@@ -41,9 +41,8 @@ namespace WebsocketsSimple.Server.Managers
                     }
                 }
             }
-            catch (Exception ex)
-            {
-            }
+            catch
+            { }
 
             return false;
         }

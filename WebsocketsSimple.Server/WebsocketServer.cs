@@ -8,9 +8,9 @@ namespace WebsocketsSimple.Server
 {
     public class WebsocketServer :
         WebsocketServerBase<
-            WSConnectionServerEventArgs<ConnectionWSServer>,
-            WSMessageServerEventArgs<ConnectionWSServer>,
-            WSErrorServerEventArgs<ConnectionWSServer>, 
+            WSConnectionServerEventArgs,
+            WSMessageServerEventArgs,
+            WSErrorServerEventArgs, 
             ParamsWSServer, 
             WebsocketHandler, 
             WSConnectionManager<ConnectionWSServer>, 
@@ -37,7 +37,7 @@ namespace WebsocketsSimple.Server
                 : new WebsocketHandler(_parameters);
         }
 
-        protected override void OnConnectionEvent(object sender, WSConnectionServerEventArgs<ConnectionWSServer> args)
+        protected override void OnConnectionEvent(object sender, WSConnectionServerBaseEventArgs<ConnectionWSServer> args)
         {
             switch (args.ConnectionEventType)
             {
@@ -51,24 +51,24 @@ namespace WebsocketsSimple.Server
                     break;
             }
 
-            FireEvent(this, new WSConnectionServerEventArgs<ConnectionWSServer>
+            FireEvent(this, new WSConnectionServerEventArgs
             {
                 Connection = args.Connection,
                 ConnectionEventType = args.ConnectionEventType
             });
         }
-        protected override void OnErrorEvent(object sender, WSErrorServerEventArgs<ConnectionWSServer> args)
+        protected override void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<ConnectionWSServer> args)
         {
-            FireEvent(this, new WSErrorServerEventArgs<ConnectionWSServer> 
+            FireEvent(this, new WSErrorServerEventArgs 
             {
                 Connection = args.Connection,
                 Exception = args.Exception,
                 Message = args.Message
             });
         }
-        protected override void OnMessageEvent(object sender, WSMessageServerEventArgs<ConnectionWSServer> args)
+        protected override void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<ConnectionWSServer> args)
         {
-            FireEvent(sender, new WSMessageServerEventArgs<ConnectionWSServer>
+            FireEvent(sender, new WSMessageServerEventArgs
             {
                 Bytes = args.Bytes,
                 Connection = args.Connection,

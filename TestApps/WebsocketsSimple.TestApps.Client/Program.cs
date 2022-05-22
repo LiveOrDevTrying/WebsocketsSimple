@@ -15,6 +15,7 @@ namespace WebsocketsSimple.TestApps.Client
     {
         private static List<IWebsocketClient> _clients = new List<IWebsocketClient>();
         private static Timer _timer;
+        private static int _max;
 
         static int CalculateNumberOfUsersPerMinute(int numberUsers)
         {
@@ -32,6 +33,15 @@ namespace WebsocketsSimple.TestApps.Client
                 line = Console.ReadLine();
             }
 
+            Console.WriteLine("Enter max number of users:");
+            line = Console.ReadLine();
+            _max = 0;
+            while (!int.TryParse(line, out _max))
+            {
+                Console.WriteLine("Invalid. Input an int:");
+                line = Console.ReadLine();
+            }
+
             Console.WriteLine("Push any key to start");
 
             Console.ReadLine();
@@ -42,32 +52,35 @@ namespace WebsocketsSimple.TestApps.Client
             {
                 line = Console.ReadLine();
 
-                Task.Run(async () => await _clients.Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendToServerAsync(line));
+                Task.Run(async () => await _clients.Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line));
             }
         }
 
         private static void OnTimerTick(object state)
         {
-            var client = new WebsocketClient(new ParamsWSClient
+            if (_clients.Count < _max)
             {
-                IsWebsocketSecured = false,
-                Port = 65214,
-                Host = "localhost",
-                Path = "newPath",
-                QueryStringParameters = new KeyValuePair<string, string>[]
+                var client = new WebsocketClient(new ParamsWSClient
                 {
+                    IsWebsocketSecured = false,
+                    Port = 65214,
+                    Host = "localhost",
+                    Path = "newPath",
+                    QueryStringParameters = new KeyValuePair<string, string>[]
+                    {
             new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
-                },
-                RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
-                RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
-                KeepAliveInterval = TimeSpan.FromSeconds(5)
-            }, "testToken");
-            client.ConnectionEvent += OnConnectionEvent;
-            client.MessageEvent += OnMessageEvent;
-            client.ErrorEvent += OnErrorEvent;
-            _clients.Add(client);
-            
-            Task.Run(async () => await client.ConnectAsync());
+                    },
+                    RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
+                    RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
+                    KeepAliveInterval = TimeSpan.FromSeconds(5)
+                }, "testToken");
+                client.ConnectionEvent += OnConnectionEvent;
+                client.MessageEvent += OnMessageEvent;
+                client.ErrorEvent += OnErrorEvent;
+                _clients.Add(client);
+
+                Task.Run(async () => await client.ConnectAsync());
+            }
         }
 
         private static void OnErrorEvent(object sender, WSErrorClientEventArgs args)

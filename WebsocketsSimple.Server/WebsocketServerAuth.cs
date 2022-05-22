@@ -20,10 +20,10 @@ namespace WebsocketsSimple.Server
 {
     public class WebsocketServerAuth<T> :
         WebsocketServerBase<
-            WSConnectionServerEventArgs<IdentityWSServer<T>>, 
-            WSMessageServerEventArgs<IdentityWSServer<T>>, 
-            WSErrorServerEventArgs<IdentityWSServer<T>>, 
-            ParamsWSServer, 
+            WSConnectionServerAuthEventArgs<T>, 
+            WSMessageServerAuthEventArgs<T>, 
+            WSErrorServerAuthEventArgs<T>, 
+            ParamsWSServerAuth,
             WebsocketHandlerAuth<T>, 
             WSConnectionManagerAuth<T>,
             IdentityWSServer<T>>, 
@@ -31,7 +31,7 @@ namespace WebsocketsSimple.Server
     {
         protected readonly IUserService<T> _userService;
 
-        public WebsocketServerAuth(ParamsWSServer parameters,
+        public WebsocketServerAuth(ParamsWSServerAuth parameters,
             IUserService<T> userService) : base(parameters)
         {
             _userService = userService;
@@ -39,7 +39,7 @@ namespace WebsocketsSimple.Server
             _handler.AuthorizeEvent += OnAuthorizeEvent;
         }
 
-        public WebsocketServerAuth(ParamsWSServer parameters,
+        public WebsocketServerAuth(ParamsWSServerAuth parameters,
             IUserService<T> userService,
             byte[] certificate,
             string certificatePassword) : base(parameters, certificate, certificatePassword)
@@ -88,7 +88,7 @@ namespace WebsocketsSimple.Server
             return false;
         }
 
-        protected override void OnConnectionEvent(object sender, WSConnectionServerEventArgs<IdentityWSServer<T>> args)
+        protected override void OnConnectionEvent(object sender, WSConnectionServerBaseEventArgs<IdentityWSServer<T>> args)
         {
             var connection = _connectionManager.Get(args.Connection.ConnectionId);
 
@@ -96,7 +96,7 @@ namespace WebsocketsSimple.Server
             {
                 case ConnectionEventType.Connected:
                         
-                    FireEvent(this, new WSConnectionServerEventArgs<IdentityWSServer<T>>
+                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         ConnectionEventType = ConnectionEventType.Connected,
                         Connection = connection,
@@ -105,7 +105,7 @@ namespace WebsocketsSimple.Server
                 case ConnectionEventType.Disconnect:
                     _connectionManager.Remove(args.Connection.ConnectionId);
 
-                    FireEvent(this, new WSConnectionServerEventArgs<IdentityWSServer<T>>
+                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         Connection = connection,
                         ConnectionEventType = args.ConnectionEventType,
@@ -115,14 +115,14 @@ namespace WebsocketsSimple.Server
                     break;
             }
         }
-        protected override void OnMessageEvent(object sender, WSMessageServerEventArgs<IdentityWSServer<T>> args)
+        protected override void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<IdentityWSServer<T>> args)
         {
             var connection = _connectionManager.Get(args.Connection.ConnectionId);
 
             switch (args.MessageEventType)
             {
                 case MessageEventType.Sent:
-                    FireEvent(this, new WSMessageServerEventArgs<IdentityWSServer<T>>
+                    FireEvent(this, new WSMessageServerAuthEventArgs<T>
                     {
                         MessageEventType = MessageEventType.Sent,
                         Message = args.Message,
@@ -131,7 +131,7 @@ namespace WebsocketsSimple.Server
                     });
                     break;
                 case MessageEventType.Receive:
-                    FireEvent(this, new WSMessageServerEventArgs<IdentityWSServer<T>>
+                    FireEvent(this, new WSMessageServerAuthEventArgs<T>
                     {
                         MessageEventType = MessageEventType.Receive,
                         Message = args.Message,
@@ -143,10 +143,10 @@ namespace WebsocketsSimple.Server
                     break;
             }
         }
-        protected override void OnErrorEvent(object sender, WSErrorServerEventArgs<IdentityWSServer<T>> args)
+        protected override void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<IdentityWSServer<T>> args)
         {
             var connection = _connectionManager.Get(args.Connection.ConnectionId);
-            FireEvent(this, new WSErrorServerEventArgs<IdentityWSServer<T>>
+            FireEvent(this, new WSErrorServerAuthEventArgs<T>
             {
                 Exception = args.Exception,
                 Message = args.Message,
@@ -161,7 +161,7 @@ namespace WebsocketsSimple.Server
 
                 if (token.Value == null || !await _userService.IsValidTokenAsync(token.Value, _cancellationToken))
                 {
-                    var bytes = Encoding.UTF8.GetBytes("Invalid token");
+                    var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
                     await args.Connection.Stream.WriteAsync(bytes, _cancellationToken);
                     await _handler.DisconnectConnectionAsync(args.Connection, _cancellationToken);
                     return;

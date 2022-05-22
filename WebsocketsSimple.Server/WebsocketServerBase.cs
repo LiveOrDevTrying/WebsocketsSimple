@@ -129,7 +129,7 @@ namespace WebsocketsSimple.Server
             await _handler.DisconnectConnectionAsync(connection, cancellationToken);
         }
 
-        protected abstract void OnConnectionEvent(object sender, WSConnectionServerEventArgs<Z> args);
+        protected abstract void OnConnectionEvent(object sender, WSConnectionServerBaseEventArgs<Z> args);
         protected virtual void OnServerEvent(object sender, ServerEventArgs args)
         {
             switch (args.ServerEventType)
@@ -156,8 +156,8 @@ namespace WebsocketsSimple.Server
 
             FireEvent(sender, args);
         }
-        protected abstract void OnMessageEvent(object sender, WSMessageServerEventArgs<Z> args);
-        protected abstract void OnErrorEvent(object sender, WSErrorServerEventArgs<Z> args);
+        protected abstract void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<Z> args);
+        protected abstract void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<Z> args);
 
         protected virtual void OnTimerPingTick(object state)
         {
@@ -167,6 +167,7 @@ namespace WebsocketsSimple.Server
 
                 Task.Run(async () =>
                 {
+                    Console.WriteLine("Ping");
                     var ts = DateTime.UtcNow;
                     foreach (var connection in _connectionManager.GetPingedConnections())
                     {
@@ -183,6 +184,7 @@ namespace WebsocketsSimple.Server
                         await SendToConnectionAsync("Ping", connection, _cancellationToken);
                     }
 
+                    Console.WriteLine("Pinged");
                     _isPingRunning = false;
                 });
             }

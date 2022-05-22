@@ -8,8 +8,8 @@ namespace WebsocketsSimple.Client
 {
     public interface IWebsocketClient : ICoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>
     {
-        Task<bool> SendToServerAsync(string message, CancellationToken cancellationToken = default);
-        Task<bool> SendToServerAsync(byte[] message, CancellationToken cancellationToken = default);
+        Task<bool> SendAsync(string message, CancellationToken cancellationToken = default);
+        Task<bool> SendAsync(byte[] message, CancellationToken cancellationToken = default);
 
         Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
         Task<bool> DisconnectAsync(CancellationToken cancellationToken = default);

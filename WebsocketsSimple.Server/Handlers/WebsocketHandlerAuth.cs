@@ -39,12 +39,9 @@ namespace WebsocketsSimple.Server.Handlers
         {
             SetPathAndQueryStringForConnection(message, connection);
 
-            var token = connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token").Value;
-
             FireEvent(this, new WSAuthorizeEventArgs<T>
             {
                 Connection = connection,
-                Token = token,
                 UpgradeData = message,
                 RequestedSubprotocols = requestedSubprotocols
             });
