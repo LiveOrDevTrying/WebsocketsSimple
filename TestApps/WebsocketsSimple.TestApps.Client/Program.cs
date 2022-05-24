@@ -94,12 +94,10 @@ namespace WebsocketsSimple.TestApps.Client
                 Task.Run(async () => await client.ConnectAsync());
             }
         }
-
         private static void OnErrorEvent(object sender, WSErrorClientEventArgs args)
         {
             Console.WriteLine(args.Message);
         }
-
         private static void OnMessageEvent(object sender, WSMessageClientEventArgs args)
         {
             switch (args.MessageEventType)
@@ -107,13 +105,12 @@ namespace WebsocketsSimple.TestApps.Client
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    //Console.WriteLine(args.Message + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
+                    Console.WriteLine(args.Message + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
                     break;
                 default:
                     break;
             }
         }
-
         private static void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
             switch (args.ConnectionEventType)

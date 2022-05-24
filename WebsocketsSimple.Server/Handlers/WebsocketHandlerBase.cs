@@ -191,18 +191,17 @@ namespace WebsocketsSimple.Server.Handlers
                 while (connection.Client.Connected && !cancellationToken.IsCancellationRequested)
                 {
                     await Task.Delay(1, cancellationToken);
-
                     if (connection.Client.Available < 3)
                     {
                         continue;
                     }; // match against "get"
 
-                    var bytes = new byte[connection.Client.Available];
-
-                    await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
-
                     if (connection.Websocket == null)
                     {
+                        var bytes = new byte[connection.Client.Available];
+
+                        await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
+
                         var data = Encoding.UTF8.GetString(bytes);
 
                         if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
@@ -216,76 +215,20 @@ namespace WebsocketsSimple.Server.Handlers
                     }
                     else
                     {
-                        bool fin = (bytes[0] & 0b10000000) != 0,
-                            mask = (bytes[1] & 0b10000000) != 0; // must be true, "All messages from the client to the server have this bit set"
-
-                        int opcode = bytes[0] & 0b00001111, // expecting 1 - text message, 2 is for binary
-                            msglen = bytes[1] - 128, // & 0111 1111
-                            offset = 2;
-
-                        if (msglen == 126)
+                        WebSocketReceiveResult result = null;
+                        using (var ms = new MemoryStream())
                         {
-                            // was ToUInt16(bytes, offset) but the result is incorrect
-                            msglen = BitConverter.ToUInt16(new byte[] { bytes[3], bytes[2] }, 0);
-                            offset = 4;
-                        }
-                        else if (msglen == 127)
-                        {
-                            // i don't really know the byte order, please edit this
-                            // msglen = BitConverter.ToUInt64(new byte[] { bytes[5], bytes[4], bytes[3], bytes[2], bytes[9], bytes[8], bytes[7], bytes[6] }, 0);
-                            // offset = 10;
-                        }
-
-                        if (msglen > 0 && mask)
-                        {
-                            var decoded = new byte[msglen];
-                            var masks = new byte[4] { bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3] };
-                            offset += 4;
-
-                            for (int i = 0; i < msglen; ++i)
+                            do
                             {
-                                decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
-                            }
+                                var bytes = new byte[connection.Client.Available];
+                                result = await connection.Websocket.ReceiveAsync(new ArraySegment<byte>(bytes), cancellationToken);
+                                ms.Write(TrimEnd(bytes));
+                            } while (!result.EndOfMessage);
 
-                            if (opcode == 2)
+                            switch (result.MessageType)
                             {
-                                // This is binary
-                                FireEvent(this, new WSMessageServerBaseEventArgs<T>
-                                {
-                                    MessageEventType = MessageEventType.Receive,
-                                    Bytes = decoded,
-                                    Connection = connection
-                                });
-                            }
-                            else
-                            {
-                                var isDisconnect = false;
-                                byte[] selectedBytes = null;
-
-                                for (int i = 0; i < decoded.Length; i++)
-                                {
-                                    // This checks for a disconnect
-                                    if (decoded[i] == 0x03)
-                                    {
-                                        isDisconnect = true;
-
-                                        selectedBytes = new byte[i];
-                                        for (int j = 0; j < i; j++)
-                                        {
-                                            selectedBytes[j] = decoded[j];
-                                        }
-                                        break;
-                                    }
-                                }
-
-                                if (!isDisconnect)
-                                {
-                                    selectedBytes = decoded;
-                                }
-
-                                if (selectedBytes != null)
-                                {
-                                    var message = Encoding.UTF8.GetString(selectedBytes);
+                                case WebSocketMessageType.Text:
+                                    var message = Encoding.UTF8.GetString(ms.ToArray());
 
                                     if (!string.IsNullOrWhiteSpace(message))
                                     {
@@ -299,17 +242,25 @@ namespace WebsocketsSimple.Server.Handlers
                                             {
                                                 MessageEventType = MessageEventType.Receive,
                                                 Message = message,
-                                                Bytes = selectedBytes,
+                                                Bytes = ms.ToArray(),
                                                 Connection = connection
                                             });
                                         }
                                     }
-                                }
-
-                                if (isDisconnect)
-                                {
+                                    break;
+                                case WebSocketMessageType.Binary:
+                                    FireEvent(this, new WSMessageServerBaseEventArgs<T>
+                                    {
+                                        MessageEventType = MessageEventType.Receive,
+                                        Bytes = ms.ToArray(),
+                                        Connection = connection
+                                    });
+                                    break;
+                                case WebSocketMessageType.Close:
                                     await ReceiveDisconnectConnectionAsync(connection, cancellationToken);
-                                }
+                                    break;
+                                default:
+                                    break;
                             }
                         }
                     }
@@ -556,7 +507,14 @@ namespace WebsocketsSimple.Server.Handlers
                 }
             }
         }
+        protected virtual byte[] TrimEnd(byte[] array)
+        {
+            int lastIndex = Array.FindLastIndex(array, b => b != 0);
 
+            Array.Resize(ref array, lastIndex + 1);
+
+            return array;
+        }
         protected virtual void FireEvent(object sender, ServerEventArgs args)
         {
             _serverEvent?.Invoke(sender, args);

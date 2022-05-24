@@ -7,6 +7,6 @@
         public string[] AvailableSubprotocols { get; set; }
 
         public int PingIntervalSec { get; set; } = 15;
-        public int MaxPingAttempts { get; set; } = 5;
+        public int MaxPingAttempts { get; set; } = 1;
     }
 }

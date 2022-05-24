@@ -261,51 +261,59 @@ namespace WebsocketsSimple.Client.Models
         {
             try
             {
-                var buffer = new byte[_parameters.ReceiveBufferSize];
 
                 var isRunning = true;
 
                 while (isRunning && !cancellationToken.IsCancellationRequested)
                 {
-                    var result = await _connection.Websocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
-
-                    switch (result.MessageType)
+                    WebSocketReceiveResult result = null;
+                    using (var ms = new MemoryStream())
                     {
-                        case WebSocketMessageType.Text:
-                            var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        do
+                        {
+                            var buffer = new ArraySegment<byte>(new byte[_parameters.ReceiveBufferSize]);
+                            result = await _connection.Websocket.ReceiveAsync(buffer, cancellationToken);
+                            await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
+                        } while (!result.EndOfMessage);
 
-                            if (!string.IsNullOrWhiteSpace(message))
-                            {
-                                if (message.Trim().ToLower() == "ping")
+                        switch (result.MessageType)
+                        {
+                            case WebSocketMessageType.Text:
+                                var message = Encoding.UTF8.GetString(ms.ToArray(), 0, result.Count);
+
+                                if (!string.IsNullOrWhiteSpace(message))
                                 {
-                                    await SendAsync("pong", cancellationToken);
-                                }
-                                else
-                                {
-                                    FireEvent(this, new WSMessageClientEventArgs
+                                    if (message.Trim().ToLower() == "ping")
                                     {
-                                        Bytes = buffer,
-                                        Message = message,
-                                        Connection = _connection,
-                                        MessageEventType = MessageEventType.Receive
-                                    });
+                                        await SendAsync("pong", cancellationToken);
+                                    }
+                                    else
+                                    {
+                                        FireEvent(this, new WSMessageClientEventArgs
+                                        {
+                                            Bytes = ms.ToArray(),
+                                            Message = message,
+                                            Connection = _connection,
+                                            MessageEventType = MessageEventType.Receive
+                                        });
+                                    }
                                 }
-                            }
-                            break;
-                        case WebSocketMessageType.Binary:
-                            FireEvent(this, new WSMessageClientEventArgs
-                            {
-                                Bytes = buffer,
-                                Connection = _connection,
-                                MessageEventType = MessageEventType.Receive
-                            });
-                            break;
-                        case WebSocketMessageType.Close:
-                            await DisconnectReceived(cancellationToken);
-                            isRunning = false;
-                            break;
-                        default:
-                            break;
+                                break;
+                            case WebSocketMessageType.Binary:
+                                FireEvent(this, new WSMessageClientEventArgs
+                                {
+                                    Bytes = ms.ToArray(),
+                                    Connection = _connection,
+                                    MessageEventType = MessageEventType.Receive
+                                });
+                                break;
+                            case WebSocketMessageType.Close:
+                                await DisconnectReceived(cancellationToken);
+                                isRunning = false;
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }

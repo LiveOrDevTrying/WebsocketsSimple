@@ -46,7 +46,7 @@ namespace WebsocketsSimple.TestApps.Server
 
         private static void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<Guid> args)
         {
-            Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
+            //Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
         }
 
         private static void OnServerEvent(object sender, ServerEventArgs args)
