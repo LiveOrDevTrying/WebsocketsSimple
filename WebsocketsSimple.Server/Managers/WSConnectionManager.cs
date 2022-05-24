@@ -46,26 +46,18 @@ namespace WebsocketsSimple.Server.Managers
             return _connections.Skip(0).Count();
         }
 
-        public virtual IEnumerable<T> GetPingedConnections()
+        public virtual IEnumerable<T> GetPingedConnections(int maxPingAttempts)
         {
             return _connections
                 .Select(x => x.Value)
-                .Where(x => x.HasBeenPinged);
+                .Where(x => x.PingAttempts >= maxPingAttempts);
         }
-        public virtual IEnumerable<T> GetPingableConnections(int maxNumberOfConnectionsToReturn)
+        public virtual IEnumerable<T> GetPingableConnections(int maxPingAttempts)
         {
             var ts = DateTime.UtcNow;
-            var query = _connections
+            return _connections
                 .Select(x => x.Value)
-                .Where(x => !x.HasBeenPinged && ts >= x.NextPingTime)
-                .OrderBy(x => x.NextPingTime);
-
-            if (maxNumberOfConnectionsToReturn > 0)
-            {
-                return query.Take(maxNumberOfConnectionsToReturn);
-            }
-
-            return query;
+                .Where(x => x.Websocket != null && x.PingAttempts < maxPingAttempts);
         }
     }
 }

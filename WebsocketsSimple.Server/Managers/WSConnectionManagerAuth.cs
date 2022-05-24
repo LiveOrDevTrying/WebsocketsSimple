@@ -33,12 +33,27 @@ namespace WebsocketsSimple.Server.Managers
 
             try
             {
+                T userToRemove = default;
+                bool removeUser = false;
                 foreach (var user in _users)
                 {
                     if (user.Value.Remove(id))
                     {
+                        if (user.Value.Count() == 0)
+                        {
+                            userToRemove = user.Key;
+                            removeUser = true;
+                            break;
+                        }
+
                         return true;
                     }
+                }
+
+                if (removeUser)
+                {
+                    _users.TryRemove(userToRemove, out var _);
+                    return true;
                 }
             }
             catch

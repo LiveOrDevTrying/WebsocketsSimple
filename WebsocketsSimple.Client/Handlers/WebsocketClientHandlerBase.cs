@@ -120,19 +120,48 @@ namespace WebsocketsSimple.Client.Models
         {
             try
             {
-                if (_connection != null && !cancellationToken.IsCancellationRequested)
+                if (!cancellationToken.IsCancellationRequested && 
+                    _connection != null && 
+                    _connection.Websocket != null && 
+                        (_connection.Websocket.State == WebSocketState.Open ||
+                        _connection.Websocket.State == WebSocketState.CloseReceived ||
+                        _connection.Websocket.State == WebSocketState.CloseSent))
                 {
-                    if (_connection.Websocket != null &&
-                        _connection.Websocket.State == WebSocketState.Open)
-                    {
-                        await _connection.Websocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", cancellationToken);
-                    }
+                    await _connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnect", cancellationToken);
 
-                    if (_connection.Client.Connected)
+                    FireEvent(this, new WSConnectionClientEventArgs
                     {
-                        _connection.Client.Close();
-                        _connection.Client.Dispose();
-                    }
+                        ConnectionEventType = ConnectionEventType.Disconnect,
+                        Connection = _connection
+                    });
+
+                    _connection = null;
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                FireEvent(this, new WSErrorClientEventArgs
+                {
+                    Exception = ex,
+                    Message = "Error in DisconnectAsync()",
+                    Connection = _connection
+                });
+            }
+
+            return false;
+        }
+        protected virtual async Task<bool> DisconnectReceived(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!cancellationToken.IsCancellationRequested &&
+                    _connection != null &&
+                    _connection.Websocket != null &&
+                    _connection.Websocket.State == WebSocketState.CloseReceived)
+                {
+                    await _connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnect", cancellationToken);
 
                     FireEvent(this, new WSConnectionClientEventArgs
                     {
@@ -272,7 +301,7 @@ namespace WebsocketsSimple.Client.Models
                             });
                             break;
                         case WebSocketMessageType.Close:
-                            await DisconnectAsync(cancellationToken);
+                            await DisconnectReceived(cancellationToken);
                             isRunning = false;
                             break;
                         default:

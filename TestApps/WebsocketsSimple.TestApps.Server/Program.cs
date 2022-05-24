@@ -13,7 +13,7 @@ namespace WebsocketsSimple.TestApps.Server
         private static WebsocketServerAuth<Guid> _authServer;
         private static WebsocketServer _server;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth
             {
@@ -31,6 +31,11 @@ namespace WebsocketsSimple.TestApps.Server
             while (true)
             {
                 Console.ReadLine();
+
+                foreach (var item in _authServer.Connections)
+                {
+                    await _authServer.DisconnectConnectionAsync(item);
+                }
             }
         }
 

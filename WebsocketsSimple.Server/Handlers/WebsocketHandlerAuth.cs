@@ -28,11 +28,9 @@ namespace WebsocketsSimple.Server.Handlers
         {
             return new IdentityWSServer<T>
             {
-                Websocket = WebSocket.CreateFromStream(stream, true, null, WebSocket.DefaultKeepAliveInterval),
                 ConnectionId = Guid.NewGuid().ToString(),
                 Stream = stream,
-                Client = client,
-                NextPingTime = DateTime.UtcNow + TimeSpan.FromSeconds(_parameters.PingIntervalSec)
+                Client = client
             };
         }
         protected override Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, IdentityWSServer<T> connection, CancellationToken cancellationToken)

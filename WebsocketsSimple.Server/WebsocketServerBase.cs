@@ -154,7 +154,7 @@ namespace WebsocketsSimple.Server
                     break;
             }
 
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
         protected abstract void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<Z> args);
         protected abstract void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<Z> args);
@@ -169,7 +169,7 @@ namespace WebsocketsSimple.Server
                 {
                     Console.WriteLine("Ping");
                     var ts = DateTime.UtcNow;
-                    foreach (var connection in _connectionManager.GetPingedConnections())
+                    foreach (var connection in _connectionManager.GetPingedConnections(_parameters.MaxPingAttempts))
                     {
                         // Already been pinged, no response, disconnect
                         await SendToConnectionAsync("No ping response - disconnected.", connection, _cancellationToken);
@@ -177,14 +177,13 @@ namespace WebsocketsSimple.Server
                         await DisconnectConnectionAsync(connection, _cancellationToken);
                     }
 
-                    foreach (var connection in _connectionManager.GetPingableConnections(_parameters.MaxConnectionsPingedPerInterval))
+                    foreach (var connection in _connectionManager.GetPingableConnections(_parameters.MaxPingAttempts))
                     {
-                        connection.HasBeenPinged = true;
-                        connection.NextPingTime = ts + TimeSpan.FromSeconds(_parameters.PingIntervalSec); 
-                        await SendToConnectionAsync("Ping", connection, _cancellationToken);
+                        connection.PingAttempts++;
+                        await SendToConnectionAsync("ping", connection, _cancellationToken);
                     }
 
-                    Console.WriteLine("Pinged");
+                    Console.WriteLine("Pong");
                     _isPingRunning = false;
                 });
             }

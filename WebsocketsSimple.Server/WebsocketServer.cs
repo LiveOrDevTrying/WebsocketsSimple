@@ -68,7 +68,7 @@ namespace WebsocketsSimple.Server
         }
         protected override void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<ConnectionWSServer> args)
         {
-            FireEvent(sender, new WSMessageServerEventArgs
+            FireEvent(this, new WSMessageServerEventArgs
             {
                 Bytes = args.Bytes,
                 Connection = args.Connection,

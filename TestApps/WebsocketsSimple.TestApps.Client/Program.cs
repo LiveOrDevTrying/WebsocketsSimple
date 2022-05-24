@@ -22,7 +22,7 @@ namespace WebsocketsSimple.TestApps.Client
             return 60000 / numberUsers;
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("Enter numbers of users per minute:");
             var line = Console.ReadLine();
@@ -52,7 +52,19 @@ namespace WebsocketsSimple.TestApps.Client
             {
                 line = Console.ReadLine();
 
-                Task.Run(async () => await _clients.Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line));
+                if (line == "restart")
+                {
+                    var clients = _clients.ToList();
+                    _clients = new List<IWebsocketClient>();
+                    foreach (var item in clients)
+                    {
+                        await item.DisconnectAsync();
+                    }
+                }
+                else
+                {
+                    await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
+                }
             }
         }
 
@@ -68,7 +80,7 @@ namespace WebsocketsSimple.TestApps.Client
                     Path = "newPath",
                     QueryStringParameters = new KeyValuePair<string, string>[]
                     {
-            new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
+                        new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
                     },
                     RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
                     RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
@@ -95,7 +107,7 @@ namespace WebsocketsSimple.TestApps.Client
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.Message + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
+                    //Console.WriteLine(args.Message + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
                     break;
                 default:
                     break;
@@ -104,6 +116,16 @@ namespace WebsocketsSimple.TestApps.Client
 
         private static void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
+            switch (args.ConnectionEventType)
+            {
+                case ConnectionEventType.Connected:
+                    break;
+                case ConnectionEventType.Disconnect:
+                    _clients.Remove((IWebsocketClient)sender);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

@@ -37,15 +37,15 @@ namespace WebsocketsSimple.Client
 
         protected override void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
         protected override void OnMessageEvent(object sender, WSMessageClientEventArgs args)
         {
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
         protected override void OnErrorEvent(object sender, WSErrorClientEventArgs args)
         {
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
 
         protected override WebsocketClientHandler CreateWebsocketHandler()

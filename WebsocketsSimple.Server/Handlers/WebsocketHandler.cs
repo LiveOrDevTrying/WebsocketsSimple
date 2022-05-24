@@ -37,11 +37,9 @@ namespace WebsocketsSimple.Server.Handlers
         {
             return new ConnectionWSServer
             {
-                Websocket = WebSocket.CreateFromStream(stream, true, null, WebSocket.DefaultKeepAliveInterval),
                 ConnectionId = Guid.NewGuid().ToString(),
                 Stream = stream,
-                Client = client,
-                NextPingTime = DateTime.UtcNow + TimeSpan.FromSeconds(_parameters.PingIntervalSec)
+                Client = client
             };
         }
     }

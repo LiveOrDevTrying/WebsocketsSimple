@@ -95,7 +95,8 @@ namespace WebsocketsSimple.Server
             switch (args.ConnectionEventType)
             {
                 case ConnectionEventType.Connected:
-                        
+                    _connectionManager.Add(args.Connection);
+
                     FireEvent(this, new WSConnectionServerAuthEventArgs<T>
                     {
                         ConnectionEventType = ConnectionEventType.Connected,
@@ -117,8 +118,6 @@ namespace WebsocketsSimple.Server
         }
         protected override void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<IdentityWSServer<T>> args)
         {
-            var connection = _connectionManager.Get(args.Connection.ConnectionId);
-
             switch (args.MessageEventType)
             {
                 case MessageEventType.Sent:
@@ -127,7 +126,7 @@ namespace WebsocketsSimple.Server
                         MessageEventType = MessageEventType.Sent,
                         Message = args.Message,
                         Bytes = args.Bytes,
-                        Connection = connection,
+                        Connection = args.Connection,
                     });
                     break;
                 case MessageEventType.Receive:
@@ -136,7 +135,7 @@ namespace WebsocketsSimple.Server
                         MessageEventType = MessageEventType.Receive,
                         Message = args.Message,
                         Bytes = args.Bytes,
-                        Connection = connection,
+                        Connection = args.Connection,
                     });
                     break;
                 default:
@@ -145,12 +144,11 @@ namespace WebsocketsSimple.Server
         }
         protected override void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<IdentityWSServer<T>> args)
         {
-            var connection = _connectionManager.Get(args.Connection.ConnectionId);
             FireEvent(this, new WSErrorServerAuthEventArgs<T>
             {
                 Exception = args.Exception,
                 Message = args.Message,
-                Connection = connection
+                Connection = args.Connection
             });
         }
         protected virtual void OnAuthorizeEvent(object sender, WSAuthorizeEventArgs<T> args)
@@ -163,13 +161,11 @@ namespace WebsocketsSimple.Server
                 {
                     var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
                     await args.Connection.Stream.WriteAsync(bytes, _cancellationToken);
-                    await _handler.DisconnectConnectionAsync(args.Connection, _cancellationToken);
+                    await DisconnectConnectionAsync(args.Connection, _cancellationToken);
                     return;
                 }
 
-                var userId = await _userService.GetIdAsync(token.Value, _cancellationToken);
-
-                _connectionManager.Add(args.Connection);
+                args.Connection.UserId = await _userService.GetIdAsync(token.Value, _cancellationToken);
 
                 await _handler.UpgradeConnectionCallbackAsync(args, _cancellationToken);
             }, _cancellationToken);
