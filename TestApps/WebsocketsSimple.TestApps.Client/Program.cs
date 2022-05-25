@@ -1,6 +1,8 @@
 ﻿using PHS.Networking.Enums;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Client;
 using WebsocketsSimple.Client.Events.Args;
@@ -11,39 +13,91 @@ namespace WebsocketsSimple.TestApps.Client
 {
     class Program
     {
-        private static IWebsocketClient _client;
+        private static List<IWebsocketClient> _clients = new List<IWebsocketClient>();
+        private static Timer _timer;
+        private static int _max;
+
+        static int CalculateNumberOfUsersPerMinute(int numberUsers)
+        {
+            return 60000 / numberUsers;
+        }
 
         static async Task Main(string[] args)
         {
+            Console.WriteLine("Enter numbers of users per minute:");
+            var line = Console.ReadLine();
+            var numberUsers = 0;
+            while (!int.TryParse(line, out numberUsers))
+            {
+                Console.WriteLine("Invalid. Input an int:");
+                line = Console.ReadLine();
+            }
+
+            Console.WriteLine("Enter max number of users:");
+            line = Console.ReadLine();
+            _max = 0;
+            while (!int.TryParse(line, out _max))
+            {
+                Console.WriteLine("Invalid. Input an int:");
+                line = Console.ReadLine();
+            }
+
             Console.WriteLine("Push any key to start");
 
             Console.ReadLine();
 
-            _client = new WebsocketClient(new ParamsWSClient
-            {
-                IsWebsocketSecured = false,
-                Port = 65214,
-                Host = "localhost",
-                RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
-                RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
-                KeepAliveInterval = TimeSpan.FromSeconds(5)
-            }, token: "Test");
-            _client.ConnectionEvent += OnConnectionEvent;
-            _client.MessageEvent += OnMessageEvent;
-            _client.ErrorEvent += OnErrorEvent;
-            await _client.ConnectAsync();
+            _timer = new Timer(OnTimerTick, null, 0, CalculateNumberOfUsersPerMinute(numberUsers));
 
-            while (true)
+            while(true)
             {
-                await _client.SendToServerAsync(Console.ReadLine());
+                line = Console.ReadLine();
+
+                if (line == "restart")
+                {
+                    var clients = _clients.ToList();
+                    _clients = new List<IWebsocketClient>();
+                    foreach (var item in clients)
+                    {
+                        await item.DisconnectAsync();
+                    }
+                }
+                else
+                {
+                    await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
+                }
             }
         }
 
+        private static void OnTimerTick(object state)
+        {
+            if (_clients.Count < _max)
+            {
+                var client = new WebsocketClient(new ParamsWSClient
+                {
+                    IsWebsocketSecured = false,
+                    Port = 65214,
+                    Host = "localhost",
+                    Path = "newPath",
+                    QueryStringParameters = new KeyValuePair<string, string>[]
+                    {
+                        new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
+                    },
+                    RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
+                    RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
+                    KeepAliveInterval = TimeSpan.FromSeconds(5)
+                }, "testToken");
+                client.ConnectionEvent += OnConnectionEvent;
+                client.MessageEvent += OnMessageEvent;
+                client.ErrorEvent += OnErrorEvent;
+                _clients.Add(client);
+
+                Task.Run(async () => await client.ConnectAsync());
+            }
+        }
         private static void OnErrorEvent(object sender, WSErrorClientEventArgs args)
         {
             Console.WriteLine(args.Message);
         }
-
         private static void OnMessageEvent(object sender, WSMessageClientEventArgs args)
         {
             switch (args.MessageEventType)
@@ -51,16 +105,24 @@ namespace WebsocketsSimple.TestApps.Client
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.Message);
+                    Console.WriteLine(args.Message + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
                     break;
                 default:
                     break;
             }
         }
-
         private static void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
-            Console.WriteLine(args.ConnectionEventType.ToString());
+            switch (args.ConnectionEventType)
+            {
+                case ConnectionEventType.Connected:
+                    break;
+                case ConnectionEventType.Disconnect:
+                    _clients.Remove((IWebsocketClient)sender);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

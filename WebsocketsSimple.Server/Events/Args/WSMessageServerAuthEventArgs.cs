@@ -1,7 +1,8 @@
-﻿namespace WebsocketsSimple.Server.Events.Args
+﻿using WebsocketsSimple.Server.Models;
+
+namespace WebsocketsSimple.Server.Events.Args
 {
-    public class WSMessageServerAuthEventArgs<T> : WSMessageServerEventArgs
+    public class WSMessageServerAuthEventArgs<T> : WSMessageServerBaseEventArgs<IdentityWSServer<T>>
     {
-        public T UserId { get; set; }
     }
 }
