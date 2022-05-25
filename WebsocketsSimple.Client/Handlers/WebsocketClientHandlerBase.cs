@@ -152,40 +152,6 @@ namespace WebsocketsSimple.Client.Models
 
             return false;
         }
-        protected virtual async Task<bool> DisconnectReceived(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                if (!cancellationToken.IsCancellationRequested &&
-                    _connection != null &&
-                    _connection.Websocket != null &&
-                    _connection.Websocket.State == WebSocketState.CloseReceived)
-                {
-                    await _connection.Websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnect", cancellationToken);
-
-                    FireEvent(this, new WSConnectionClientEventArgs
-                    {
-                        ConnectionEventType = ConnectionEventType.Disconnect,
-                        Connection = _connection
-                    });
-
-                    _connection = null;
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                FireEvent(this, new WSErrorClientEventArgs
-                {
-                    Exception = ex,
-                    Message = "Error in DisconnectAsync()",
-                    Connection = _connection
-                });
-            }
-
-            return false;
-        }
 
         public virtual async Task<bool> SendAsync(string message, CancellationToken cancellationToken = default)
         {
@@ -261,20 +227,26 @@ namespace WebsocketsSimple.Client.Models
         {
             try
             {
-
                 var isRunning = true;
 
-                while (isRunning && !cancellationToken.IsCancellationRequested)
+                while (isRunning && !cancellationToken.IsCancellationRequested && _connection != null)
                 {
+                    await Task.Delay(1, cancellationToken);
+
+                    if (_connection.Client.Available <= 0)
+                    {
+                        continue;
+                    };
+
                     WebSocketReceiveResult result = null;
                     using (var ms = new MemoryStream())
                     {
                         do
                         {
-                            var buffer = new ArraySegment<byte>(new byte[_parameters.ReceiveBufferSize]);
+                            var buffer = WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize);
                             result = await _connection.Websocket.ReceiveAsync(buffer, cancellationToken);
                             await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
-                        } while (!result.EndOfMessage);
+                        } while (!result.EndOfMessage && _connection.Client.Connected && _connection.Websocket.State == WebSocketState.Open);
 
                         switch (result.MessageType)
                         {
@@ -283,20 +255,13 @@ namespace WebsocketsSimple.Client.Models
 
                                 if (!string.IsNullOrWhiteSpace(message))
                                 {
-                                    if (message.Trim().ToLower() == "ping")
+                                    FireEvent(this, new WSMessageClientEventArgs
                                     {
-                                        await SendAsync("pong", cancellationToken);
-                                    }
-                                    else
-                                    {
-                                        FireEvent(this, new WSMessageClientEventArgs
-                                        {
-                                            Bytes = ms.ToArray(),
-                                            Message = message,
-                                            Connection = _connection,
-                                            MessageEventType = MessageEventType.Receive
-                                        });
-                                    }
+                                        Bytes = ms.ToArray(),
+                                        Message = message,
+                                        Connection = _connection,
+                                        MessageEventType = MessageEventType.Receive
+                                    });
                                 }
                                 break;
                             case WebSocketMessageType.Binary:
@@ -308,7 +273,7 @@ namespace WebsocketsSimple.Client.Models
                                 });
                                 break;
                             case WebSocketMessageType.Close:
-                                await DisconnectReceived(cancellationToken);
+                                await DisconnectAsync(cancellationToken);
                                 isRunning = false;
                                 break;
                             default:

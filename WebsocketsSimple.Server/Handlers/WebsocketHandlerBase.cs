@@ -190,14 +190,15 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 while (connection.Client.Connected && !cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(1, cancellationToken);
-                    if (connection.Client.Available < 3)
-                    {
-                        continue;
-                    }; // match against "get"
-
                     if (connection.Websocket == null)
                     {
+                        await Task.Delay(1, cancellationToken);
+
+                        if (connection.Client.Available < 3)
+                        {
+                            continue;
+                        }; // match against "get"
+
                         var bytes = new byte[connection.Client.Available];
 
                         await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken);
@@ -215,15 +216,28 @@ namespace WebsocketsSimple.Server.Handlers
                     }
                     else
                     {
+                        await Task.Delay(1, cancellationToken);
+
+                        if (connection.Client.Available <= 0)
+                        {
+                            continue;
+                        };
+
                         WebSocketReceiveResult result = null;
                         using (var ms = new MemoryStream())
                         {
                             do
                             {
-                                var bytes = new byte[connection.Client.Available];
-                                result = await connection.Websocket.ReceiveAsync(new ArraySegment<byte>(bytes), cancellationToken);
-                                ms.Write(TrimEnd(bytes));
-                            } while (!result.EndOfMessage);
+                                if (connection.Client.Available <= 0)
+                                {
+                                    continue;
+                                }
+
+                                var buffer = WebSocket.CreateServerBuffer(connection.Client.Available);
+                                result = await connection.Websocket.ReceiveAsync(buffer, cancellationToken);
+                                await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count);
+                            }
+                            while (!result.EndOfMessage && connection.Client.Connected && connection.Websocket.State == WebSocketState.Open);
 
                             switch (result.MessageType)
                             {
@@ -232,20 +246,13 @@ namespace WebsocketsSimple.Server.Handlers
 
                                     if (!string.IsNullOrWhiteSpace(message))
                                     {
-                                        if (message.Trim().ToLower() == "pong")
+                                        FireEvent(this, new WSMessageServerBaseEventArgs<T>
                                         {
-                                            connection.PingAttempts = 0;
-                                        }
-                                        else
-                                        {
-                                            FireEvent(this, new WSMessageServerBaseEventArgs<T>
-                                            {
-                                                MessageEventType = MessageEventType.Receive,
-                                                Message = message,
-                                                Bytes = ms.ToArray(),
-                                                Connection = connection
-                                            });
-                                        }
+                                            MessageEventType = MessageEventType.Receive,
+                                            Message = message,
+                                            Bytes = ms.ToArray(),
+                                            Connection = connection
+                                        });
                                     }
                                     break;
                                 case WebSocketMessageType.Binary:
@@ -266,8 +273,15 @@ namespace WebsocketsSimple.Server.Handlers
                     }
                 }
             }
-            catch
-            { }
+            catch (Exception ex)
+            {
+                FireEvent(this, new WSErrorServerBaseEventArgs<T>
+                {
+                    Exception = ex,
+                    Message = ex.Message,
+                    Connection = connection,
+                });
+            }
 
             FireEvent(this, new WSConnectionServerBaseEventArgs<T>
             {
@@ -305,7 +319,7 @@ namespace WebsocketsSimple.Server.Handlers
             var swkaSha1Base64 = Convert.ToBase64String(swkaSha1);
 
             var subProtocol = requestedSubprotocols.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray().Length > 0 ? $"{requestedSubprotocols[0]}" : null;
-            connection.Websocket = WebSocket.CreateFromStream(connection.Stream, true, subProtocol, WebSocket.DefaultKeepAliveInterval);
+            connection.Websocket = WebSocket.CreateFromStream(connection.Stream, true, subProtocol, TimeSpan.FromSeconds(_parameters.PingIntervalSec));
 
             // HTTP/1.1 defines the sequence CR LF as the end-of-line marker
             var response = Encoding.UTF8.GetBytes(

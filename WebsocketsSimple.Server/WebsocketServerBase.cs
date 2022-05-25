@@ -29,7 +29,6 @@ namespace WebsocketsSimple.Server
         protected readonly X _handler;
         protected readonly W _parameters;
         protected readonly Y _connectionManager;
-        protected Timer _timerPing;
         protected volatile bool _isPingRunning;
         protected CancellationToken _cancellationToken;
 
@@ -132,62 +131,10 @@ namespace WebsocketsSimple.Server
         protected abstract void OnConnectionEvent(object sender, WSConnectionServerBaseEventArgs<Z> args);
         protected virtual void OnServerEvent(object sender, ServerEventArgs args)
         {
-            switch (args.ServerEventType)
-            {
-                case ServerEventType.Start:
-                    if (_timerPing != null)
-                    {
-                        _timerPing.Dispose();
-                        _timerPing = null;
-                    }
-
-                    _timerPing = new Timer(OnTimerPingTick, null, _parameters.PingIntervalSec * 1000, _parameters.PingIntervalSec * 1000);
-                    break;
-                case ServerEventType.Stop:
-                    if (_timerPing != null)
-                    {
-                        _timerPing.Dispose();
-                        _timerPing = null;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
             FireEvent(this, args);
         }
         protected abstract void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<Z> args);
         protected abstract void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<Z> args);
-
-        protected virtual void OnTimerPingTick(object state)
-        {
-            if (!_isPingRunning)
-            {
-                _isPingRunning = true;
-
-                Task.Run(async () =>
-                {
-                    Console.WriteLine("Ping");
-                    var ts = DateTime.UtcNow;
-                    foreach (var connection in _connectionManager.GetPingedConnections(_parameters.MaxPingAttempts))
-                    {
-                        // Already been pinged, no response, disconnect
-                        await SendToConnectionAsync("No ping response - disconnected.", connection, _cancellationToken);
-
-                        await DisconnectConnectionAsync(connection, _cancellationToken);
-                    }
-
-                    foreach (var connection in _connectionManager.GetPingableConnections(_parameters.MaxPingAttempts))
-                    {
-                        connection.PingAttempts++;
-                        await SendToConnectionAsync("ping", connection, _cancellationToken);
-                    }
-
-                    Console.WriteLine("Pong");
-                    _isPingRunning = false;
-                });
-            }
-        }
 
         protected abstract X CreateWebsocketHandler(byte[] certificate = null, string certificatePassword = null);
         protected abstract Y CreateWSConnectionManager();
@@ -213,11 +160,6 @@ namespace WebsocketsSimple.Server
                 _handler.Dispose();
             }
 
-            if (_timerPing != null)
-            {
-                _timerPing.Dispose();
-                _timerPing = null;
-            }
             base.Dispose();
         }
 

@@ -96,51 +96,29 @@ namespace WebsocketsSimple.Server
             {
                 case ConnectionEventType.Connected:
                     _connectionManager.Add(args.Connection);
-
-                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        ConnectionEventType = ConnectionEventType.Connected,
-                        Connection = connection,
-                    });
                     break;
                 case ConnectionEventType.Disconnect:
                     _connectionManager.Remove(args.Connection.ConnectionId);
-
-                    FireEvent(this, new WSConnectionServerAuthEventArgs<T>
-                    {
-                        Connection = connection,
-                        ConnectionEventType = args.ConnectionEventType,
-                    });
                     break;
                 default:
                     break;
             }
+
+            FireEvent(this, new WSConnectionServerAuthEventArgs<T>
+            {
+                ConnectionEventType = args.ConnectionEventType,
+                Connection = connection,
+            });
         }
         protected override void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<IdentityWSServer<T>> args)
         {
-            switch (args.MessageEventType)
+            FireEvent(this, new WSMessageServerAuthEventArgs<T>
             {
-                case MessageEventType.Sent:
-                    FireEvent(this, new WSMessageServerAuthEventArgs<T>
-                    {
-                        MessageEventType = MessageEventType.Sent,
-                        Message = args.Message,
-                        Bytes = args.Bytes,
-                        Connection = args.Connection,
-                    });
-                    break;
-                case MessageEventType.Receive:
-                    FireEvent(this, new WSMessageServerAuthEventArgs<T>
-                    {
-                        MessageEventType = MessageEventType.Receive,
-                        Message = args.Message,
-                        Bytes = args.Bytes,
-                        Connection = args.Connection,
-                    });
-                    break;
-                default:
-                    break;
-            }
+                MessageEventType = args.MessageEventType,
+                Message = args.Message,
+                Bytes = args.Bytes,
+                Connection = args.Connection,
+            });
         }
         protected override void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<IdentityWSServer<T>> args)
         {
