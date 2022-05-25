@@ -11,14 +11,15 @@ namespace WebsocketsSimple.TestApps.Server
     class Program
     {
         private static WebsocketServerAuth<Guid> _authServer;
+        private static WebsocketServer _server;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth
             {
                 ConnectionSuccessString = "Connected Successfully",
+                ConnectionUnauthorizedString = "Unauthorized",
                 Port = 65214,
-                ConnectionUnauthorizedString = "Not authorized",
                 AvailableSubprotocols = new string[] { "testProtocol", "test2", "test3", "another" }
             }, new MockUserService());
             _authServer.MessageEvent += OnMessageEvent;
@@ -30,6 +31,11 @@ namespace WebsocketsSimple.TestApps.Server
             while (true)
             {
                 Console.ReadLine();
+
+                foreach (var item in _authServer.Connections)
+                {
+                    await _authServer.DisconnectConnectionAsync(item);
+                }
             }
         }
 
@@ -40,7 +46,7 @@ namespace WebsocketsSimple.TestApps.Server
 
         private static void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<Guid> args)
         {
-            Console.WriteLine(args.ConnectionEventType);
+            //Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
         }
 
         private static void OnServerEvent(object sender, ServerEventArgs args)
@@ -57,10 +63,11 @@ namespace WebsocketsSimple.TestApps.Server
                 case MessageEventType.Receive:
                     Console.WriteLine(args.MessageEventType + ": " + args.Message);
 
+
                     Task.Run(async () =>
                     {
-                        await _authServer.SendToConnectionAsync(args.Message, args.Connection);
-
+                        Console.WriteLine("Connections: " + _authServer.ConnectionCount);
+                        await _authServer.BroadcastToAllConnectionsAsync(args.Message, args.Connection);
                     });
                     break;
                 default:
