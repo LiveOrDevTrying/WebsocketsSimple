@@ -1,17 +1,16 @@
-﻿using System;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Services;
 using PHS.Networking.Events;
-using PHS.Networking.Server.Enums;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Handlers;
 using WebsocketsSimple.Server.Models;
 using WebsocketsSimple.Server.Managers;
 using System.Collections.Generic;
 using WebsocketsSimple.Core.Events.Args;
+using System.Net.WebSockets;
 
 namespace WebsocketsSimple.Server
 {
@@ -77,7 +76,7 @@ namespace WebsocketsSimple.Server
                 {
                     if (connectionSending == null || connection.ConnectionId != connectionSending.ConnectionId)
                     {
-                        await SendToConnectionAsync(message, connection, cancellationToken);
+                        await SendToConnectionAsync(message, connection, cancellationToken).ConfigureAwait(false);
                     }
                 }
 
@@ -94,7 +93,7 @@ namespace WebsocketsSimple.Server
                 {
                     if (connectionSending == null || connection.ConnectionId != connectionSending.ConnectionId)
                     {
-                        await SendToConnectionAsync(message, connection, cancellationToken);
+                        await SendToConnectionAsync(message, connection, cancellationToken).ConfigureAwait(false);
                     }
                 }
 
@@ -108,7 +107,7 @@ namespace WebsocketsSimple.Server
         {
             if (IsServerRunning)
             {
-                return await _handler.SendAsync(message, connection, cancellationToken);
+                return await _handler.SendAsync(message, connection, cancellationToken).ConfigureAwait(false);
             }
             
             return false;
@@ -117,15 +116,18 @@ namespace WebsocketsSimple.Server
         {
             if (IsServerRunning)
             {
-                return await _handler.SendAsync(message, connection, cancellationToken);
+                return await _handler.SendAsync(message, connection, cancellationToken).ConfigureAwait(false);
             }
             
             return false;
         }
 
-        public virtual async Task DisconnectConnectionAsync(Z connection, CancellationToken cancellationToken = default)
+        public virtual async Task DisconnectConnectionAsync(Z connection,
+            WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
+            string statusDescription = "Disconnect",
+            CancellationToken cancellationToken = default)
         {
-            await _handler.DisconnectConnectionAsync(connection, cancellationToken);
+            await _handler.DisconnectConnectionAsync(connection, webSocketCloseStatus, statusDescription, cancellationToken).ConfigureAwait(false);
         }
 
         protected abstract void OnConnectionEvent(object sender, WSConnectionServerBaseEventArgs<Z> args);

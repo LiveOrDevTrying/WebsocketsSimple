@@ -48,7 +48,7 @@ namespace WebsocketsSimple.Server.Handlers
         }
         public virtual async Task UpgradeConnectionCallbackAsync(WSAuthorizeEventArgs<T> args, CancellationToken cancellationToken)
         {
-            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestedSubprotocols, args.Connection, cancellationToken);
+            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestedSubprotocols, args.Connection, cancellationToken).ConfigureAwait(false);
         }
 
         protected virtual void FireEvent(object sender, WSAuthorizeEventArgs<T> args)

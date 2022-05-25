@@ -10,18 +10,5 @@ namespace WebsocketsSimple.Core.Models
         public WebSocket Websocket { get; set; }
         public TcpClient Client { get; set; }
         public Stream Stream { get; set; }
-
-        public string Subprotocol
-        {
-            get
-            {
-                if (Websocket != null)
-                {
-                    return Websocket.SubProtocol;
-                }
-
-                return null;
-            }
-        }
     }
 }

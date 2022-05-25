@@ -3,6 +3,7 @@ using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Services;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using WebsocketsSimple.Core.Events.Args;
@@ -27,7 +28,10 @@ namespace WebsocketsSimple.Server
         Task<bool> SendToConnectionAsync(string message, W connection, CancellationToken cancellationToken = default);
         Task<bool> SendToConnectionAsync(byte[] message, W connection, CancellationToken cancellationToken = default);
 
-        Task DisconnectConnectionAsync(W connection, CancellationToken cancellationToken = default);
+        Task DisconnectConnectionAsync(W connection, 
+            WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
+            string statusDescription = "Disconnect", 
+            CancellationToken cancellationToken = default);
 
         IEnumerable<W> Connections { get; }
         int ConnectionCount { get; }

@@ -38,20 +38,22 @@ namespace WebsocketsSimple.Client
 
         public virtual async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
         {
-            return await _handler.ConnectAsync(cancellationToken);
+            return await _handler.ConnectAsync(cancellationToken).ConfigureAwait(false);
         }
-        public virtual async Task<bool> DisconnectAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<bool> DisconnectAsync(WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
+            string closeStatusDescription = "Disconnect", 
+            CancellationToken cancellationToken = default)
         {
-            return await _handler.DisconnectAsync(cancellationToken);
+            return await _handler.DisconnectAsync(webSocketCloseStatus, closeStatusDescription, cancellationToken).ConfigureAwait(false);
         }
         
         public virtual async Task<bool> SendAsync(string message, CancellationToken cancellationToken = default)
         {
-            return await _handler.SendAsync(message, cancellationToken);
+            return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
         public virtual async Task<bool> SendAsync(byte[] message, CancellationToken cancellationToken = default)
         {
-            return await _handler.SendAsync(message, cancellationToken);
+            return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
         protected abstract void OnConnectionEvent(object sender, WSConnectionClientEventArgs args);
@@ -78,6 +80,8 @@ namespace WebsocketsSimple.Client
             get
             {
                 return _handler.Connection != null &&
+                    _handler.Connection.Client != null &&
+                    _handler.Connection.Client.Connected &&
                     _handler.Connection.Websocket != null &&
                     _handler.Connection.Websocket.State == WebSocketState.Open;
             }

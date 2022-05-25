@@ -55,7 +55,7 @@ namespace WebsocketsSimple.Server
             {
                 foreach (var connection in _connectionManager.GetAll(userId))
                 {
-                    await SendToConnectionAsync(message, connection, cancellationToken);
+                    await SendToConnectionAsync(message, connection, cancellationToken).ConfigureAwait(false);
                 }
 
                 return true;
@@ -69,20 +69,10 @@ namespace WebsocketsSimple.Server
             {
                 foreach (var connection in _connectionManager.GetAll(userId))
                 {
-                    await SendToConnectionAsync(message, connection, cancellationToken);
+                    await SendToConnectionAsync(message, connection, cancellationToken).ConfigureAwait(false);
                 }
 
                 return true;
-            }
-
-            return false;
-        }
-
-        public override async Task<bool> SendToConnectionAsync(string message, IdentityWSServer<T> connection, CancellationToken cancellationToken = default)
-        {
-            if (IsServerRunning)
-            {
-                return await _handler.SendAsync(message, connection, cancellationToken);
             }
 
             return false;
@@ -135,17 +125,17 @@ namespace WebsocketsSimple.Server
             {
                 var token = args.Connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token");
 
-                if (token.Value == null || !await _userService.IsValidTokenAsync(token.Value, _cancellationToken))
+                if (token.Value == null || !await _userService.IsValidTokenAsync(token.Value, _cancellationToken).ConfigureAwait(false))
                 {
                     var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
-                    await args.Connection.Stream.WriteAsync(bytes, _cancellationToken);
-                    await DisconnectConnectionAsync(args.Connection, _cancellationToken);
+                    await args.Connection.Stream.WriteAsync(bytes, _cancellationToken).ConfigureAwait(false);
+                    await DisconnectConnectionAsync(args.Connection, statusDescription: "Unauthorized", cancellationToken: _cancellationToken).ConfigureAwait(false);
                     return;
                 }
 
-                args.Connection.UserId = await _userService.GetIdAsync(token.Value, _cancellationToken);
+                args.Connection.UserId = await _userService.GetIdAsync(token.Value, _cancellationToken).ConfigureAwait(false);
 
-                await _handler.UpgradeConnectionCallbackAsync(args, _cancellationToken);
+                await _handler.UpgradeConnectionCallbackAsync(args, _cancellationToken).ConfigureAwait(false);
             }, _cancellationToken);
         }
         
