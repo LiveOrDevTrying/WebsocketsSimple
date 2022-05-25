@@ -1,8 +1,9 @@
-﻿namespace WebsocketsSimple.Server.Events.Args
+﻿using WebsocketsSimple.Server.Models;
+
+namespace WebsocketsSimple.Server.Events.Args
 {
-    public class WSConnectionServerAuthEventArgs<T> : WSConnectionServerEventArgs
+    public class WSConnectionServerAuthEventArgs<T> : WSConnectionServerBaseEventArgs<IdentityWSServer<T>>
     {
-        public T UserId { get; set; }
     }
 }
 
