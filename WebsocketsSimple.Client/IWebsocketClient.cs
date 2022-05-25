@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 using PHS.Networking.Models;
 using PHS.Networking.Services;
@@ -8,11 +9,13 @@ namespace WebsocketsSimple.Client
 {
     public interface IWebsocketClient : ICoreNetworking<WSConnectionClientEventArgs, WSMessageClientEventArgs, WSErrorClientEventArgs>
     {
-        Task<bool> SendToServerAsync(string message, CancellationToken cancellationToken = default);
-        Task<bool> SendToServerAsync(byte[] message, CancellationToken cancellationToken = default);
+        Task<bool> SendAsync(string message, CancellationToken cancellationToken = default);
+        Task<bool> SendAsync(byte[] message, CancellationToken cancellationToken = default);
 
         Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
-        Task<bool> DisconnectAsync(CancellationToken cancellationToken = default);
+        Task<bool> DisconnectAsync(WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
+            string closeStatusDescription = "Disconnect",
+            CancellationToken cancellationToken = default);
 
         bool IsRunning { get; }
         IConnection Connection { get; }

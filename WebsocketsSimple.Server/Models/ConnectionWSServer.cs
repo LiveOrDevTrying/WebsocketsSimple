@@ -1,13 +1,14 @@
-﻿using System.IO;
-using System.Net.Sockets;
+﻿using System;
+using System.Collections.Generic;
 using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Server.Models
 {
-    public class ConnectionWSServer : ConnectionWS, IConnectionWSServer
+    public class ConnectionWSServer : ConnectionWS
     {
-        public bool HasBeenPinged { get; set; }
+        public int PingAttempts { get; set; }
         public string ConnectionId { get; set; }
-        public string[] SubProtocols { get; set; }
+        public string Path { get; set; }
+        public KeyValuePair<string, string>[] QueryStringParameters { get; set; }
     }
 }
