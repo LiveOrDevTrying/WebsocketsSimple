@@ -14,7 +14,7 @@ namespace WebsocketsSimple.TestApps.Server
 
         public Task<bool> IsValidTokenAsync(string token, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(true);
+            return Task.FromResult(!string.IsNullOrWhiteSpace(token) && token.Trim().ToLower() == "testtoken");
         }
 
         public void Dispose()
