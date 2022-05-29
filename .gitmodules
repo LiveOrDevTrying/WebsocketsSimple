@@ -1,3 +1,3 @@
-[submodule "PHS/Tcp.NET"]
-	path = PHS/Tcp.NET
+[submodule "Resources/Tcp.NET"]
+	path = Resources/Tcp.NET
 	url = https://github.com/liveordevtrying/tcp.net
