@@ -24,13 +24,13 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
         
-        protected override IdentityWSServer<T> CreateConnection(TcpClient client, Stream stream)
+        protected override IdentityWSServer<T> CreateConnection(ConnectionWSServer connection)
         {
             return new IdentityWSServer<T>
             {
-                ConnectionId = Guid.NewGuid().ToString(),
-                Stream = stream,
-                Client = client
+                ConnectionId = connection.ConnectionId,
+                Stream = connection.Stream,
+                Client = connection.Client,
             };
         }
         protected override Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, IdentityWSServer<T> connection, CancellationToken cancellationToken)

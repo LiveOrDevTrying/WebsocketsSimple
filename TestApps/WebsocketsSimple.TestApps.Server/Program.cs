@@ -63,7 +63,6 @@ namespace WebsocketsSimple.TestApps.Server
                 case MessageEventType.Receive:
                     Console.WriteLine(args.MessageEventType + ": " + args.Message);
 
-
                     Task.Run(async () =>
                     {
                         Console.WriteLine("Connections: " + _authServer.ConnectionCount);

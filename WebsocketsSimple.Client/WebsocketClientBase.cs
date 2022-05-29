@@ -20,17 +20,16 @@ namespace WebsocketsSimple.Client
         where X : WebsocketClientHandlerBase<Y>
         where Y : ConnectionWS
     {
-        protected X _handler;
-        protected W _parameters;
-        protected string _token;
-        protected Uri _uri;
+        protected readonly X _handler;
+        protected readonly W _parameters;
+        protected readonly string _token;
 
         public WebsocketClientBase(W parameters, string token = "")
         {
             _parameters = parameters;
             _token = token;
 
-            _handler = CreateWebsocketHandler();
+            _handler = CreateWebsocketClientHandler();
             _handler.ConnectionEvent += OnConnectionEvent;
             _handler.MessageEvent += OnMessageEvent;
             _handler.ErrorEvent += OnErrorEvent;
@@ -60,7 +59,7 @@ namespace WebsocketsSimple.Client
         protected abstract void OnMessageEvent(object sender, WSMessageClientEventArgs args);
         protected abstract void OnErrorEvent(object sender, WSErrorClientEventArgs args);
 
-        protected abstract X CreateWebsocketHandler();
+        protected abstract X CreateWebsocketClientHandler();
 
         public override void Dispose()
         {
@@ -86,7 +85,7 @@ namespace WebsocketsSimple.Client
                     _handler.Connection.Websocket.State == WebSocketState.Open;
             }
         }
-        public IConnection Connection
+        public Y Connection
         {
             get
             {

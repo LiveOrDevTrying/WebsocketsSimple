@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using PHS.Networking.Models;
 using PHS.Networking.Services;
 using WebsocketsSimple.Client.Events.Args;
+using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client
 {
@@ -18,6 +19,6 @@ namespace WebsocketsSimple.Client
             CancellationToken cancellationToken = default);
 
         bool IsRunning { get; }
-        IConnection Connection { get; }
+        ConnectionWS Connection { get; }
     }
 }

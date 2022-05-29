@@ -228,16 +228,8 @@ namespace WebsocketsSimple.Client.Models
         {
             try
             {
-                var isRunning = true;
-
-                while (isRunning && !cancellationToken.IsCancellationRequested && _connection != null)
+                while (!cancellationToken.IsCancellationRequested && _connection != null && _connection.Client.Connected)
                 {
-                    if (_connection.Client.Available <= 0)
-                    {
-                        await Task.Delay(1, cancellationToken).ConfigureAwait(false);
-                        continue;
-                    };
-
                     WebSocketReceiveResult result = null;
                     using (var ms = new MemoryStream())
                     {
@@ -280,7 +272,6 @@ namespace WebsocketsSimple.Client.Models
                                 break;
                             case WebSocketMessageType.Close:
                                 await DisconnectAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-                                isRunning = false;
                                 break;
                             default:
                                 break;
@@ -307,7 +298,11 @@ namespace WebsocketsSimple.Client.Models
             };
             var stream = client.GetStream();
 
-            _connection = CreateConnection(client, stream);
+            _connection = CreateConnection(new ConnectionWS 
+            {
+                Client = client,
+                Stream = stream
+            });
         }
         protected virtual async Task CreateSSLConnectionAsync(CancellationToken cancellationToken)
         {
@@ -336,14 +331,18 @@ namespace WebsocketsSimple.Client.Models
 
             if (sslStream.IsAuthenticated && sslStream.IsEncrypted && !cancellationToken.IsCancellationRequested)
             {
-                _connection = CreateConnection(client, sslStream);
+                _connection = CreateConnection(new ConnectionWS
+                {
+                    Client = client,
+                    Stream = sslStream
+                });
             }
             else
             {
                 throw new Exception("Could not create connection - SSL cert has validation problem.");
             }
         }
-        protected abstract T CreateConnection(TcpClient client, Stream stream);
+        protected abstract T CreateConnection(ConnectionWS connection);
 
         protected virtual string ConstructURI()
         {
@@ -658,6 +657,13 @@ namespace WebsocketsSimple.Client.Models
                 newLength == 0 ? string.Empty :
                 newLength == text.Length ? text :
                 text.Substring(startIndex, newLength);
+        }
+
+        public override void Dispose()
+        {
+            DisconnectAsync().Wait();
+
+            base.Dispose();
         }
 
         public T Connection

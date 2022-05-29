@@ -28,8 +28,6 @@ namespace WebsocketsSimple.Server
         protected readonly X _handler;
         protected readonly W _parameters;
         protected readonly Y _connectionManager;
-        protected volatile bool _isPingRunning;
-        protected CancellationToken _cancellationToken;
 
         protected event NetworkingEventHandler<ServerEventArgs> _serverEvent;
 
@@ -60,7 +58,6 @@ namespace WebsocketsSimple.Server
  
         public virtual void Start(CancellationToken cancellationToken = default)
         {
-            _cancellationToken = cancellationToken;
             _handler.Start(cancellationToken);
         }
         public virtual void Stop()

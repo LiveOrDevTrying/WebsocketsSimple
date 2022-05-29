@@ -48,7 +48,7 @@ namespace WebsocketsSimple.Client
             FireEvent(this, args);
         }
 
-        protected override WebsocketClientHandler CreateWebsocketHandler()
+        protected override WebsocketClientHandler CreateWebsocketClientHandler()
         {
             return new WebsocketClientHandler(_parameters, _token);
         }

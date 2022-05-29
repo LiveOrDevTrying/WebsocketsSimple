@@ -123,19 +123,26 @@ namespace WebsocketsSimple.Server
         {
             Task.Run(async () =>
             {
-                var token = args.Connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token");
-
-                if (token.Value == null || !await _userService.IsValidTokenAsync(token.Value, _cancellationToken).ConfigureAwait(false))
+                try
                 {
-                    var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
-                    await args.Connection.Stream.WriteAsync(bytes, _cancellationToken).ConfigureAwait(false);
-                    await DisconnectConnectionAsync(args.Connection, statusDescription: "Unauthorized", cancellationToken: _cancellationToken).ConfigureAwait(false);
-                    return;
+                    var token = args.Connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token");
+
+                    if (token.Value == null || !await _userService.IsValidTokenAsync(token.Value, _cancellationToken).ConfigureAwait(false))
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
+                        await args.Connection.Stream.WriteAsync(bytes, _cancellationToken).ConfigureAwait(false);
+                        await DisconnectConnectionAsync(args.Connection, statusDescription: "Unauthorized", cancellationToken: _cancellationToken).ConfigureAwait(false);
+                        return;
+                    }
+
+                    args.Connection.UserId = await _userService.GetIdAsync(token.Value, _cancellationToken).ConfigureAwait(false);
+
+                    await _handler.UpgradeConnectionCallbackAsync(args, _cancellationToken).ConfigureAwait(false);
+                } 
+                catch (Exception ex)
+                {
+
                 }
-
-                args.Connection.UserId = await _userService.GetIdAsync(token.Value, _cancellationToken).ConfigureAwait(false);
-
-                await _handler.UpgradeConnectionCallbackAsync(args, _cancellationToken).ConfigureAwait(false);
             }, _cancellationToken);
         }
         

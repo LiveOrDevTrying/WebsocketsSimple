@@ -30,16 +30,15 @@ namespace WebsocketsSimple.Server.Managers
         }
         public virtual T Get(string id)
         {
-            return _connections.TryGetValue(id, out var connection) ? connection : default;
+            return _connections.TryGetValue(id, out var connection) ? connection : null;
+        }
+        public virtual bool Add(string id, T connection)
+        {
+            return _connections.TryAdd(id, connection);
         }
         public virtual bool Remove(string id)
         {
             return _connections.TryRemove(id, out var _);
-        }
-
-        public virtual bool Add(string id, T connection)
-        {
-            return _connections.TryAdd(id, connection);
         }
         public virtual int Count()
         {

@@ -33,14 +33,9 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override ConnectionWSServer CreateConnection(TcpClient client, Stream stream)
+        protected override ConnectionWSServer CreateConnection(ConnectionWSServer connection)
         {
-            return new ConnectionWSServer
-            {
-                ConnectionId = Guid.NewGuid().ToString(),
-                Stream = stream,
-                Client = client
-            };
+            return connection;
         }
     }
 }

@@ -28,13 +28,9 @@ namespace WebsocketsSimple.Client.Models
         {
         }
 
-        protected override ConnectionWS CreateConnection(TcpClient client, Stream stream)
+        protected override ConnectionWS CreateConnection(ConnectionWS connection)
         {
-            return new ConnectionWS
-            {
-                Client = client,
-                Stream = stream
-            };
+            return connection;
         }
     }
 }

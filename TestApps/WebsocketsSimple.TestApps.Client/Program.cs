@@ -17,11 +17,6 @@ namespace WebsocketsSimple.TestApps.Client
         private static Timer _timer;
         private static int _max;
 
-        static int CalculateNumberOfUsersPerMinute(int numberUsers)
-        {
-            return 60000 / numberUsers;
-        }
-
         static async Task Main(string[] args)
         {
             Console.WriteLine("Enter numbers of users per minute:");
@@ -63,7 +58,7 @@ namespace WebsocketsSimple.TestApps.Client
                 }
                 else
                 {
-                    await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
+                      await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
                 }
             }
         }
@@ -118,11 +113,23 @@ namespace WebsocketsSimple.TestApps.Client
                 case ConnectionEventType.Connected:
                     break;
                 case ConnectionEventType.Disconnect:
-                    _clients.Remove((IWebsocketClient)sender);
+                    var client = (IWebsocketClient)sender;
+                    _clients.Remove(client);
+                    
+                    client.ConnectionEvent -= OnConnectionEvent;
+                    client.MessageEvent -= OnMessageEvent;
+                    client.ErrorEvent -= OnErrorEvent;
+
+                    client.Dispose();
                     break;
                 default:
                     break;
             }
+        }
+
+        static int CalculateNumberOfUsersPerMinute(int numberUsers)
+        {
+            return 60000 / numberUsers;
         }
     }
 }
