@@ -67,20 +67,11 @@ namespace WebsocketsSimple.TestApps.Client
         {
             if (_clients.Count < _max)
             {
-                var client = new WebsocketClient(new ParamsWSClient
+                var client = new WebsocketClient(new ParamsWSClient("localhost", 65214, false, "testToken", "newPath", new KeyValuePair<string, string>[]
                 {
-                    IsWebsocketSecured = false,
-                    Port = 65214,
-                    Host = "localhost",
-                    Path = "newPath",
-                    QueryStringParameters = new KeyValuePair<string, string>[]
-                    {
-                        new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
-                    },
-                    RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
-                    RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
-                    KeepAliveInterval = TimeSpan.FromSeconds(5)
-                }, "testToken");
+                    new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
+                }, new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } }, new string[] { "testProtocol", "test2", "test3" }));
+               
                 client.ConnectionEvent += OnConnectionEvent;
                 client.MessageEvent += OnMessageEvent;
                 client.ErrorEvent += OnErrorEvent;

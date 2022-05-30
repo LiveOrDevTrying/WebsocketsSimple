@@ -26,18 +26,18 @@ namespace WebsocketsSimple.Server
         {
         }
 
-        protected override WSConnectionManager<ConnectionWSServer> CreateWSConnectionManager()
+        protected override WSConnectionManager<ConnectionWSServer> CreateConnectionManager()
         {
             return new WSConnectionManager<ConnectionWSServer>();
         }
-        protected override WebsocketHandler CreateWebsocketHandler(byte[] certificate = null, string certificatePassword = null)
+        protected override WebsocketHandler CreateHandler(byte[] certificate = null, string certificatePassword = null)
         {
             return certificate != null
                 ? new WebsocketHandler(_parameters, certificate, certificatePassword)
                 : new WebsocketHandler(_parameters);
         }
 
-        protected override void OnConnectionEvent(object sender, WSConnectionServerBaseEventArgs<ConnectionWSServer> args)
+        protected override void OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
         {
             switch (args.ConnectionEventType)
             {
@@ -51,30 +51,15 @@ namespace WebsocketsSimple.Server
                     break;
             }
 
-            FireEvent(this, new WSConnectionServerEventArgs
-            {
-                Connection = args.Connection,
-                ConnectionEventType = args.ConnectionEventType
-            });
+            FireEvent(this, args);
         }
-        protected override void OnErrorEvent(object sender, WSErrorServerBaseEventArgs<ConnectionWSServer> args)
+        protected override void OnErrorEvent(object sender, WSErrorServerEventArgs args)
         {
-            FireEvent(this, new WSErrorServerEventArgs 
-            {
-                Connection = args.Connection,
-                Exception = args.Exception,
-                Message = args.Message
-            });
+            FireEvent(this, args);
         }
-        protected override void OnMessageEvent(object sender, WSMessageServerBaseEventArgs<ConnectionWSServer> args)
+        protected override void OnMessageEvent(object sender, WSMessageServerEventArgs args)
         {
-            FireEvent(this, new WSMessageServerEventArgs
-            {
-                Bytes = args.Bytes,
-                Connection = args.Connection,
-                Message = args.Message,
-                MessageEventType = args.MessageEventType
-            });
+            FireEvent(this, args);
         }
     }
 }

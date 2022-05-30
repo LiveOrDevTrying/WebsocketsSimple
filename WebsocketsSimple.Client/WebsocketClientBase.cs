@@ -1,33 +1,27 @@
-﻿using PHS.Networking.Models;
-using PHS.Networking.Services;
-using System;
+﻿using PHS.Networking.Services;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
-using WebsocketsSimple.Client.Events.Args;
 using WebsocketsSimple.Client.Models;
+using WebsocketsSimple.Core.Events.Args;
 using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client
 {
     public abstract class WebsocketClientBase<T, U, V, W, X, Y> :
-        CoreNetworking<T, U, V>,
-        ICoreNetworking<T, U, V>
-        where T : WSConnectionClientEventArgs
-        where U : WSMessageClientEventArgs
-        where V : WSErrorClientEventArgs
+        CoreNetworkingGeneric<T, U, V, W, Y>,
+        ICoreNetworkingClient<T, U, V, Y>
+        where T : WSConnectionEventArgs<Y>
+        where U : WSMessageEventArgs<Y>
+        where V : WSErrorEventArgs<Y>
         where W : ParamsWSClient
         where X : WebsocketClientHandlerBase<Y>
         where Y : ConnectionWS
     {
         protected readonly X _handler;
-        protected readonly W _parameters;
-        protected readonly string _token;
 
-        public WebsocketClientBase(W parameters, string token = "")
+        public WebsocketClientBase(W parameters) : base(parameters)
         {
-            _parameters = parameters;
-            _token = token;
 
             _handler = CreateWebsocketClientHandler();
             _handler.ConnectionEvent += OnConnectionEvent;
@@ -45,7 +39,11 @@ namespace WebsocketsSimple.Client
         {
             return await _handler.DisconnectAsync(webSocketCloseStatus, closeStatusDescription, cancellationToken).ConfigureAwait(false);
         }
-        
+        public virtual async Task<bool> DisconnectAsync(CancellationToken cancellationToken = default)
+        {
+            return await _handler.DisconnectAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         public virtual async Task<bool> SendAsync(string message, CancellationToken cancellationToken = default)
         {
             return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
@@ -55,9 +53,9 @@ namespace WebsocketsSimple.Client
             return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
-        protected abstract void OnConnectionEvent(object sender, WSConnectionClientEventArgs args);
-        protected abstract void OnMessageEvent(object sender, WSMessageClientEventArgs args);
-        protected abstract void OnErrorEvent(object sender, WSErrorClientEventArgs args);
+        protected abstract void OnConnectionEvent(object sender, WSConnectionEventArgs<Y> args);
+        protected abstract void OnMessageEvent(object sender, WSMessageEventArgs<Y> args);
+        protected abstract void OnErrorEvent(object sender, WSErrorEventArgs<Y> args);
 
         protected abstract X CreateWebsocketClientHandler();
 
@@ -70,8 +68,6 @@ namespace WebsocketsSimple.Client
                 _handler.ErrorEvent -= OnErrorEvent;
                 _handler.Dispose();
             }
-
-            base.Dispose();
         }
 
         public bool IsRunning
@@ -79,8 +75,8 @@ namespace WebsocketsSimple.Client
             get
             {
                 return _handler.Connection != null &&
-                    _handler.Connection.Client != null &&
-                    _handler.Connection.Client.Connected &&
+                    _handler.Connection.TcpClient != null &&
+                    _handler.Connection.TcpClient.Connected &&
                     _handler.Connection.Websocket != null &&
                     _handler.Connection.Websocket.State == WebSocketState.Open;
             }

@@ -24,7 +24,7 @@ namespace WebsocketsSimple.Client.Models
 {
     public class WebsocketClientHandler : WebsocketClientHandlerBase<ConnectionWS>
     {
-        public WebsocketClientHandler(ParamsWSClient parameters, string token = "") : base(parameters, token)
+        public WebsocketClientHandler(ParamsWSClient parameters) : base(parameters)
         {
         }
 
