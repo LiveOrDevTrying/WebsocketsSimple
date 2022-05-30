@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Resources\Tcp.NET\Resources\PHS\PHS.Networking.Server\PHS.Networking.Server.csproj" />
+    <ProjectReference Include="..\Resources\PHS\PHS.Networking.Server\PHS.Networking.Server.csproj" />
     <ProjectReference Include="..\WebsocketsSimple.Core\WebsocketsSimple.Core.csproj" />
   </ItemGroup>
 
