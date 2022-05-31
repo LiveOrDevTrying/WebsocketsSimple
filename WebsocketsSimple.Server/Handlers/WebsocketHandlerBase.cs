@@ -1,7 +1,9 @@
 ﻿using PHS.Networking.Enums;
 using PHS.Networking.Events;
+using PHS.Networking.Models;
 using PHS.Networking.Server.Enums;
 using PHS.Networking.Server.Events.Args;
+using PHS.Networking.Server.Handlers;
 using PHS.Networking.Services;
 using System;
 using System.Collections.Generic;
@@ -23,184 +25,142 @@ using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Handlers
 {
-    public abstract class WebsocketHandlerBase<T> :
-        CoreNetworking<WSConnectionServerBaseEventArgs<T>, WSMessageServerBaseEventArgs<T>, WSErrorServerBaseEventArgs<T>>,
-        ICoreNetworking<WSConnectionServerBaseEventArgs<T>, WSMessageServerBaseEventArgs<T>, WSErrorServerBaseEventArgs<T>>
-        where T : ConnectionWSServer
+    public abstract class WebsocketHandlerBase<T, U, V, W, Z> :
+        HandlerServerBaseTcpListener<T, U, V, W, Z>
+        where T : WSConnectionServerBaseEventArgs<Z>
+        where U : WSMessageServerBaseEventArgs<Z>
+        where V : WSErrorServerBaseEventArgs<Z>
+        where W : ParamsWSServer
+        where Z : ConnectionWSServer
     {
-        protected readonly byte[] _certificate;
-        protected readonly string _certificatePassword;
-        protected readonly ParamsWSServer _parameters;
-        protected TcpListener _server;
-        protected bool _isRunning;
-
-        private event NetworkingEventHandler<ServerEventArgs> _serverEvent;
-
-        public WebsocketHandlerBase(ParamsWSServer parameters)
+        public WebsocketHandlerBase(W parameters) : base(parameters)
         {
-            _parameters = parameters;
         }
-        public WebsocketHandlerBase(ParamsWSServer parameters, byte[] certificate, string certificatePassword)
+        public WebsocketHandlerBase(W parameters, byte[] certificate, string certificatePassword) : base(parameters, certificate, certificatePassword)
         {
-            _parameters = parameters;
-            _certificate = certificate;
-            _certificatePassword = certificatePassword;
         }
 
-        public virtual bool Start(CancellationToken cancellationToken = default)
+        public override async Task<bool> SendAsync(string message, Z connection, CancellationToken cancellationToken)
         {
             try
             {
-                if (_server != null)
+                if (connection.TcpClient.Connected && connection.Websocket != null && connection.Websocket.State == WebSocketState.Open && _isRunning)
                 {
-                    Stop();
+                    var bytes = Encoding.UTF8.GetBytes(message);
+                    await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: bytes,
+                        offset: 0,
+                        count: message.Length),
+                        messageType: WebSocketMessageType.Text,
+                        endOfMessage: true,
+                        cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                    FireEvent(this, CreateMessageEventArgs(new WSMessageServerBaseEventArgs<Z>
+                    {
+                        MessageEventType = MessageEventType.Sent,
+                        Message = message,
+                        Bytes = bytes,
+                        Connection = connection,
+                    }));
+
+                    return true;
                 }
-
-                _isRunning = true;
-
-                _server = new TcpListener(IPAddress.Any, _parameters.Port);
-                _server.Server.ReceiveTimeout = 60000;
-                _server.Start();
-
-                FireEvent(this, new ServerEventArgs
-                {
-                    ServerEventType = ServerEventType.Start
-                });
-
-                if (_certificate == null)
-                {
-                    _ = Task.Run(async () => { await ListenForConnectionsAsync(cancellationToken).ConfigureAwait(false); }, cancellationToken);
-                }
-                else
-                {
-                    _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(cancellationToken).ConfigureAwait(false); }, cancellationToken);
-                }
-
-                return true;
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerBaseEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorServerBaseEventArgs<Z>
                 {
                     Exception = ex,
                     Message = ex.Message,
-                });
+                    Connection = connection,
+                }));
             }
 
             return false;
         }
-        public virtual void Stop()
+        public override async Task<bool> SendAsync(byte[] message, Z connection, CancellationToken cancellationToken)
         {
-            _isRunning = false;
-
             try
             {
-                if (_server != null)
+                if (connection.TcpClient != null && connection.TcpClient.Connected && connection.Websocket != null && connection.Websocket.State == WebSocketState.Open && _isRunning)
                 {
-                    _server.Stop();
-                    _server = null;
+                    await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: message,
+                        offset: 0,
+                        count: message.Length),
+                        messageType: WebSocketMessageType.Binary,
+                        endOfMessage: true,
+                        cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                    FireEvent(this, new ServerEventArgs
+                    FireEvent(this, CreateMessageEventArgs(new WSMessageServerBaseEventArgs<Z>
                     {
-                        ServerEventType = ServerEventType.Stop
-                    });
+                        MessageEventType = MessageEventType.Sent,
+                        Bytes = message,
+                        Connection = connection,
+                    }));
+
+                    return true;
                 }
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorServerBaseEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorServerBaseEventArgs<Z>
                 {
+                    Connection = connection,
                     Exception = ex,
                     Message = ex.Message,
-                });
+                }));
             }
+
+            return false;
         }
-
-        protected abstract T CreateConnection(TcpClient client, Stream stream);
-
-        protected virtual async Task ListenForConnectionsAsync(CancellationToken cancellationToken)
+        public override async Task<bool> DisconnectConnectionAsync(Z connection, CancellationToken cancellationToken)
         {
-            while (_isRunning && !cancellationToken.IsCancellationRequested)
+            return await DisconnectConnectionAsync(connection, WebSocketCloseStatus.NormalClosure, "Disconnect", cancellationToken);
+        }
+        public virtual async Task<bool> DisconnectConnectionAsync(Z connection,
+            WebSocketCloseStatus webSocketCloseStatus,
+            string statusDescription,
+            CancellationToken cancellationToken)
+        {
+            if (connection.Websocket != null && connection.TcpClient != null && connection.TcpClient.Connected && !connection.Disposed)
             {
+                connection.Disposed = true;
+
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
-                    var stream = client.GetStream();
-
-                    var connection = CreateConnection(client, stream);
-
-                    _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken).ConfigureAwait(false); }, cancellationToken);
+                    await connection.Websocket.CloseAsync(webSocketCloseStatus, statusDescription, cancellationToken).ConfigureAwait(false);
+                    return true;
                 }
                 catch (Exception ex)
                 {
-                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
+                    FireEvent(this, CreateErrorEventArgs(new WSErrorServerBaseEventArgs<Z>
                     {
+                        Connection = connection,
                         Exception = ex,
-                        Message = ex.Message,
-                    });
+                        Message = ex.Message
+                    }));
                 }
-
             }
+
+            return false;
         }
-        protected virtual async Task ListenForConnectionsSSLAsync(CancellationToken cancellationToken)
+
+        protected override async Task ReceiveAsync(Z connection, CancellationToken cancellationToken)
         {
-            while (_isRunning && !cancellationToken.IsCancellationRequested)
+            while (connection.TcpClient.Connected && !cancellationToken.IsCancellationRequested && !connection.Disposed)
             {
                 try
-                {
-                    var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
-                    var sslStream = new SslStream(client.GetStream());
-                    await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
-                    {
-                        ServerCertificate = new X509Certificate2(_certificate, _certificatePassword)
-                    }, cancellationToken).ConfigureAwait(false);
-
-                    if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
-                    {
-                        var connection = CreateConnection(client, sslStream);
-
-                        _ = Task.Run(async () => { await StartReceivingMessagesAsync(connection, cancellationToken).ConfigureAwait(false); }, cancellationToken);
-                    }
-                    else
-                    {
-                        var certStatus = $"IsAuthenticated = {sslStream.IsAuthenticated} && IsEncrypted == {sslStream.IsEncrypted}";
-                        FireEvent(this, new WSErrorServerBaseEventArgs<T>
-                        {
-                            Exception = new Exception(certStatus),
-                            Message = certStatus
-                        });
-
-                        client.Close();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
-                    {
-                        Exception = ex,
-                        Message = ex.Message,
-                    });
-                }
-
-            }
-        }
-        protected virtual async Task StartReceivingMessagesAsync(T connection, CancellationToken cancellationToken)
-        {
-            try
-            {
-                while (connection.Client.Connected && !cancellationToken.IsCancellationRequested)
                 {
                     if (connection.Websocket == null)
                     {
-                        if (connection.Client.Available < 3)
+                        if (connection.TcpClient.Available < 3)
                         {
                             await Task.Delay(1, cancellationToken).ConfigureAwait(false);
                             continue;
                         }; // match against "get"
 
-                        var bytes = new byte[connection.Client.Available];
-
-                        await connection.Stream.ReadAsync(bytes, 0, connection.Client.Available, cancellationToken).ConfigureAwait(false);
+                        var bytes = new byte[connection.TcpClient.Available];
+                        var buffer = new ArraySegment<byte>(bytes);
+                        await connection.TcpClient.Client.ReceiveAsync(bytes, SocketFlags.None, cancellationToken).ConfigureAwait(false);
 
                         var data = Encoding.UTF8.GetString(bytes);
 
@@ -215,28 +175,22 @@ namespace WebsocketsSimple.Server.Handlers
                     }
                     else
                     {
-                        if (connection.Client.Available <= 0)
-                        {
-                            await Task.Delay(1, cancellationToken).ConfigureAwait(false);
-                            continue;
-                        }
-
                         WebSocketReceiveResult result = null;
                         using (var ms = new MemoryStream())
                         {
                             do
                             {
-                                if (connection.Client.Available <= 0)
+                                if (connection.Disposed || connection.TcpClient.Available <= 0)
                                 {
                                     await Task.Delay(1, cancellationToken).ConfigureAwait(false);
                                     continue;
                                 }
 
-                                var buffer = WebSocket.CreateServerBuffer(connection.Client.Available);
+                                var buffer = WebSocket.CreateServerBuffer(connection.TcpClient.Available);
                                 result = await connection.Websocket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
                                 await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count).ConfigureAwait(false);
                             }
-                            while (result == null || (!result.EndOfMessage && connection != null && connection.Client.Connected && connection.Websocket.State == WebSocketState.Open));
+                            while (result == null || (!connection.Disposed && !result.EndOfMessage && connection != null && connection.TcpClient.Connected && connection.Websocket.State == WebSocketState.Open));
 
                             switch (result.MessageType)
                             {
@@ -245,22 +199,22 @@ namespace WebsocketsSimple.Server.Handlers
 
                                     if (!string.IsNullOrWhiteSpace(message))
                                     {
-                                        FireEvent(this, new WSMessageServerBaseEventArgs<T>
+                                        FireEvent(this, CreateMessageEventArgs(new WSMessageServerBaseEventArgs<Z>
                                         {
                                             MessageEventType = MessageEventType.Receive,
                                             Message = message,
                                             Bytes = ms.ToArray(),
                                             Connection = connection
-                                        });
+                                        }));
                                     }
                                     break;
                                 case WebSocketMessageType.Binary:
-                                    FireEvent(this, new WSMessageServerBaseEventArgs<T>
+                                    FireEvent(this, CreateMessageEventArgs(new WSMessageServerBaseEventArgs<Z>
                                     {
                                         MessageEventType = MessageEventType.Receive,
                                         Bytes = ms.ToArray(),
                                         Connection = connection
-                                    });
+                                    }));
                                     break;
                                 case WebSocketMessageType.Close:
                                     await DisconnectConnectionAsync(connection, WebSocketCloseStatus.NormalClosure, "Disconnect", cancellationToken).ConfigureAwait(false);
@@ -271,25 +225,26 @@ namespace WebsocketsSimple.Server.Handlers
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                FireEvent(this, new WSErrorServerBaseEventArgs<T>
+                catch (Exception ex)
                 {
-                    Exception = ex,
-                    Message = ex.Message,
-                    Connection = connection,
-                });
+                    FireEvent(this, CreateErrorEventArgs(new WSErrorServerBaseEventArgs<Z>
+                    {
+                        Exception = ex,
+                        Message = ex.Message,
+                        Connection = connection,
+                    }));
+                }
             }
 
-            FireEvent(this, new WSConnectionServerBaseEventArgs<T>
+
+            FireEvent(this, CreateConnectionEventArgs(new WSConnectionServerBaseEventArgs<Z>
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Disconnect,
-            });
+            }));
         }
 
-        protected virtual async Task<bool> CanUpgradeConnection(string message, string[] requestedSubprotocols, T connection, CancellationToken cancellationToken)
+        protected virtual async Task<bool> CanUpgradeConnection(string message, string[] requestedSubprotocols, Z connection, CancellationToken cancellationToken)
         {
             SetPathAndQueryStringForConnection(message, connection);
 
@@ -298,7 +253,7 @@ namespace WebsocketsSimple.Server.Handlers
                 if (!AreSubprotocolsRequestedValid(requestedSubprotocols))
                 {
                     var bytes = Encoding.UTF8.GetBytes("Invalid subprotocols requested");
-                    await connection.Stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
+                    await connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, cancellationToken).ConfigureAwait(false);
                     await DisconnectConnectionAsync(connection, WebSocketCloseStatus.ProtocolError, "Invalid Subprotocol", cancellationToken).ConfigureAwait(false);
                     return false;
                 }
@@ -306,7 +261,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             return true;
         }
-        protected virtual async Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, T connection, CancellationToken cancellationToken)
+        protected virtual async Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, Z connection, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -318,7 +273,7 @@ namespace WebsocketsSimple.Server.Handlers
             var swkaSha1Base64 = Convert.ToBase64String(swkaSha1);
 
             var subProtocol = requestedSubprotocols.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray().Length > 0 ? $"{requestedSubprotocols[0]}" : null;
-            connection.Websocket = WebSocket.CreateFromStream(connection.Stream, true, subProtocol, TimeSpan.FromSeconds(_parameters.PingIntervalSec));
+            connection.Websocket = WebSocket.CreateFromStream(connection.TcpClient.GetStream(), true, subProtocol, TimeSpan.FromSeconds(_parameters.PingIntervalSec));
 
             // HTTP/1.1 defines the sequence CR LF as the end-of-line marker
             var response = Encoding.UTF8.GetBytes(
@@ -328,17 +283,17 @@ namespace WebsocketsSimple.Server.Handlers
                 $"{HttpKnownHeaderNames.SecWebSocketAccept}: {swkaSha1Base64}\r\n" +
                 $"{HttpKnownHeaderNames.SecWebSocketProtocol}: {subProtocol}\r\n\r\n");
 
-            await connection.Stream.WriteAsync(response, 0, response.Length, cancellationToken).ConfigureAwait(false);
+            await connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(response), SocketFlags.None, cancellationToken).ConfigureAwait(false);
 
             await SendAsync(_parameters.ConnectionSuccessString, connection, cancellationToken).ConfigureAwait(false);
 
-            FireEvent(this, new WSConnectionServerBaseEventArgs<T>
+            FireEvent(this, CreateConnectionEventArgs(new WSConnectionServerBaseEventArgs<Z>
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Connected,
-            });
+            }));
         }
-        protected virtual void SetPathAndQueryStringForConnection(string message, T connection)
+        protected virtual void SetPathAndQueryStringForConnection(string message, Z connection)
         {
             // Get Path and QueryStrung and load into connection
             var split = message.Split(" ");
@@ -377,137 +332,6 @@ namespace WebsocketsSimple.Server.Handlers
             return true;
         }
 
-        public virtual async Task<bool> SendAsync(string message, T connection, CancellationToken cancellationToken)
-        {
-            try
-            {
-                if (connection.Client != null && connection.Client.Connected && connection.Websocket != null && connection.Websocket.State == WebSocketState.Open)
-                {
-                    var bytes = Encoding.UTF8.GetBytes(message);
-                    await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: bytes,
-                        offset: 0,
-                        count: message.Length),
-                        messageType: WebSocketMessageType.Text,
-                        endOfMessage: true,
-                        cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                    FireEvent(this, new WSMessageServerBaseEventArgs<T>
-                    {
-                        MessageEventType = MessageEventType.Sent,
-                        Message = message,
-                        Bytes = bytes,
-                        Connection = connection,
-                    });
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                FireEvent(this, new WSErrorServerBaseEventArgs<T>
-                {
-                    Exception = ex,
-                    Message = ex.Message,
-                    Connection = connection,
-                });
-            }
-
-            return false;
-        }
-        public virtual async Task<bool> SendAsync(byte[] message, T connection, CancellationToken cancellationToken)
-        {
-            try
-            {
-                if (connection.Client != null && connection.Client.Connected && connection.Websocket != null && connection.Websocket.State == WebSocketState.Open)
-                {
-                    await connection.Websocket.SendAsync(buffer: new ArraySegment<byte>(array: message,
-                        offset: 0,
-                        count: message.Length),
-                        messageType: WebSocketMessageType.Binary,
-                        endOfMessage: true,
-                        cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                    FireEvent(this, new WSMessageServerBaseEventArgs<T>
-                    {
-                        MessageEventType = MessageEventType.Sent,
-                        Bytes = message,
-                        Connection = connection,
-                    });
-
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                FireEvent(this, new WSErrorServerBaseEventArgs<T>
-                {
-                    Connection = connection,
-                    Exception = ex,
-                    Message = ex.Message,
-                });
-            }
-
-            return false;
-        }
-        public virtual async Task DisconnectConnectionAsync(T connection,
-            WebSocketCloseStatus webSocketCloseStatus,
-            string statusDescription,
-            CancellationToken cancellationToken)
-        {
-            if (connection.Websocket != null && connection.Client != null && connection.Client.Connected)
-            {
-                try
-                {
-                    await connection.Websocket.CloseAsync(webSocketCloseStatus, statusDescription, cancellationToken).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    FireEvent(this, new WSErrorServerBaseEventArgs<T>
-                    {
-                        Connection = connection,
-                        Exception = ex,
-                        Message = ex.Message
-                    });
-                }
-            }
-        }
-        protected virtual void FireEvent(object sender, ServerEventArgs args)
-        {
-            _serverEvent?.Invoke(sender, args);
-        }
-
-        public override void Dispose()
-        {
-            Stop();
-
-            base.Dispose();
-        }
-
-        public TcpListener Server
-        {
-            get
-            {
-                return _server;
-            }
-        }
-        public bool IsServerRunning
-        {
-            get
-            {
-                return _isRunning;
-            }
-        }
-
-        public event NetworkingEventHandler<ServerEventArgs> ServerEvent
-        {
-            add
-            {
-                _serverEvent += value;
-            }
-            remove
-            {
-                _serverEvent -= value;
-            }
-        }
+        protected abstract U CreateMessageEventArgs(WSMessageServerBaseEventArgs<Z> args);
     }
 }
