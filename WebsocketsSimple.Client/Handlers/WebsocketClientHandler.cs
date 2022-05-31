@@ -24,17 +24,13 @@ namespace WebsocketsSimple.Client.Models
 {
     public class WebsocketClientHandler : WebsocketClientHandlerBase<ConnectionWS>
     {
-        public WebsocketClientHandler(ParamsWSClient parameters, string token = "") : base(parameters, token)
+        public WebsocketClientHandler(ParamsWSClient parameters) : base(parameters)
         {
         }
 
-        protected override ConnectionWS CreateConnection(TcpClient client, Stream stream)
+        protected override ConnectionWS CreateConnection(ConnectionWS connection)
         {
-            return new ConnectionWS
-            {
-                Client = client,
-                Stream = stream
-            };
+            return connection;
         }
     }
 }
