@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using WebsocketsSimple.Client.Events.Args;
 using WebsocketsSimple.Client.Models;
 using WebsocketsSimple.Core;
+using WebsocketsSimple.Core.Events.Args;
 using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client
@@ -31,26 +32,41 @@ namespace WebsocketsSimple.Client
             ConnectionWS>,
         IWebsocketClient
     {
-        public WebsocketClient(ParamsWSClient parameters, string token = "") : base(parameters, token)
+        public WebsocketClient(ParamsWSClient parameters) : base(parameters)
         {
         }
 
-        protected override void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
+        protected override void OnConnectionEvent(object sender, WSConnectionEventArgs<ConnectionWS> args)
         {
-            FireEvent(this, args);
+            FireEvent(this, new WSConnectionClientEventArgs
+            {
+                Connection = args.Connection,
+                ConnectionEventType = args.ConnectionEventType
+            });
         }
-        protected override void OnMessageEvent(object sender, WSMessageClientEventArgs args)
+        protected override void OnMessageEvent(object sender, WSMessageEventArgs<ConnectionWS> args)
         {
-            FireEvent(this, args);
+            FireEvent(this, new WSMessageClientEventArgs
+            {
+                Bytes = args.Bytes,
+                Connection = args.Connection,
+                Message = args.Message,
+                MessageEventType = args.MessageEventType
+            });
         }
-        protected override void OnErrorEvent(object sender, WSErrorClientEventArgs args)
+        protected override void OnErrorEvent(object sender, WSErrorEventArgs<ConnectionWS> args)
         {
-            FireEvent(this, args);
+            FireEvent(this, new WSErrorClientEventArgs
+            {
+                Connection = args.Connection,
+                Exception = args.Exception,
+                Message = args.Message
+            });
         }
 
-        protected override WebsocketClientHandler CreateWebsocketHandler()
+        protected override WebsocketClientHandler CreateWebsocketClientHandler()
         {
-            return new WebsocketClientHandler(_parameters, _token);
+            return new WebsocketClientHandler(_parameters);
         }
     }
 }

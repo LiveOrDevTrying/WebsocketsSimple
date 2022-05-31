@@ -61,6 +61,7 @@ namespace WebsocketsSimple.Server.Managers
 
             return false;
         }
+
         public IEnumerable<IdentityWSServer<T>> GetAll(T id)
         {
             if (_users.TryGetValue(id, out var user))

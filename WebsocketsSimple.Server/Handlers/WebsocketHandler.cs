@@ -1,29 +1,18 @@
-﻿using PHS.Networking.Enums;
-using PHS.Networking.Events;
-using PHS.Networking.Server.Enums;
-using PHS.Networking.Server.Events.Args;
-using PHS.Networking.Services;
+﻿using PHS.Networking.Events.Args;
+using PHS.Networking.Models;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Security;
-using System.Net.Sockets;
-using System.Net.WebSockets;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web;
-using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Handlers
 {
-    public class WebsocketHandler : WebsocketHandlerBase<ConnectionWSServer>
+    public class WebsocketHandler : 
+        WebsocketHandlerBase<
+            WSConnectionServerEventArgs,
+            WSMessageServerEventArgs,
+            WSErrorServerEventArgs,
+            ParamsWSServer,
+            ConnectionWSServer>
     {
         public WebsocketHandler(ParamsWSServer parameters) : base(parameters)
         {
@@ -33,13 +22,42 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override ConnectionWSServer CreateConnection(TcpClient client, Stream stream)
+        protected override ConnectionWSServer CreateConnection(ConnectionTcpClient connection)
         {
             return new ConnectionWSServer
             {
                 ConnectionId = Guid.NewGuid().ToString(),
-                Stream = stream,
-                Client = client
+                TcpClient = connection.TcpClient
+            };
+        }
+
+        protected override WSConnectionServerEventArgs CreateConnectionEventArgs(ConnectionEventArgs<ConnectionWSServer> args)
+        {
+            return new WSConnectionServerEventArgs
+            {
+                Connection = args.Connection,
+                ConnectionEventType = args.ConnectionEventType
+            };
+        }
+
+        protected override WSErrorServerEventArgs CreateErrorEventArgs(ErrorEventArgs<ConnectionWSServer> args)
+        {
+            return new WSErrorServerEventArgs
+            {
+                Connection = args.Connection,
+                Exception = args.Exception,
+                Message = args.Message
+            };
+        }
+
+        protected override WSMessageServerEventArgs CreateMessageEventArgs(WSMessageServerBaseEventArgs<ConnectionWSServer> args)
+        {
+            return new WSMessageServerEventArgs
+            {
+                Bytes = args.Bytes,
+                Connection = args.Connection,
+                Message = args.Message,
+                MessageEventType = args.MessageEventType
             };
         }
     }
