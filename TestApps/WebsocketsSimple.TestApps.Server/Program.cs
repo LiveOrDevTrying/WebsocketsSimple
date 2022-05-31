@@ -11,17 +11,10 @@ namespace WebsocketsSimple.TestApps.Server
     class Program
     {
         private static WebsocketServerAuth<Guid> _authServer;
-        private static WebsocketServer _server;
 
         static async Task Main(string[] args)
         {
-            _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth
-            {
-                ConnectionSuccessString = "Connected Successfully",
-                ConnectionUnauthorizedString = "Unauthorized",
-                Port = 65214,
-                AvailableSubprotocols = new string[] { "testProtocol", "test2", "test3", "another" }
-            }, new MockUserService());
+            _authServer = new WebsocketServerAuth<Guid>(new ParamsWSServerAuth(65214, "Connected Successfully", "Unauthorized", new string[] { "testProtocol", "test2", "test3", "another" }), new MockUserService());
             _authServer.MessageEvent += OnMessageEvent;
             _authServer.ServerEvent += OnServerEvent;
             _authServer.ConnectionEvent += OnConnectionEvent;
@@ -63,11 +56,10 @@ namespace WebsocketsSimple.TestApps.Server
                 case MessageEventType.Receive:
                     Console.WriteLine(args.MessageEventType + ": " + args.Message);
 
-
                     Task.Run(async () =>
                     {
                         Console.WriteLine("Connections: " + _authServer.ConnectionCount);
-                        await _authServer.BroadcastToAllConnectionsAsync(args.Message, args.Connection);
+                        await _authServer.BroadcastToAllConnectionsAsync(args.Message);
                     });
                     break;
                 default:
