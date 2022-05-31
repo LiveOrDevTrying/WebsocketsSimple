@@ -17,11 +17,6 @@ namespace WebsocketsSimple.TestApps.Client
         private static Timer _timer;
         private static int _max;
 
-        static int CalculateNumberOfUsersPerMinute(int numberUsers)
-        {
-            return 60000 / numberUsers;
-        }
-
         static async Task Main(string[] args)
         {
             Console.WriteLine("Enter numbers of users per minute:");
@@ -63,7 +58,7 @@ namespace WebsocketsSimple.TestApps.Client
                 }
                 else
                 {
-                    await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
+                      await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
                 }
             }
         }
@@ -72,20 +67,11 @@ namespace WebsocketsSimple.TestApps.Client
         {
             if (_clients.Count < _max)
             {
-                var client = new WebsocketClient(new ParamsWSClient
+                var client = new WebsocketClient(new ParamsWSClient("localhost", 65214, false, "testToken", "newPath", new KeyValuePair<string, string>[]
                 {
-                    IsWebsocketSecured = false,
-                    Port = 65214,
-                    Host = "localhost",
-                    Path = "newPath",
-                    QueryStringParameters = new KeyValuePair<string, string>[]
-                    {
-                        new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
-                    },
-                    RequestedSubProtocols = new string[] { "testProtocol", "test2", "test3" },
-                    RequestHeaders = new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } },
-                    KeepAliveInterval = TimeSpan.FromSeconds(5)
-                }, "testToken");
+                    new KeyValuePair<string, string>("TestQSParam", "TestQSValue")
+                }, new Dictionary<string, string> { { HttpKnownHeaderNames.From, "Robbie" } }, new string[] { "testProtocol", "test2", "test3" }));
+               
                 client.ConnectionEvent += OnConnectionEvent;
                 client.MessageEvent += OnMessageEvent;
                 client.ErrorEvent += OnErrorEvent;
@@ -118,11 +104,23 @@ namespace WebsocketsSimple.TestApps.Client
                 case ConnectionEventType.Connected:
                     break;
                 case ConnectionEventType.Disconnect:
-                    _clients.Remove((IWebsocketClient)sender);
+                    var client = (IWebsocketClient)sender;
+                    _clients.Remove(client);
+                    
+                    client.ConnectionEvent -= OnConnectionEvent;
+                    client.MessageEvent -= OnMessageEvent;
+                    client.ErrorEvent -= OnErrorEvent;
+
+                    client.Dispose();
                     break;
                 default:
                     break;
             }
+        }
+
+        static int CalculateNumberOfUsersPerMinute(int numberUsers)
+        {
+            return 60000 / numberUsers;
         }
     }
 }
