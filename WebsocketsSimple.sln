@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Client", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple", "WebsocketsSimple\WebsocketsSimple.csproj", "{07B6D7EF-CBF7-483E-929A-0837264A55DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketsSimple.Server", "WebsocketsSimple.Server\WebsocketsSimple.Server.csproj", "{146204DA-0039-4755-9BD0-0361DB91525E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.Server", "WebsocketsSimple.Server\WebsocketsSimple.Server.csproj", "{146204DA-0039-4755-9BD0-0361DB91525E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketsSimple.TestApps.Server", "TestApps\WebsocketsSimple.TestApps.Server\WebsocketsSimple.TestApps.Server.csproj", "{5ED75709-F4BD-4901-B0BF-7A964493B959}"
 EndProject
