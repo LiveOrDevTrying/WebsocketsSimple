@@ -1,11 +1,19 @@
-﻿namespace WebsocketsSimple.Server.Models
-{
-    public class ParamsWSServer
-    {
-        public int Port { get; set; }
-        public string ConnectionSuccessString { get; set; }
-        public string[] AvailableSubprotocols { get; set; }
+﻿using PHS.Networking.Models;
+using System;
 
-        public int PingIntervalSec { get; set; } = 30;
+namespace WebsocketsSimple.Server.Models
+{
+    public class ParamsWSServer : ParamsPort
+    {
+        public string ConnectionSuccessString { get; protected set; }
+        public string[] AvailableSubprotocols { get; protected set; }
+        public int PingIntervalSec { get; protected set; }
+
+        public ParamsWSServer(int port, string connectionSuccessString = null, string[] availableSubprotocols = null, int pingIntervalSec = 30) : base(port)
+        {
+            ConnectionSuccessString = connectionSuccessString;
+            AvailableSubprotocols = availableSubprotocols;
+            PingIntervalSec = pingIntervalSec;
+        }
     }
 }
