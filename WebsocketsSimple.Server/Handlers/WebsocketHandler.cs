@@ -1,12 +1,12 @@
 ﻿using PHS.Networking.Events.Args;
-using PHS.Networking.Models;
 using System;
+using Tcp.NET.Core.Models;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Handlers
 {
-    public class WebsocketHandler : 
+    public class WebsocketHandler :
         WebsocketHandlerBase<
             WSConnectionServerEventArgs,
             WSMessageServerEventArgs,
@@ -22,7 +22,7 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override ConnectionWSServer CreateConnection(ConnectionTcpClient connection)
+        protected override ConnectionWSServer CreateConnection(ConnectionTcp connection)
         {
             return new ConnectionWSServer
             {

@@ -22,7 +22,6 @@ namespace WebsocketsSimple.Client
 
         public WebsocketClientBase(W parameters) : base(parameters)
         {
-
             _handler = CreateWebsocketClientHandler();
             _handler.ConnectionEvent += OnConnectionEvent;
             _handler.MessageEvent += OnMessageEvent;
