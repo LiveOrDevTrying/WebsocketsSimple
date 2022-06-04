@@ -15,7 +15,7 @@ namespace WebsocketsSimple.Client
         where U : WSMessageEventArgs<Y>
         where V : WSErrorEventArgs<Y>
         where W : ParamsWSClient
-        where X : WebsocketClientHandlerBase<Y>
+        where X : WebsocketClientHandlerBase<T, U, V, W, Y>
         where Y : ConnectionWS
     {
         protected readonly X _handler;
@@ -52,9 +52,18 @@ namespace WebsocketsSimple.Client
             return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
-        protected abstract void OnConnectionEvent(object sender, WSConnectionEventArgs<Y> args);
-        protected abstract void OnMessageEvent(object sender, WSMessageEventArgs<Y> args);
-        protected abstract void OnErrorEvent(object sender, WSErrorEventArgs<Y> args);
+        protected virtual void OnConnectionEvent(object sender, T args)
+        {
+            FireEvent(sender, args);
+        }
+        protected virtual void OnMessageEvent(object sender, U args)
+        {
+            FireEvent(sender, args);
+        }
+        protected virtual void OnErrorEvent(object sender, V args)
+        {
+            FireEvent(sender, args);
+        }
 
         protected abstract X CreateWebsocketClientHandler();
 
