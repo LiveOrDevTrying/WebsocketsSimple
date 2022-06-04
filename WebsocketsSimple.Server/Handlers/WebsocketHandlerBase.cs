@@ -1,19 +1,11 @@
 ﻿using PHS.Networking.Enums;
-using PHS.Networking.Events;
-using PHS.Networking.Models;
-using PHS.Networking.Server.Enums;
-using PHS.Networking.Server.Events.Args;
 using PHS.Networking.Server.Handlers;
-using PHS.Networking.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -26,7 +18,7 @@ using WebsocketsSimple.Server.Models;
 namespace WebsocketsSimple.Server.Handlers
 {
     public abstract class WebsocketHandlerBase<T, U, V, W, Z> :
-        HandlerServerBaseTcpListener<T, U, V, W, Z>
+        TcpHandlerServerBaseTcp<T, U, V, W, Z>
         where T : WSConnectionServerBaseEventArgs<Z>
         where U : WSMessageServerBaseEventArgs<Z>
         where V : WSErrorServerBaseEventArgs<Z>
