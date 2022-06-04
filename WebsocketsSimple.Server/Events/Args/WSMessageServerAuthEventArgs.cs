@@ -2,7 +2,7 @@
 
 namespace WebsocketsSimple.Server.Events.Args
 {
-    public class WSMessageServerAuthEventArgs<T> : WSMessageServerBaseEventArgs<IdentityWSServer<T>>
+    public class WSMessageServerAuthEventArgs<T> : WSMessageServerAuthBaseEventArgs<IdentityWSServer<T>, T>
     {
     }
 }
