@@ -24,7 +24,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <ProjectReference Include="..\Resources\Tcp.NET\Resources\PHS\PHS.Networking\PHS.Networking.csproj" />
+	  <ProjectReference Include="..\Resources\Tcp.NET\Tcp.NET.Core\Tcp.NET.Core.csproj" />
 	</ItemGroup>
 
 </Project>
