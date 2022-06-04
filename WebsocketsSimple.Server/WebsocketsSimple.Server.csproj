@@ -17,8 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Tcp.NET.Server" Version="6.0.*" />
-    <PackageReference Include="WebsocketsSimple.Core" Version="6.0.*" />
+    <PackageReference Include="Tcp.NET.Server" Version="2.1.*" />
+    <PackageReference Include="WebsocketsSimple.Core" Version="2.1.*" />
   </ItemGroup>
 
 
