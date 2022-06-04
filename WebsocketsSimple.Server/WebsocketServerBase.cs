@@ -8,6 +8,7 @@ using WebsocketsSimple.Server.Models;
 using WebsocketsSimple.Server.Managers;
 using System.Net.WebSockets;
 using PHS.Networking.Server.Services;
+using PHS.Networking.Enums;
 
 namespace WebsocketsSimple.Server
 {
@@ -19,7 +20,7 @@ namespace WebsocketsSimple.Server
         where V : WSErrorServerBaseEventArgs<Z>
         where W : ParamsWSServer
         where X : WebsocketHandlerBase<T, U, V, W, Z>
-        where Y : WSConnectionManager<Z>
+        where Y : WSConnectionManagerBase<Z>
         where Z : ConnectionWSServer
     {
         public WebsocketServerBase(W parameters) : base(parameters)
@@ -30,16 +31,15 @@ namespace WebsocketsSimple.Server
             string certificatePassword) : base(parameters, certificate, certificatePassword)
         {
         }
- 
-        protected override void OnServerEvent(object sender, ServerEventArgs args)
-        {
-            FireEvent(this, args);
-        }
 
         public virtual async Task<bool> DisconnectConnectionAsync(Z connection, WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure, string statusDescription = "Disconnect", CancellationToken cancellationToken = default)
         {
             return await _handler.DisconnectConnectionAsync(connection, webSocketCloseStatus, statusDescription, cancellationToken);
         }
+
+        protected abstract T CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<Z> args);
+        protected abstract U CreateMessageEventArgs(WSMessageServerBaseEventArgs<Z> args);
+        protected abstract V CreateErrorEventArgs(WSErrorServerBaseEventArgs<Z> args);
 
         public TcpListener Server
         {
