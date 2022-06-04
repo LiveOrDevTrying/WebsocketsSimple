@@ -8,5 +8,6 @@ namespace WebsocketsSimple.Core.Models
     {
         public WebSocket Websocket { get; set; }
         public TcpClient TcpClient { get; set; }
+        public string ConnectionId { get; set; }
     }
 }
