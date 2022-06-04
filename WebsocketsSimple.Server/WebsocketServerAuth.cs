@@ -19,121 +19,30 @@ using WebsocketsSimple.Server.Models;
 namespace WebsocketsSimple.Server
 {
     public class WebsocketServerAuth<T> :
-        WebsocketServerBase<
+        WebsocketServerAuthBase<
             WSConnectionServerAuthEventArgs<T>, 
             WSMessageServerAuthEventArgs<T>, 
             WSErrorServerAuthEventArgs<T>, 
             ParamsWSServerAuth,
             WebsocketHandlerAuth<T>, 
             WSConnectionManagerAuth<T>,
-            IdentityWSServer<T>>, 
+            IdentityWSServer<T>,
+            T,
+            WSAuthorizeEventArgs<T>>, 
         IWebsocketServerAuth<T>
     {
-        protected readonly IUserService<T> _userService;
-
         public WebsocketServerAuth(ParamsWSServerAuth parameters,
-            IUserService<T> userService) : base(parameters)
+            IUserService<T> userService) : base(parameters, userService)
         {
-            _userService = userService;
-
-            _handler.AuthorizeEvent += OnAuthorizeEvent;
         }
 
         public WebsocketServerAuth(ParamsWSServerAuth parameters,
             IUserService<T> userService,
             byte[] certificate,
-            string certificatePassword) : base(parameters, certificate, certificatePassword)
+            string certificatePassword) : base(parameters, userService, certificate, certificatePassword)
         {
-            _userService = userService;
-
-            _handler.AuthorizeEvent += OnAuthorizeEvent;
         }
 
-        public virtual async Task<bool> SendToUserAsync(string message, T userId, CancellationToken cancellationToken = default)
-        {
-            if (IsServerRunning)
-            {
-                foreach (var connection in _connectionManager.GetAll(userId))
-                {
-                    await SendToConnectionAsync(message, connection, cancellationToken).ConfigureAwait(false);
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-        public virtual async Task<bool> SendToUserAsync(byte[] message, T userId, CancellationToken cancellationToken = default)
-        {
-            if (IsServerRunning)
-            {
-                foreach (var connection in _connectionManager.GetAll(userId))
-                {
-                    await SendToConnectionAsync(message, connection, cancellationToken).ConfigureAwait(false);
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        protected override void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<T> args)
-        {
-            switch (args.ConnectionEventType)
-            {
-                case ConnectionEventType.Connected:
-                    _connectionManager.Add(args.Connection);
-                    break;
-                case ConnectionEventType.Disconnect:
-                    _connectionManager.Remove(args.Connection.ConnectionId);
-                    break;
-                default:
-                    break;
-            }
-
-            FireEvent(this, args);
-        }
-        protected override void OnMessageEvent(object sender, WSMessageServerAuthEventArgs<T> args)
-        {
-            FireEvent(this, args);
-        }
-        protected override void OnErrorEvent(object sender, WSErrorServerAuthEventArgs<T> args)
-        {
-            FireEvent(this, args);
-        }
-        protected virtual void OnAuthorizeEvent(object sender, WSAuthorizeEventArgs<T> args)
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    var token = args.Connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token");
-
-                    if (token.Value == null || !await _userService.IsValidTokenAsync(token.Value, _cancellationToken).ConfigureAwait(false))
-                    {
-                        var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
-                        await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, _cancellationToken).ConfigureAwait(false);
-                        await DisconnectConnectionAsync(args.Connection, statusDescription: _parameters.ConnectionUnauthorizedString, cancellationToken: _cancellationToken).ConfigureAwait(false);
-                        return;
-                    }
-
-                    args.Connection.UserId = await _userService.GetIdAsync(token.Value, _cancellationToken).ConfigureAwait(false);
-
-                    await _handler.AuthorizedConnectionCallback(args, _cancellationToken).ConfigureAwait(false);
-                } 
-                catch (Exception ex) 
-                {
-                    FireEvent(this, new WSErrorServerAuthEventArgs<T>
-                    {
-                        Exception = ex,
-                        Message = ex.Message,
-                        Connection = args.Connection
-                    });
-                }
-            }, _cancellationToken);
-        }
-        
         protected override WebsocketHandlerAuth<T> CreateHandler(byte[] certificate = null, string certificatePassword = null)
         {
             return certificate != null
@@ -145,14 +54,34 @@ namespace WebsocketsSimple.Server
             return new WSConnectionManagerAuth<T>();
         }
 
-        public override void Dispose()
+        protected override WSConnectionServerAuthEventArgs<T> CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<IdentityWSServer<T>> args)
         {
-            if (_handler != null)
+            return new WSConnectionServerAuthEventArgs<T>
             {
-                _handler.AuthorizeEvent -= OnAuthorizeEvent;
-            }
+                Connection = args.Connection,
+                ConnectionEventType = args.ConnectionEventType
+            };
+        }
 
-            base.Dispose();
+        protected override WSMessageServerAuthEventArgs<T> CreateMessageEventArgs(WSMessageServerBaseEventArgs<IdentityWSServer<T>> args)
+        {
+            return new WSMessageServerAuthEventArgs<T>
+            {
+                Bytes = args.Bytes,
+                Connection = args.Connection,
+                Message = args.Message,
+                MessageEventType = args.MessageEventType
+            };
+        }
+
+        protected override WSErrorServerAuthEventArgs<T> CreateErrorEventArgs(WSErrorServerBaseEventArgs<IdentityWSServer<T>> args)
+        {
+            return new WSErrorServerAuthEventArgs<T>
+            {
+                Connection = args.Connection,
+                Exception = args.Exception,
+                Message = args.Message,
+            };
         }
     }
 }

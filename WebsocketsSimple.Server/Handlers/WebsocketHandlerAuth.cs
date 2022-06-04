@@ -1,8 +1,9 @@
 ﻿using PHS.Networking.Events.Args;
-using PHS.Networking.Models;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Tcp.NET.Core.Models;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
@@ -10,49 +11,52 @@ namespace WebsocketsSimple.Server.Handlers
 {
     public delegate void WebsocketAuthorizeEvent<T>(object sender, WSAuthorizeEventArgs<T> args);
 
-    public class WebsocketHandlerAuth<T> : 
-        WebsocketHandlerBase<
+    public class WebsocketHandlerAuth<T> :
+        WebsocketHandlerAuthBase<
             WSConnectionServerAuthEventArgs<T>,
             WSMessageServerAuthEventArgs<T>,
             WSErrorServerAuthEventArgs<T>,
             ParamsWSServerAuth,
-            IdentityWSServer<T>>
+            WSAuthorizeEventArgs<T>,
+            IdentityWSServer<T>,
+            T>
     {
-        private event WebsocketAuthorizeEvent<T> _authorizeEvent;
-
         public WebsocketHandlerAuth(ParamsWSServerAuth parameters) : base(parameters)
         {
         }
-        public WebsocketHandlerAuth(ParamsWSServerAuth parameters, byte[] certificate, string certificatePassword)
-            : base(parameters, certificate, certificatePassword)
+        public WebsocketHandlerAuth(ParamsWSServerAuth parameters, byte[] certificate, string certificatePassword) : base(parameters, certificate, certificatePassword)
         {
         }
-        
-        protected override IdentityWSServer<T> CreateConnection(ConnectionTcpClient connection)
+
+        public override async Task AuthorizeCallbackAsync(WSAuthorizeEventArgs<T> args, CancellationToken cancellationToken)
         {
-            return new IdentityWSServer<T>
-            {
-                ConnectionId = Guid.NewGuid().ToString(),
-                TcpClient = connection.TcpClient
-            };
+            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestedSubprotocols, args.Connection, cancellationToken).ConfigureAwait(false);
         }
 
         protected override Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, IdentityWSServer<T> connection, CancellationToken cancellationToken)
         {
             SetPathAndQueryStringForConnection(message, connection);
 
+            var token = connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token");
+
             FireEvent(this, new WSAuthorizeEventArgs<T>
             {
                 Connection = connection,
                 UpgradeData = message,
-                RequestedSubprotocols = requestedSubprotocols
+                RequestedSubprotocols = requestedSubprotocols,
+                Token = token.Value
             });
 
             return Task.CompletedTask;
         }
-        public virtual async Task AuthorizedConnectionCallback(WSAuthorizeEventArgs<T> args, CancellationToken cancellationToken)
+
+        protected override IdentityWSServer<T> CreateConnection(ConnectionTcp connection)
         {
-            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestedSubprotocols, args.Connection, cancellationToken).ConfigureAwait(false);
+            return new IdentityWSServer<T>
+            {
+                TcpClient = connection.TcpClient,
+                ConnectionId = Guid.NewGuid().ToString()
+            };
         }
 
         protected override WSMessageServerAuthEventArgs<T> CreateMessageEventArgs(WSMessageServerBaseEventArgs<IdentityWSServer<T>> args)
@@ -65,6 +69,7 @@ namespace WebsocketsSimple.Server.Handlers
                 MessageEventType = args.MessageEventType
             };
         }
+
         protected override WSConnectionServerAuthEventArgs<T> CreateConnectionEventArgs(ConnectionEventArgs<IdentityWSServer<T>> args)
         {
             return new WSConnectionServerAuthEventArgs<T>
@@ -82,23 +87,6 @@ namespace WebsocketsSimple.Server.Handlers
                 Exception = args.Exception,
                 Message = args.Message
             };
-        }
-
-        protected virtual void FireEvent(object sender, WSAuthorizeEventArgs<T> args)
-        {
-            _authorizeEvent?.Invoke(sender, args);
-        }
-
-        public event WebsocketAuthorizeEvent<T> AuthorizeEvent
-        {
-            add
-            {
-                _authorizeEvent += value;
-            }
-            remove
-            {
-                _authorizeEvent -= value;
-            }
         }
     }
 }

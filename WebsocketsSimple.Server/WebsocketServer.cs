@@ -1,5 +1,4 @@
-﻿using PHS.Networking.Enums;
-using WebsocketsSimple.Server.Events.Args;
+﻿using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 using WebsocketsSimple.Server.Managers;
 using WebsocketsSimple.Server.Handlers;
@@ -13,7 +12,7 @@ namespace WebsocketsSimple.Server
             WSErrorServerEventArgs, 
             ParamsWSServer, 
             WebsocketHandler, 
-            WSConnectionManager<ConnectionWSServer>, 
+            WSConnectionManager, 
             ConnectionWSServer>,
         IWebsocketServer
     {
@@ -26,10 +25,11 @@ namespace WebsocketsSimple.Server
         {
         }
 
-        protected override WSConnectionManager<ConnectionWSServer> CreateConnectionManager()
+        protected override WSConnectionManager CreateConnectionManager()
         {
-            return new WSConnectionManager<ConnectionWSServer>();
+            return new WSConnectionManager();
         }
+
         protected override WebsocketHandler CreateHandler(byte[] certificate = null, string certificatePassword = null)
         {
             return certificate != null
@@ -37,29 +37,34 @@ namespace WebsocketsSimple.Server
                 : new WebsocketHandler(_parameters);
         }
 
-        protected override void OnConnectionEvent(object sender, WSConnectionServerEventArgs args)
+        protected override WSConnectionServerEventArgs CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<ConnectionWSServer> args)
         {
-            switch (args.ConnectionEventType)
+            return new WSConnectionServerEventArgs
             {
-                case ConnectionEventType.Connected:
-                    _connectionManager.Add(args.Connection.ConnectionId, args.Connection);
-                    break;
-                case ConnectionEventType.Disconnect:
-                    _connectionManager.Remove(args.Connection.ConnectionId);
-                    break;
-                default:
-                    break;
-            }
+                Connection = args.Connection,
+                ConnectionEventType = args.ConnectionEventType
+            };
+        }
 
-            FireEvent(this, args);
-        }
-        protected override void OnErrorEvent(object sender, WSErrorServerEventArgs args)
+        protected override WSMessageServerEventArgs CreateMessageEventArgs(WSMessageServerBaseEventArgs<ConnectionWSServer> args)
         {
-            FireEvent(this, args);
+            return new WSMessageServerEventArgs
+            {
+                Bytes = args.Bytes,
+                Connection = args.Connection,
+                Message = args.Message,
+                MessageEventType = args.MessageEventType
+            };
         }
-        protected override void OnMessageEvent(object sender, WSMessageServerEventArgs args)
+
+        protected override WSErrorServerEventArgs CreateErrorEventArgs(WSErrorServerBaseEventArgs<ConnectionWSServer> args)
         {
-            FireEvent(this, args);
+            return new WSErrorServerEventArgs
+            {
+                Connection = args.Connection,
+                Exception = args.Exception,
+                Message = args.Message
+            };
         }
     }
 }
