@@ -1,16 +1,20 @@
 ﻿using PHS.Networking.Enums;
+using PHS.Networking.Events.Args;
 using PHS.Networking.Server.Handlers;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Tcp.NET.Core.Models;
 using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
@@ -136,6 +140,76 @@ namespace WebsocketsSimple.Server.Handlers
             return false;
         }
 
+
+        protected override async Task ListenForConnectionsAsync(CancellationToken cancellationToken)
+        {
+            while (_isRunning && !cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+
+                    var connection = CreateConnection(new ConnectionTcp
+                    {
+                        TcpClient = client
+                    });
+
+                    _ = Task.Run(async () => { await ReceiveAsync(connection, cancellationToken).ConfigureAwait(false); }, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    FireEvent(this, CreateErrorEventArgs(new ErrorEventArgs<Z>
+                    {
+                        Exception = ex,
+                        Message = ex.Message,
+                    }));
+                }
+            }
+        }
+        protected override async Task ListenForConnectionsSSLAsync(CancellationToken cancellationToken)
+        {
+            while (_isRunning && !cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+                    var sslStream = new SslStream(client.GetStream());
+                    await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
+                    {
+                        ServerCertificate = new X509Certificate2(_certificate, _certificatePassword)
+                    }, cancellationToken).ConfigureAwait(false);
+
+                    if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
+                    {
+                        var connection = CreateConnection(new ConnectionTcp
+                        {
+                            TcpClient = client
+                        });
+
+                        _ = Task.Run(async () => { await ReceiveAsync(connection, cancellationToken).ConfigureAwait(false); }, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        var certStatus = $"IsAuthenticated = {sslStream.IsAuthenticated} && IsEncrypted == {sslStream.IsEncrypted}";
+                        FireEvent(this, CreateErrorEventArgs(new ErrorEventArgs<Z>
+                        {
+                            Exception = new Exception(certStatus),
+                            Message = certStatus
+                        }));
+
+                        client.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FireEvent(this, CreateErrorEventArgs(new ErrorEventArgs<Z>
+                    {
+                        Exception = ex,
+                        Message = ex.Message,
+                    }));
+                }
+            }
+        }
         protected override async Task ReceiveAsync(Z connection, CancellationToken cancellationToken)
         {
             while (connection.TcpClient.Connected && !cancellationToken.IsCancellationRequested && !connection.Disposed)
