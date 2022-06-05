@@ -18,11 +18,17 @@ using System.Threading.Tasks;
 using WebsocketsSimple.Client.Events.Args;
 using WebsocketsSimple.Client.Models;
 using WebsocketsSimple.Core;
+using WebsocketsSimple.Core.Events.Args;
 using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client.Models
 {
-    public class WebsocketClientHandler : WebsocketClientHandlerBase<ConnectionWS>
+    public class WebsocketClientHandler : WebsocketClientHandlerBase<
+        WSConnectionClientEventArgs,
+        WSMessageClientEventArgs,
+        WSErrorClientEventArgs,
+        ParamsWSClient,
+        ConnectionWS>
     {
         public WebsocketClientHandler(ParamsWSClient parameters) : base(parameters)
         {
@@ -31,6 +37,36 @@ namespace WebsocketsSimple.Client.Models
         protected override ConnectionWS CreateConnection(ConnectionWS connection)
         {
             return connection;
+        }
+
+        protected override WSConnectionClientEventArgs CreateConnectionEventArgs(WSConnectionEventArgs<ConnectionWS> args)
+        {
+            return new WSConnectionClientEventArgs
+            {
+                Connection = args.Connection,
+                ConnectionEventType = args.ConnectionEventType
+            };
+        }
+
+        protected override WSErrorClientEventArgs CreateErrorEventArgs(WSErrorEventArgs<ConnectionWS> args)
+        {
+            return new WSErrorClientEventArgs
+            {
+                Connection = args.Connection,
+                Exception = args.Exception,
+                Message = args.Message
+            };
+        }
+
+        protected override WSMessageClientEventArgs CreateMessageEventArgs(WSMessageEventArgs<ConnectionWS> args)
+        {
+            return new WSMessageClientEventArgs
+            {
+                Bytes = args.Bytes,
+                Connection = args.Connection,
+                Message = args.Message,
+                MessageEventType = args.MessageEventType
+            };
         }
     }
 }
