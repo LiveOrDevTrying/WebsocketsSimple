@@ -19,18 +19,18 @@ using WebsocketsSimple.Core.Models;
 
 namespace WebsocketsSimple.Client.Models
 {
-    public abstract class WebsocketClientHandlerBase<T> :
-        CoreNetworkingGeneric<
-            WSConnectionEventArgs<T>,
-            WSMessageEventArgs<T>,
-            WSErrorEventArgs<T>,
-            ParamsWSClient,
-            T>
-        where T : ConnectionWS
+    public abstract class WebsocketClientHandlerBase<T, U, V, W, Y> :
+        CoreNetworkingGeneric<T, U, V, W, Y>,
+        ICoreNetworkingGeneric<T, U, V, Y>
+        where T : WSConnectionEventArgs<Y>
+        where U : WSMessageEventArgs<Y>
+        where V : WSErrorEventArgs<Y>
+        where W : ParamsWSClient
+        where Y : ConnectionWS
     {
-        protected T _connection;
+        protected Y _connection;
 
-        public WebsocketClientHandlerBase(ParamsWSClient parameters) : base(parameters)
+        public WebsocketClientHandlerBase(W parameters) : base(parameters)
         {
         }
 
@@ -80,22 +80,22 @@ namespace WebsocketsSimple.Client.Models
 
                             if (_connection.Websocket.State == WebSocketState.Open)
                             {
-                                FireEvent(this, new WSConnectionEventArgs<T>
+                                FireEvent(this, CreateConnectionEventArgs(new WSConnectionEventArgs<Y>
                                 {
                                     ConnectionEventType = ConnectionEventType.Connected,
                                     Connection = _connection
-                                });
+                                }));
 
                                 foreach (var bytes in remainingMessages)
                                 {
                                     var message = Encoding.UTF8.GetString(bytes).Replace("\u0016", "");
-                                    FireEvent(this, new WSMessageEventArgs<T>
+                                    FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
                                     {
                                         Bytes = bytes,
                                         Message = message,
                                         Connection = _connection,
                                         MessageEventType = MessageEventType.Receive
-                                    });
+                                    }));
                                 }
 
                                 _ = Task.Run(async () => { await ReceiveAsync(cancellationToken).ConfigureAwait(false); }, cancellationToken);
@@ -107,12 +107,12 @@ namespace WebsocketsSimple.Client.Models
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorEventArgs<Y>
                 {
                     Exception = ex,
                     Message = $"Error during ConnectAsync() - {ex.Message}",
                     Connection = _connection
-                });
+                }));
             }
 
             await DisconnectAsync(cancellationToken: cancellationToken);
@@ -133,11 +133,11 @@ namespace WebsocketsSimple.Client.Models
                 {
                     await _connection.Websocket.CloseAsync(webSocketCloseStatus, closeStatusDescription, cancellationToken).ConfigureAwait(false);
 
-                    FireEvent(this, new WSConnectionEventArgs<T>
+                    FireEvent(this, CreateConnectionEventArgs(new WSConnectionEventArgs<Y>
                     {
                         ConnectionEventType = ConnectionEventType.Disconnect,
                         Connection = _connection
-                    });
+                    }));
 
                     _connection = null;
 
@@ -146,12 +146,12 @@ namespace WebsocketsSimple.Client.Models
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorEventArgs<Y>
                 {
                     Exception = ex,
                     Message = $"Error in DisconnectAsync() - {ex.Message}",
                     Connection = _connection
-                });
+                }));
             }
 
             return false;
@@ -169,25 +169,25 @@ namespace WebsocketsSimple.Client.Models
                     var bytes = Encoding.UTF8.GetBytes(message);
                     await _connection.Websocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken).ConfigureAwait(false);
 
-                    FireEvent(this, new WSMessageEventArgs<T>
+                    FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
                     {
                         MessageEventType = MessageEventType.Sent,
                         Bytes = bytes,
                         Message = message,
                         Connection = _connection,
-                    });
+                    }));
 
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorEventArgs<Y>
                 {
                     Exception = ex,
                     Message = $"Error during SendToServerAsync() - {ex.Message}",
                     Connection = _connection
-                });
+                }));
             }
 
             return false;
@@ -203,24 +203,24 @@ namespace WebsocketsSimple.Client.Models
                 {
                     await _connection.Websocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Binary, true, cancellationToken).ConfigureAwait(false);
 
-                    FireEvent(this, new WSMessageEventArgs<T>
+                    FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
                     {
                         MessageEventType = MessageEventType.Sent,
                         Bytes = message,
                         Connection = _connection
-                    });
+                    }));
 
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorEventArgs<Y>
                 {
                     Exception = ex,
                     Message = $"Error during SendToServerAsync() - {ex.Message}",
                     Connection = _connection
-                });
+                }));
             }
 
             return false;
@@ -255,22 +255,22 @@ namespace WebsocketsSimple.Client.Models
 
                                 if (!string.IsNullOrWhiteSpace(message))
                                 {
-                                    FireEvent(this, new WSMessageEventArgs<T>
+                                    FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
                                     {
                                         Bytes = ms.ToArray(),
                                         Message = message,
                                         Connection = _connection,
                                         MessageEventType = MessageEventType.Receive
-                                    });
+                                    }));
                                 }
                                 break;
                             case WebSocketMessageType.Binary:
-                                FireEvent(this, new WSMessageEventArgs<T>
+                                FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
                                 {
                                     Bytes = ms.ToArray(),
                                     Connection = _connection,
                                     MessageEventType = MessageEventType.Receive
-                                });
+                                }));
                                 break;
                             case WebSocketMessageType.Close:
                                 await DisconnectAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -283,12 +283,12 @@ namespace WebsocketsSimple.Client.Models
             }
             catch (Exception ex)
             {
-                FireEvent(this, new WSErrorEventArgs<T>
+                FireEvent(this, CreateErrorEventArgs(new WSErrorEventArgs<Y>
                 {
                     Exception = ex,
                     Message = $"Error in ReceiveAsync() - {ex.Message}",
                     Connection = _connection
-                });
+                }));
             }
         }
 
@@ -342,7 +342,11 @@ namespace WebsocketsSimple.Client.Models
                 throw new Exception("Could not create connection - SSL cert has validation problem.");
             }
         }
-        protected abstract T CreateConnection(ConnectionWS connection);
+        
+        protected abstract Y CreateConnection(ConnectionWS connection);
+        protected abstract T CreateConnectionEventArgs(WSConnectionEventArgs<Y> args);
+        protected abstract U CreateMessageEventArgs(WSMessageEventArgs<Y> args);
+        protected abstract V CreateErrorEventArgs(WSErrorEventArgs<Y> args);
 
         protected virtual string ConstructURI()
         {
@@ -664,13 +668,12 @@ namespace WebsocketsSimple.Client.Models
             DisconnectAsync().Wait();
         }
 
-        public T Connection
+        public Y Connection
         {
             get
             {
                 return _connection;
             }
         }
-
     }
 }
