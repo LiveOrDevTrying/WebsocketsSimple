@@ -78,7 +78,7 @@ namespace WebsocketsSimple.Server
             {
                 try
                 {
-                    if (args.Token == null || args.Token.Length <= 0 || !await _userService.IsValidTokenAsync(args.Token, _cancellationToken).ConfigureAwait(false))
+                    if (args.Token == null || args.Token.Length <= 0 || !await _userService.TryGetIdAsync(args.Token, out var id, _cancellationToken).ConfigureAwait(false))
                     {
                         var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
                         await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, _cancellationToken).ConfigureAwait(false);
@@ -86,7 +86,7 @@ namespace WebsocketsSimple.Server
                         return;
                     }
 
-                    args.Connection.UserId = await _userService.GetIdAsync(args.Token, _cancellationToken).ConfigureAwait(false);
+                    args.Connection.UserId = id;
 
                     if (!_parameters.OnlyEmitBytes || !string.IsNullOrWhiteSpace(_parameters.ConnectionSuccessString))
                     {
