@@ -147,7 +147,7 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+                    var client = await _server.AcceptTcpClientAsync().ConfigureAwait(false);
 
                     var connection = CreateConnection(new ConnectionTcp
                     {
@@ -172,7 +172,7 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 try
                 {
-                    var client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+                    var client = await _server.AcceptTcpClientAsync().ConfigureAwait(false);
                     var sslStream = new SslStream(client.GetStream());
                     await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
                     {
