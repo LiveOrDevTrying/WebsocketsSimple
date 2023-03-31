@@ -28,9 +28,14 @@ namespace WebsocketsSimple.Client
             _handler.ErrorEvent += OnErrorEvent;
         }
 
-        public virtual async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<bool> ConnectAsync(CancellationToken? cancellationToken = default)
         {
-            return await _handler.ConnectAsync(cancellationToken).ConfigureAwait(false);
+            if (cancellationToken.HasValue)
+            {
+                return await _handler.ConnectAsync(cancellationToken.Value).ConfigureAwait(false);
+            }
+
+            return await _handler.ConnectAsync(default(CancellationToken)).ConfigureAwait(false);
         }
         public virtual async Task<bool> DisconnectAsync(WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
             string closeStatusDescription = "Disconnect", 
@@ -38,18 +43,33 @@ namespace WebsocketsSimple.Client
         {
             return await _handler.DisconnectAsync(webSocketCloseStatus, closeStatusDescription, cancellationToken).ConfigureAwait(false);
         }
-        public virtual async Task<bool> DisconnectAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<bool> DisconnectAsync(CancellationToken? cancellationToken = default)
         {
-            return await _handler.DisconnectAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (cancellationToken.HasValue)
+            {
+                return await _handler.DisconnectAsync(cancellationToken: cancellationToken.Value).ConfigureAwait(false);
+            }
+
+            return await _handler.DisconnectAsync().ConfigureAwait(false);
         }
 
-        public virtual async Task<bool> SendAsync(string message, CancellationToken cancellationToken = default)
+        public virtual async Task<bool> SendAsync(string message, CancellationToken? cancellationToken = default)
         {
-            return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
+            if (cancellationToken.HasValue)
+            {
+                return await _handler.SendAsync(message, cancellationToken.Value).ConfigureAwait(false);
+            }
+
+            return await _handler.SendAsync(message, default(CancellationToken)).ConfigureAwait(false);
         }
-        public virtual async Task<bool> SendAsync(byte[] message, CancellationToken cancellationToken = default)
+        public virtual async Task<bool> SendAsync(byte[] message, CancellationToken? cancellationToken = default)
         {
-            return await _handler.SendAsync(message, cancellationToken).ConfigureAwait(false);
+            if (cancellationToken.HasValue)
+            {
+                return await _handler.SendAsync(message, cancellationToken.Value).ConfigureAwait(false);
+            }
+
+            return await _handler.SendAsync(message, default(CancellationToken)).ConfigureAwait(false);
         }
 
         protected virtual void OnConnectionEvent(object sender, T args)
