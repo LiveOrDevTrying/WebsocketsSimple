@@ -12,7 +12,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>The server module for a simple websocket server and client implementation with authentication with TcpListener.</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright 2022</copyright>
+    <copyright>Copyright 2023</copyright>
     <tags>Websocket Websockets server client websocketsharp tcpListener wss WebsocketSimple WebsocketsSimple simple authentication auth</tags>
     <dependencies>
 		<group targetFramework="netcoreapp3.0">
