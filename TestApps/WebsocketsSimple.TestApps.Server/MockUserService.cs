@@ -7,14 +7,14 @@ namespace WebsocketsSimple.TestApps.Server
 {
     public class MockUserService : IUserService<Guid>
     {
-        public Task<bool> TryGetIdAsync(string token, out Guid id, CancellationToken cancellationToken = default)
+        public Task<bool> IsValidTokenAsync(string token, CancellationToken cancellationToken = default)
         {
-            id = Guid.NewGuid();
             return Task.FromResult(token == "testToken");
         }
 
-        public void Dispose()
+        public Task<Guid> GetIdAsync(string token, CancellationToken cancellationToken = default)
         {
+            return Task.FromResult(Guid.NewGuid());
         }
     }
 }
