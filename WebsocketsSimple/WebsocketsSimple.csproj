@@ -7,7 +7,7 @@
     <Version>5.0.0</Version>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
-    <Copyright>Copyright 2022</Copyright>
+    <Copyright>Copyright 2023</Copyright>
     <Description>The client and server modules combined for a simple websocket server and client implementation with authentication.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/LiveOrDevTrying/WebsocketsSimple</PackageProjectUrl>
