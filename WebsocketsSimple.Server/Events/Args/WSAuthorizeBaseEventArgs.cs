@@ -1,4 +1,5 @@
-﻿using Tcp.NET.Server.Events.Args;
+﻿using System.Collections.Generic;
+using Tcp.NET.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Events.Args
@@ -7,7 +8,8 @@ namespace WebsocketsSimple.Server.Events.Args
         where Z : IdentityWSServer<A>
     {
         public string UpgradeData { get; set; }
-        public string[] RequestedSubprotocols { get; set; }
+        public string[] RequestSubprotocols { get; set; }
+        public Dictionary<string, string> RequestHeaders { get; set; }
     }
 }
 
