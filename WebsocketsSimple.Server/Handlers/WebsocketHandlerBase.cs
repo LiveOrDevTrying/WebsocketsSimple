@@ -232,10 +232,22 @@ namespace WebsocketsSimple.Server.Handlers
 
                         if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                         {
-                            var requestedSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)").Groups[1].Value.Trim().Split(",");
-                            if (await CanUpgradeConnection(data, requestedSubprotocols, connection, cancellationToken).ConfigureAwait(false))
+                            var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)").Groups[1].Value.Trim().Split(",");
+
+                            var headers = new Dictionary<string, string>();
+                            foreach (var item in data.Split("\r\n").Where(x => !string.IsNullOrWhiteSpace(x)))
                             {
-                                await UpgradeConnectionAsync(data, requestedSubprotocols, connection, cancellationToken).ConfigureAwait(false);
+                                var split = item.Split(":");
+
+                                if (split.Length == 2)
+                                {
+                                    headers.Add(split[0].Trim(), split[1].Trim());
+                                }
+                            }
+
+                            if (await CanUpgradeConnection(data, requestSubprotocols, headers, connection, cancellationToken).ConfigureAwait(false))
+                            {
+                                await UpgradeConnectionAsync(data, requestSubprotocols, headers, connection, cancellationToken).ConfigureAwait(false);
                             }
                         }
                     }
@@ -257,7 +269,7 @@ namespace WebsocketsSimple.Server.Handlers
                                 await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count).ConfigureAwait(false);
                             }
                             while (result == null || (!connection.Disposed && !result.EndOfMessage && connection != null && connection.TcpClient.Connected && connection.Websocket.State == WebSocketState.Open));
-
+                            
                             switch (result.MessageType)
                             {
                                 case WebSocketMessageType.Text:
@@ -310,7 +322,7 @@ namespace WebsocketsSimple.Server.Handlers
             }));
         }
 
-        protected virtual async Task<bool> CanUpgradeConnection(string message, string[] requestedSubprotocols, Z connection, CancellationToken cancellationToken)
+        protected virtual async Task<bool> CanUpgradeConnection(string message, string[] requestedSubprotocols, Dictionary<string, string> requestHeaders, Z connection, CancellationToken cancellationToken)
         {
             SetPathAndQueryStringForConnection(message, connection);
 
@@ -327,7 +339,7 @@ namespace WebsocketsSimple.Server.Handlers
 
             return true;
         }
-        protected virtual async Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, Z connection, CancellationToken cancellationToken)
+        protected virtual async Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, Dictionary<string, string> requestHeaders, Z connection, CancellationToken cancellationToken)
         {
             // 1. Obtain the value of the "Sec-WebSocket-Key" request header without any leading or trailing whitespace
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
@@ -357,6 +369,7 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 Connection = connection,
                 ConnectionEventType = ConnectionEventType.Connected,
+                RequestHeaders = requestHeaders
             }));
         }
         protected virtual void SetPathAndQueryStringForConnection(string message, Z connection)
