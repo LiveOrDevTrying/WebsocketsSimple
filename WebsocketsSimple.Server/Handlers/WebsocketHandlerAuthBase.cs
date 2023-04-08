@@ -29,7 +29,7 @@ namespace WebsocketsSimple.Server.Handlers
 
         public virtual async Task AuthorizeCallbackAsync(X args, CancellationToken cancellationToken)
         {
-            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestedSubprotocols, args.Connection, cancellationToken).ConfigureAwait(false);
+            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestSubprotocols, args.RequestHeaders, args.Connection, cancellationToken).ConfigureAwait(false);
         }
 
         protected virtual void FireEvent(object sender, X args)
