@@ -79,22 +79,7 @@ namespace WebsocketsSimple.Server
             {
                 try
                 {
-                    string token = null;
-
-                    if (args.RequestHeaders.ContainsKey(HttpKnownHeaderNames.Authorization))
-                    {
-                        var split = args.RequestHeaders[HttpKnownHeaderNames.Authorization].Split(" ");
-                        if (split.Length == 2)
-                        {
-                            token = split[1];
-                        }
-                    }
-                    else if (args.Token == null || args.Token.Length <= 0)
-                    {
-                        token = args.Token;
-                    }
-                        
-                    if (token == null || !await _userService.IsValidTokenAsync(token, _cancellationToken).ConfigureAwait(false))
+                    if (args.Token == null || !await _userService.IsValidTokenAsync(args.Token, _cancellationToken).ConfigureAwait(false))
                     {
                         var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
                         await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, _cancellationToken).ConfigureAwait(false);
@@ -102,7 +87,7 @@ namespace WebsocketsSimple.Server
                         return;
                     }
 
-                    args.Connection.UserId = await _userService.GetIdAsync(token, _cancellationToken);
+                    args.Connection.UserId = await _userService.GetIdAsync(args.Token, _cancellationToken);
 
                     _connectionManager.Add(args.Connection);
 
