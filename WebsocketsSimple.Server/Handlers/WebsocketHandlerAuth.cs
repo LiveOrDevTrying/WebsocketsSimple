@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Tcp.NET.Core.Models;
+using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
@@ -33,16 +34,31 @@ namespace WebsocketsSimple.Server.Handlers
         {
             SetPathAndQueryStringForConnection(message, connection);
 
-            var token = connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token");
-
-            FireEvent(this, new WSAuthorizeEventArgs<T>
+            string token = null;
+            if (requestHeaders.ContainsKey(HttpKnownHeaderNames.Authorization))
             {
-                Connection = connection,
-                UpgradeData = message,
-                RequestSubprotocols = requestedSubprotocols,
-                Token = token.Value,
-                RequestHeaders = requestHeaders
-            });
+                var split = requestHeaders[HttpKnownHeaderNames.Authorization].Split(" ");
+                if (split.Length == 2)
+                {
+                    token = split[1];
+                }
+            }
+            else if (connection.QueryStringParameters.Any(x => x.Key.Trim().ToLower() == "token"))
+            {
+                token = connection.QueryStringParameters.FirstOrDefault(x => x.Key.Trim().ToLower() == "token").Value;
+            };
+
+            if (token != null)
+            {
+                FireEvent(this, new WSAuthorizeEventArgs<T>
+                {
+                    Connection = connection,
+                    UpgradeData = message,
+                    RequestSubprotocols = requestedSubprotocols,
+                    Token = token,
+                    RequestHeaders = requestHeaders
+                });
+            }
 
             return Task.CompletedTask;
         }

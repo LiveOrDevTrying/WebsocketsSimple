@@ -9,7 +9,7 @@ namespace WebsocketsSimple.TestApps.Server
     {
         public Task<bool> IsValidTokenAsync(string token, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(token == "Robbie");
+            return Task.FromResult(token == "testToken");
         }
 
         public Task<Guid> GetIdAsync(string token, CancellationToken cancellationToken = default)
