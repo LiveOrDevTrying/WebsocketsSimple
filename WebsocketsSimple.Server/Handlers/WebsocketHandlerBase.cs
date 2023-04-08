@@ -383,16 +383,23 @@ namespace WebsocketsSimple.Server.Handlers
             }
 
             var pathAndQueryString = split[1];
-            connection.Path = pathAndQueryString.StartsWith("/") ? pathAndQueryString.Substring(1, pathAndQueryString.IndexOf("?") - 1) : pathAndQueryString.Substring(0, pathAndQueryString.IndexOf("?") - 1);
-
-            var qsParsedToken = HttpUtility.ParseQueryString(pathAndQueryString.Substring(pathAndQueryString.IndexOf("?") + 1));
-
-            var kvps = new List<KeyValuePair<string, string>>();
-            foreach (string item in qsParsedToken)
+            if (pathAndQueryString.IndexOf("?") > 0)
             {
-                kvps.Add(new KeyValuePair<string, string>(item, qsParsedToken[item]));
+                connection.Path = pathAndQueryString.StartsWith("/") ? pathAndQueryString.Substring(1, pathAndQueryString.IndexOf("?") - 1) : pathAndQueryString.Substring(0, pathAndQueryString.IndexOf("?") - 1);
+
+                var qsParsedToken = HttpUtility.ParseQueryString(pathAndQueryString.Substring(pathAndQueryString.IndexOf("?") + 1));
+
+                var kvps = new List<KeyValuePair<string, string>>();
+                foreach (string item in qsParsedToken)
+                {
+                    kvps.Add(new KeyValuePair<string, string>(item, qsParsedToken[item]));
+                }
+                connection.QueryStringParameters = kvps.ToArray();
             }
-            connection.QueryStringParameters = kvps.ToArray();
+            else
+            {
+                connection.Path = pathAndQueryString;
+            }
         }
         protected virtual bool AreSubprotocolsRequestedValid(string[] subprotocols)
         {
