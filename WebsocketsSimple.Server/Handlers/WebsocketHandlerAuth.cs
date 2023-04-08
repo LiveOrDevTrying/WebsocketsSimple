@@ -1,5 +1,6 @@
 ﻿using PHS.Networking.Events.Args;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,12 +29,7 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        public override async Task AuthorizeCallbackAsync(WSAuthorizeEventArgs<T> args, CancellationToken cancellationToken)
-        {
-            await base.UpgradeConnectionAsync(args.UpgradeData, args.RequestedSubprotocols, args.Connection, cancellationToken).ConfigureAwait(false);
-        }
-
-        protected override Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, IdentityWSServer<T> connection, CancellationToken cancellationToken)
+        protected override Task UpgradeConnectionAsync(string message, string[] requestedSubprotocols, Dictionary<string, string> requestHeaders, IdentityWSServer<T> connection, CancellationToken cancellationToken)
         {
             SetPathAndQueryStringForConnection(message, connection);
 
@@ -43,8 +39,9 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 Connection = connection,
                 UpgradeData = message,
-                RequestedSubprotocols = requestedSubprotocols,
-                Token = token.Value
+                RequestSubprotocols = requestedSubprotocols,
+                Token = token.Value,
+                RequestHeaders = requestHeaders
             });
 
             return Task.CompletedTask;
