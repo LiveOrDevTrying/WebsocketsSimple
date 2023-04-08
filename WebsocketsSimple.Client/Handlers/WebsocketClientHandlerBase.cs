@@ -355,11 +355,6 @@ namespace WebsocketsSimple.Client.Models
             var path = _parameters.Path == null ? "/" : !_parameters.Path.StartsWith("/") ? $"/{_parameters.Path}" : _parameters.Path;
             var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
-            if (!string.IsNullOrWhiteSpace(_parameters.Token))
-            {
-                qs.Add("token", _parameters.Token);
-            }
-
             if (_parameters.QueryStringParameters != null)
             {
                 foreach (var item in _parameters.QueryStringParameters)
@@ -448,6 +443,11 @@ namespace WebsocketsSimple.Client.Models
                     builder.Append(key).Append(": ").Append(_parameters.RequestHeaders[key]).Append("\r\n");
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(_parameters.Token))
+            {
+                builder.Append($"{HttpKnownHeaderNames.Authorization}:Bearer {_parameters.Token}\r\n");
+            } 
 
             // Add the optional subprotocols header
             if (_parameters.RequestedSubProtocols != null &&
