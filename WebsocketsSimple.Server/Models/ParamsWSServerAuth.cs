@@ -11,7 +11,7 @@ namespace WebsocketsSimple.Server.Models
         {
             if (onlyEmitBytes && !string.IsNullOrWhiteSpace(connectionUnauthorizedString))
             {
-                throw new ArgumentException("onlyEmitBytes can not be true is a connectionUnauthorizedString is specified");
+                throw new ArgumentException("onlyEmitBytes can not be true if a connectionUnauthorizedString is specified");
             }
 
             ConnectionUnauthorizedString = connectionUnauthorizedString;
