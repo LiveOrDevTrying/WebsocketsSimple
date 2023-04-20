@@ -14,7 +14,10 @@ namespace WebsocketsSimple.Server
             WSMessageServerAuthEventArgs<T>, 
             WSErrorServerAuthEventArgs<T>, 
             IdentityWSServer<T>>
-    { 
+    {
+        Task SendToChannelAsync(string message, string channel, CancellationToken cancellationToken = default);
+        Task SendToChannelAsync(byte[] message, string channel, CancellationToken cancellationToken = default);
+
         Task<bool> SendToUserAsync(string message, T userId, CancellationToken cancellationToken = default);
         Task<bool> SendToUserAsync(byte[] message, T userId, CancellationToken cancellationToken = default);
 
