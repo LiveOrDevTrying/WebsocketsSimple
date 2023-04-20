@@ -1,14 +1,13 @@
 ﻿using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using PHS.Networking.Server.Events.Args;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Handlers;
 using WebsocketsSimple.Server.Models;
 using WebsocketsSimple.Server.Managers;
 using System.Net.WebSockets;
 using PHS.Networking.Server.Services;
-using PHS.Networking.Enums;
+using System.Linq;
 
 namespace WebsocketsSimple.Server
 {
@@ -35,6 +34,21 @@ namespace WebsocketsSimple.Server
         public virtual async Task<bool> DisconnectConnectionAsync(Z connection, WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure, string statusDescription = "Disconnect", CancellationToken cancellationToken = default)
         {
             return await _handler.DisconnectConnectionAsync(connection, webSocketCloseStatus, statusDescription, cancellationToken);
+        }
+
+        public virtual async Task SendToChannelAsync(string message, string channel, CancellationToken cancellationToken = default)
+        {
+            foreach (var connection in _connectionManager.GetAll().Where(x => x.Channel.Trim().ToLower() == channel.Trim().ToLower()))
+            {
+                await _handler.SendAsync(message, connection, cancellationToken);
+            }
+        }
+        public virtual async Task SendToChannelAsync(byte[] message, string channel, CancellationToken cancellationToken = default)
+        {
+            foreach (var connection in _connectionManager.GetAll().Where(x => x.Channel.Trim().ToLower() == channel.Trim().ToLower()))
+            {
+                await _handler.SendAsync(message, connection, cancellationToken);
+            }
         }
 
         protected abstract T CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<Z> args);

@@ -389,7 +389,7 @@ namespace WebsocketsSimple.Server.Handlers
             var pathAndQueryString = split[1];
             if (pathAndQueryString.IndexOf("?") > 0)
             {
-                connection.Path = pathAndQueryString.StartsWith("/") ? pathAndQueryString.Substring(1, pathAndQueryString.IndexOf("?") - 1) : pathAndQueryString.Substring(0, pathAndQueryString.IndexOf("?") - 1);
+                connection.Channel = pathAndQueryString.StartsWith("/") ? pathAndQueryString.Substring(1, pathAndQueryString.IndexOf("?") - 1) : pathAndQueryString.Substring(0, pathAndQueryString.IndexOf("?") - 1);
 
                 var qsParsedToken = HttpUtility.ParseQueryString(pathAndQueryString.Substring(pathAndQueryString.IndexOf("?") + 1));
 
@@ -402,7 +402,7 @@ namespace WebsocketsSimple.Server.Handlers
             }
             else
             {
-                connection.Path = pathAndQueryString;
+                connection.Channel = pathAndQueryString;
             }
         }
         protected virtual bool AreSubprotocolsRequestedValid(string[] subprotocols)
