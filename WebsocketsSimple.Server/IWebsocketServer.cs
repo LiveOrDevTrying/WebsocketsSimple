@@ -15,6 +15,9 @@ namespace WebsocketsSimple.Server
             WSErrorServerEventArgs, 
             ConnectionWSServer>
     {
+        Task SendToChannelAsync(string message, string channel, CancellationToken cancellationToken = default);
+        Task SendToChannelAsync(byte[] message, string channel, CancellationToken cancellationToken = default);
+
         Task<bool> DisconnectConnectionAsync(ConnectionWSServer connection,
             WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
             string statusDescription = "Disconnect",
