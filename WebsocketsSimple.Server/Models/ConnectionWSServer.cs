@@ -5,7 +5,7 @@ namespace WebsocketsSimple.Server.Models
 {
     public class ConnectionWSServer : ConnectionWS
     {
-        public string Path { get; set; }
+        public string Channel { get; set; }
         public KeyValuePair<string, string>[] QueryStringParameters { get; set; }
         public bool Disposed { get; set; }
     }
