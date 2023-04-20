@@ -91,7 +91,7 @@ namespace WebsocketsSimple.Server
 
                     _connectionManager.Add(args.Connection);
 
-                    if (!_parameters.OnlyEmitBytes || !string.IsNullOrWhiteSpace(_parameters.ConnectionSuccessString))
+                    if (!_parameters.OnlyEmitBytes && !string.IsNullOrWhiteSpace(_parameters.ConnectionSuccessString))
                     {
                         await SendToConnectionAsync(_parameters.ConnectionSuccessString, args.Connection, _cancellationToken).ConfigureAwait(false);
                     }

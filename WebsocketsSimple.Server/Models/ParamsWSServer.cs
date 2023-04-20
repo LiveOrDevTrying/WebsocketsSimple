@@ -12,14 +12,9 @@ namespace WebsocketsSimple.Server.Models
 
         public ParamsWSServer(int port, string connectionSuccessString = null, string[] availableSubprotocols = null, int pingIntervalSec = 30, bool onlyEmitBytes = false) : base(port)
         {
-            if (port <= 0)
-            {
-                throw new ArgumentException("Ping must be greater than 0");
-            }
-
             if (pingIntervalSec <= 0)
             {
-                throw new ArgumentException("Ping must be greater than 0");
+                throw new ArgumentException("Ping interval must be greater than 0");
             }
 
             if (onlyEmitBytes && !string.IsNullOrWhiteSpace(connectionSuccessString))
