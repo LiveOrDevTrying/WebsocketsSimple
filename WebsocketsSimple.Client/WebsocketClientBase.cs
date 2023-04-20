@@ -54,15 +54,15 @@ namespace WebsocketsSimple.Client
 
         protected virtual void OnConnectionEvent(object sender, T args)
         {
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
         protected virtual void OnMessageEvent(object sender, U args)
         {
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
         protected virtual void OnErrorEvent(object sender, V args)
         {
-            FireEvent(sender, args);
+            FireEvent(this, args);
         }
 
         protected abstract X CreateWebsocketClientHandler();

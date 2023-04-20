@@ -362,8 +362,11 @@ namespace WebsocketsSimple.Server.Handlers
                 $"{HttpKnownHeaderNames.SecWebSocketProtocol}: {subProtocol}\r\n\r\n");
 
             await connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(response), SocketFlags.None, cancellationToken).ConfigureAwait(false);
-
-            await SendAsync(_parameters.ConnectionSuccessString, connection, cancellationToken).ConfigureAwait(false);
+            
+            if (!_parameters.OnlyEmitBytes && !string.IsNullOrWhiteSpace(_parameters.ConnectionSuccessString))
+            {
+                await SendAsync(_parameters.ConnectionSuccessString, connection, cancellationToken).ConfigureAwait(false);
+            }
 
             FireEvent(this, CreateConnectionEventArgs(new WSConnectionServerBaseEventArgs<Z>
             {
