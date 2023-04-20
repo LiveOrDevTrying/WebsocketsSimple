@@ -359,7 +359,8 @@ namespace WebsocketsSimple.Server.Handlers
                 $"{HttpKnownHeaderNames.Connection}: Upgrade\r\n" +
                 $"{HttpKnownHeaderNames.Upgrade}: websocket\r\n" +
                 $"{HttpKnownHeaderNames.SecWebSocketAccept}: {swkaSha1Base64}\r\n" +
-                $"{HttpKnownHeaderNames.SecWebSocketProtocol}: {subProtocol}\r\n\r\n");
+                (!string.IsNullOrWhiteSpace(subProtocol) ? $"{HttpKnownHeaderNames.SecWebSocketProtocol}: {subProtocol}\r\n" : "") +
+                "\r\n");
 
             await connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(response), SocketFlags.None, cancellationToken).ConfigureAwait(false);
             
