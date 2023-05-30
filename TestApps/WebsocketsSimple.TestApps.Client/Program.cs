@@ -99,6 +99,8 @@ namespace WebsocketsSimple.TestApps.Client
         }
         private static void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
+            Console.WriteLine(args.ConnectionEventType + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
+
             switch (args.ConnectionEventType)
             {
                 case ConnectionEventType.Connected:

@@ -44,7 +44,8 @@ namespace WebsocketsSimple.Client.Models
             return new WSConnectionClientEventArgs
             {
                 Connection = args.Connection,
-                ConnectionEventType = args.ConnectionEventType
+                ConnectionEventType = args.ConnectionEventType,
+                CancellationToken = args.CancellationToken,
             };
         }
 
@@ -54,7 +55,8 @@ namespace WebsocketsSimple.Client.Models
             {
                 Connection = args.Connection,
                 Exception = args.Exception,
-                Message = args.Message
+                Message = args.Message,
+                CancellationToken = args.CancellationToken,
             };
         }
 
@@ -65,7 +67,8 @@ namespace WebsocketsSimple.Client.Models
                 Bytes = args.Bytes,
                 Connection = args.Connection,
                 Message = args.Message,
-                MessageEventType = args.MessageEventType
+                MessageEventType = args.MessageEventType,
+                CancellationToken = args.CancellationToken,
             };
         }
     }

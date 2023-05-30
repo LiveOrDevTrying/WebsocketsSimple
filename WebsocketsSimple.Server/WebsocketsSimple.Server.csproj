@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
-    <Version>6.0.0</Version>
+    <Version>7.0.0</Version>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Description>The server module for a simple websocket server and client implementation with authentication.</Description>
@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Resources\Tcp.NET\Tcp.NET.Server\Tcp.NET.Server.csproj" />
+    <ProjectReference Include="..\Resources\PHS\PHS.Networking.Server\PHS.Networking.Server.csproj" />
     <ProjectReference Include="..\WebsocketsSimple.Core\WebsocketsSimple.Core.csproj" />
   </ItemGroup>
 
