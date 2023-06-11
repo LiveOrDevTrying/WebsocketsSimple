@@ -1,14 +1,13 @@
-﻿using PHS.Networking.Server.Services;
+﻿using PHS.Networking.Enums;
+using PHS.Networking.Server.Managers;
+using PHS.Networking.Server.Services;
 using System;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Handlers;
-using WebsocketsSimple.Server.Managers;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server
@@ -20,7 +19,7 @@ namespace WebsocketsSimple.Server
         where V : WSErrorServerAuthBaseEventArgs<Z, A>
         where W : ParamsWSServerAuth
         where X : WebsocketHandlerAuthBase<T, U, V, W, B, Z, A>
-        where Y : WSConnectionManagerAuthBase<Z, A>
+        where Y : ConnectionManagerAuth<Z, A>
         where Z : IdentityWSServer<A>
         where B : WSAuthorizeBaseEventArgs<Z, A>
     {
@@ -72,31 +71,48 @@ namespace WebsocketsSimple.Server
 
             return false;
         }
+        protected override void OnConnectionEvent(object sender, T args)
+        {
+            switch (args.ConnectionEventType)
+            {
+                case ConnectionEventType.Connected:
+                    if (!_connectionManager.AddUser(args.Connection))
+                    {
+                        FireEvent(this, args);
 
+                        Task.Run(async () =>
+                        {
+                            await DisconnectConnectionAsync(args.Connection, args.CancellationToken).ConfigureAwait(false);
+                        });
+                        return;
+                    }
+                    break;
+                case ConnectionEventType.Disconnect:
+                    _connectionManager.RemoveConnection(args.Connection.ConnectionId);
+                    break;
+                default:
+                    break;
+            }
+
+            FireEvent(this, args);
+        }
         protected virtual void OnAuthorizeEvent(object sender, B args)
         {
             Task.Run(async () =>
             {
                 try
                 {
-                    if (args.Token == null || !await _userService.IsValidTokenAsync(args.Token, _cancellationToken).ConfigureAwait(false))
+                    if (args.Token == null || !await _userService.IsValidTokenAsync(args.Token, args.CancellationToken).ConfigureAwait(false))
                     {
                         var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
-                        await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, _cancellationToken).ConfigureAwait(false);
-                        await DisconnectConnectionAsync(args.Connection, statusDescription: _parameters.ConnectionUnauthorizedString, cancellationToken: _cancellationToken).ConfigureAwait(false);
+                        await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, args.CancellationToken).ConfigureAwait(false);
+                        await DisconnectConnectionAsync(args.Connection, statusDescription: _parameters.ConnectionUnauthorizedString, cancellationToken: args.CancellationToken).ConfigureAwait(false);
                         return;
                     }
 
-                    args.Connection.UserId = await _userService.GetIdAsync(args.Token, _cancellationToken);
+                    args.Connection.UserId = await _userService.GetIdAsync(args.Token, args.CancellationToken);
 
-                    _connectionManager.Add(args.Connection);
-
-                    if (!_parameters.OnlyEmitBytes && !string.IsNullOrWhiteSpace(_parameters.ConnectionSuccessString))
-                    {
-                        await SendToConnectionAsync(_parameters.ConnectionSuccessString, args.Connection, _cancellationToken).ConfigureAwait(false);
-                    }
-
-                    await _handler.AuthorizeCallbackAsync(args, _cancellationToken).ConfigureAwait(false);
+                    await _handler.AuthorizeCallbackAsync(args, args.CancellationToken).ConfigureAwait(false);
                 } 
                 catch (Exception ex) 
                 {
@@ -104,10 +120,11 @@ namespace WebsocketsSimple.Server
                     {
                         Exception = ex,
                         Message = ex.Message,
-                        Connection = args.Connection
+                        Connection = args.Connection,
+                        CancellationToken = args.CancellationToken
                     }));
                 }
-            }, _cancellationToken);
+            }, args.CancellationToken);
         }
 
         public override void Dispose()
