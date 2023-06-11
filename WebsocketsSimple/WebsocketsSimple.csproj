@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
     <PackageId>WebsocketsSimple</PackageId>
-    <Version>7.0.0</Version>
+    <Version>6.0.0</Version>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Copyright>Copyright 2023</Copyright>
@@ -18,8 +18,8 @@
   </PropertyGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="WebsocketsSimple.Client" Version="7.0.*" />
-		<PackageReference Include="WebsocketsSimple.Server" Version="7.0.*" />
+		<PackageReference Include="WebsocketsSimple.Client" Version="6.0.*" />
+		<PackageReference Include="WebsocketsSimple.Server" Version="6.0.*" />
 	</ItemGroup>
 
 	<ItemGroup>

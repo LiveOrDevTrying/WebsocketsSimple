@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ApplicationIcon>Logo.ico</ApplicationIcon>
-    <Version>7.0.0</Version>
+    <Version>6.0.0</Version>
     <Authors>Rob Engel - LiveOrDevTrying</Authors>
     <Company>Rob Engel - LiveOrDevTrying - Pixel Horror Studios</Company>
     <Copyright>Copyright 2023</Copyright>
@@ -24,7 +24,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <PackageReference Include="PHS.Networking" Version="7.0.*" />
+	  <PackageReference Include="PHS.Networking" Version="6.0.*" />
 	</ItemGroup>
 	
 </Project>
