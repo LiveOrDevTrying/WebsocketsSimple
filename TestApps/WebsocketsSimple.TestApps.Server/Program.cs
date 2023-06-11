@@ -19,7 +19,7 @@ namespace WebsocketsSimple.TestApps.Server
             _authServer.ServerEvent += OnServerEvent;
             _authServer.ConnectionEvent += OnConnectionEvent;
             _authServer.ErrorEvent += OnErrorEvent;
-            _authServer.Start();
+            await _authServer.StartAsync();
 
             while (true)
             {
@@ -39,7 +39,7 @@ namespace WebsocketsSimple.TestApps.Server
 
         private static void OnConnectionEvent(object sender, WSConnectionServerAuthEventArgs<Guid> args)
         {
-            //Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
+            Console.WriteLine(args.ConnectionEventType + " " + _authServer.ConnectionCount);
         }
 
         private static void OnServerEvent(object sender, ServerEventArgs args)
