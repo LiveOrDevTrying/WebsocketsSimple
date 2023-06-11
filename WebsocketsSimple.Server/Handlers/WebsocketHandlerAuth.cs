@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Tcp.NET.Core.Models;
 using WebsocketsSimple.Core;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
@@ -55,15 +55,16 @@ namespace WebsocketsSimple.Server.Handlers
                     Connection = connection,
                     UpgradeData = message,
                     RequestSubprotocols = requestedSubprotocols,
-                    Token = token,
-                    RequestHeaders = requestHeaders
+                    Token = Encoding.UTF8.GetBytes(token),
+                    RequestHeaders = requestHeaders,
+                    CancellationToken = cancellationToken
                 });
             }
 
             return Task.CompletedTask;
         }
 
-        protected override IdentityWSServer<T> CreateConnection(ConnectionTcp connection)
+        protected override IdentityWSServer<T> CreateConnection(ConnectionWSServer connection)
         {
             return new IdentityWSServer<T>
             {
@@ -79,7 +80,8 @@ namespace WebsocketsSimple.Server.Handlers
                 Bytes = args.Bytes,
                 Connection = args.Connection,
                 Message = args.Message,
-                MessageEventType = args.MessageEventType
+                MessageEventType = args.MessageEventType,
+                CancellationToken = args.CancellationToken
             };
         }
 
@@ -88,7 +90,8 @@ namespace WebsocketsSimple.Server.Handlers
             return new WSConnectionServerAuthEventArgs<T>
             {
                 Connection = args.Connection,
-                ConnectionEventType = args.ConnectionEventType
+                ConnectionEventType = args.ConnectionEventType,
+                CancellationToken = args.CancellationToken
             };
         }
 
@@ -98,7 +101,8 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 Connection = args.Connection,
                 Exception = args.Exception,
-                Message = args.Message
+                Message = args.Message,
+                CancellationToken = args.CancellationToken
             };
         }
     }

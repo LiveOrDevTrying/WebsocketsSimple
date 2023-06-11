@@ -43,35 +43,15 @@ namespace WebsocketsSimple.Server
         {
         }
 
-        protected override WebsocketHandlerAuth<T> CreateHandler(byte[] certificate = null, string certificatePassword = null)
+        protected override WebsocketHandlerAuth<T> CreateHandler()
         {
-            return certificate != null
-                ? new WebsocketHandlerAuth<T>(_parameters, certificate, certificatePassword)
+            return _certificate != null
+                ? new WebsocketHandlerAuth<T>(_parameters, _certificate, _certificatePassword)
                 : new WebsocketHandlerAuth<T>(_parameters);
         }
         protected override WSConnectionManagerAuth<T> CreateConnectionManager()
         {
             return new WSConnectionManagerAuth<T>();
-        }
-
-        protected override WSConnectionServerAuthEventArgs<T> CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<IdentityWSServer<T>> args)
-        {
-            return new WSConnectionServerAuthEventArgs<T>
-            {
-                Connection = args.Connection,
-                ConnectionEventType = args.ConnectionEventType
-            };
-        }
-
-        protected override WSMessageServerAuthEventArgs<T> CreateMessageEventArgs(WSMessageServerBaseEventArgs<IdentityWSServer<T>> args)
-        {
-            return new WSMessageServerAuthEventArgs<T>
-            {
-                Bytes = args.Bytes,
-                Connection = args.Connection,
-                Message = args.Message,
-                MessageEventType = args.MessageEventType
-            };
         }
 
         protected override WSErrorServerAuthEventArgs<T> CreateErrorEventArgs(WSErrorServerBaseEventArgs<IdentityWSServer<T>> args)
@@ -81,6 +61,7 @@ namespace WebsocketsSimple.Server
                 Connection = args.Connection,
                 Exception = args.Exception,
                 Message = args.Message,
+                CancellationToken = args.CancellationToken,
             };
         }
     }

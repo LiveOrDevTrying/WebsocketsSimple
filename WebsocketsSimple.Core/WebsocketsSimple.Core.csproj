@@ -24,7 +24,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <PackageReference Include="Tcp.NET.Core" Version="3.1.*" />
+	  <PackageReference Include="PHS.Networking" Version="3.1.*" />
 	</ItemGroup>
 	
 </Project>

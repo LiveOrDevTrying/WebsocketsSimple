@@ -1,6 +1,5 @@
 ﻿using PHS.Networking.Events.Args;
 using System;
-using Tcp.NET.Core.Models;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
@@ -22,7 +21,7 @@ namespace WebsocketsSimple.Server.Handlers
         {
         }
 
-        protected override ConnectionWSServer CreateConnection(ConnectionTcp connection)
+        protected override ConnectionWSServer CreateConnection(ConnectionWSServer connection)
         {
             return new ConnectionWSServer
             {
@@ -36,7 +35,8 @@ namespace WebsocketsSimple.Server.Handlers
             return new WSConnectionServerEventArgs
             {
                 Connection = args.Connection,
-                ConnectionEventType = args.ConnectionEventType
+                ConnectionEventType = args.ConnectionEventType,
+                CancellationToken = args.CancellationToken,
             };
         }
 
@@ -46,7 +46,8 @@ namespace WebsocketsSimple.Server.Handlers
             {
                 Connection = args.Connection,
                 Exception = args.Exception,
-                Message = args.Message
+                Message = args.Message,
+                CancellationToken = args.CancellationToken,
             };
         }
 
@@ -57,7 +58,8 @@ namespace WebsocketsSimple.Server.Handlers
                 Bytes = args.Bytes,
                 Connection = args.Connection,
                 Message = args.Message,
-                MessageEventType = args.MessageEventType
+                MessageEventType = args.MessageEventType,
+                CancellationToken = args.CancellationToken,
             };
         }
     }

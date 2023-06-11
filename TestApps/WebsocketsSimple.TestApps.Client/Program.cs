@@ -1,5 +1,6 @@
 ﻿using PHS.Networking.Enums;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -7,15 +8,14 @@ using System.Threading.Tasks;
 using WebsocketsSimple.Client;
 using WebsocketsSimple.Client.Events.Args;
 using WebsocketsSimple.Client.Models;
-using WebsocketsSimple.Core;
 
 namespace WebsocketsSimple.TestApps.Client
 {
     class Program
     {
-        private static List<IWebsocketClient> _clients = new List<IWebsocketClient>();
-        private static Timer _timer;
+        private static ConcurrentDictionary<int, IWebsocketClient> _clients = new ConcurrentDictionary<int, IWebsocketClient>();
         private static int _max;
+        private static bool _isDone;
 
         static async Task Main(string[] args)
         {
@@ -41,7 +41,7 @@ namespace WebsocketsSimple.TestApps.Client
 
             Console.ReadLine();
 
-            _timer = new Timer(OnTimerTick, null, 0, CalculateNumberOfUsersPerMinute(numberUsers));
+            _ = new Timer(OnTimerTick, null, 0, CalculateNumberOfUsersPerMinute(numberUsers));
 
             while(true)
             {
@@ -49,23 +49,24 @@ namespace WebsocketsSimple.TestApps.Client
 
                 if (line == "restart")
                 {
-                    var clients = _clients.ToList();
-                    _clients = new List<IWebsocketClient>();
-                    foreach (var item in clients)
+                    foreach (var item in _clients.Values.ToList())
                     {
-                        await item.DisconnectAsync();
+                        if (item != null)
+                        {
+                            await item.DisconnectAsync();
+                        }
                     }
                 }
                 else
                 {
-                      await _clients.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
+                      await _clients.Values.ToList().Where(x => x.IsRunning).OrderBy(x => Guid.NewGuid()).First().SendAsync(line);
                 }
             }
         }
 
         private static void OnTimerTick(object state)
         {
-            if (_clients.Count < _max)
+            if (!_isDone && _clients.Values.Where(x => x.IsRunning).Count() < _max)
             {
                 var client = new WebsocketClient(new ParamsWSClient("localhost", 65214, false, "testToken", "newPath", new KeyValuePair<string, string>[]
                 {
@@ -75,9 +76,14 @@ namespace WebsocketsSimple.TestApps.Client
                 client.ConnectionEvent += OnConnectionEvent;
                 client.MessageEvent += OnMessageEvent;
                 client.ErrorEvent += OnErrorEvent;
-                _clients.Add(client);
+                _clients.TryAdd(client.GetHashCode(), client);
 
                 Task.Run(async () => await client.ConnectAsync());
+
+                if (_clients.Values.Where(x => x.IsRunning).Count() >= _max)
+                {
+                    _isDone = true;
+                }
             }
         }
         private static void OnErrorEvent(object sender, WSErrorClientEventArgs args)
@@ -91,7 +97,7 @@ namespace WebsocketsSimple.TestApps.Client
                 case MessageEventType.Sent:
                     break;
                 case MessageEventType.Receive:
-                    Console.WriteLine(args.Message + " : " + _clients.Where(x => x != null && x.IsRunning).Count());
+                    //Console.WriteLine(args.Message + " : " + _clients.Values.Where(x => x.IsRunning).Count());
                     break;
                 default:
                     break;
@@ -99,14 +105,16 @@ namespace WebsocketsSimple.TestApps.Client
         }
         private static void OnConnectionEvent(object sender, WSConnectionClientEventArgs args)
         {
+            Console.WriteLine(args.ConnectionEventType + " : " + _clients.Values.Where(x => x.IsRunning).Count());
+
             switch (args.ConnectionEventType)
             {
                 case ConnectionEventType.Connected:
                     break;
                 case ConnectionEventType.Disconnect:
                     var client = (IWebsocketClient)sender;
-                    _clients.Remove(client);
-                    
+                    _clients.TryRemove(_clients.FirstOrDefault(x => x.Key == client.GetHashCode()));
+
                     client.ConnectionEvent -= OnConnectionEvent;
                     client.MessageEvent -= OnMessageEvent;
                     client.ErrorEvent -= OnErrorEvent;
