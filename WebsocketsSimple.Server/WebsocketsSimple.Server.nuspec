@@ -17,6 +17,7 @@
     <dependencies>
 		<group targetFramework="net7.0">
 			<dependency id="WebsocketsSimple.Core" version="[7.0,7.1)" />
+			<dependency id="PHS.Networking.Server" version="[7.0,7.1)" />
 		</group>
     </dependencies>
   </metadata>
