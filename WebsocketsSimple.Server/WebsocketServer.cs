@@ -30,31 +30,11 @@ namespace WebsocketsSimple.Server
             return new WSConnectionManager();
         }
 
-        protected override WebsocketHandler CreateHandler(byte[] certificate = null, string certificatePassword = null)
+        protected override WebsocketHandler CreateHandler()
         {
-            return certificate != null
-                ? new WebsocketHandler(_parameters, certificate, certificatePassword)
+            return _certificate != null
+                ? new WebsocketHandler(_parameters, _certificate, _certificatePassword)
                 : new WebsocketHandler(_parameters);
-        }
-
-        protected override WSConnectionServerEventArgs CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<ConnectionWSServer> args)
-        {
-            return new WSConnectionServerEventArgs
-            {
-                Connection = args.Connection,
-                ConnectionEventType = args.ConnectionEventType
-            };
-        }
-
-        protected override WSMessageServerEventArgs CreateMessageEventArgs(WSMessageServerBaseEventArgs<ConnectionWSServer> args)
-        {
-            return new WSMessageServerEventArgs
-            {
-                Bytes = args.Bytes,
-                Connection = args.Connection,
-                Message = args.Message,
-                MessageEventType = args.MessageEventType
-            };
         }
 
         protected override WSErrorServerEventArgs CreateErrorEventArgs(WSErrorServerBaseEventArgs<ConnectionWSServer> args)
@@ -63,7 +43,8 @@ namespace WebsocketsSimple.Server
             {
                 Connection = args.Connection,
                 Exception = args.Exception,
-                Message = args.Message
+                Message = args.Message,
+                CancellationToken = args.CancellationToken,
             };
         }
     }
