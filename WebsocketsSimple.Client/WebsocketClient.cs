@@ -23,7 +23,7 @@ using WebsocketsSimple.Core.Models;
 namespace WebsocketsSimple.Client
 {
     public class WebsocketClient :
-        WebsocketClientBase<
+        CoreNetworkingClient<
             WSConnectionClientEventArgs, 
             WSMessageClientEventArgs, 
             WSErrorClientEventArgs, 
@@ -36,9 +36,16 @@ namespace WebsocketsSimple.Client
         {
         }
 
-        protected override WebsocketClientHandler CreateWebsocketClientHandler()
+        protected override WebsocketClientHandler CreateHandler()
         {
             return new WebsocketClientHandler(_parameters);
+        }
+
+        public virtual async Task<bool> DisconnectAsync(WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure,
+           string closeStatusDescription = "Disconnect",
+           CancellationToken cancellationToken = default)
+        {
+            return await _handler.DisconnectAsync(webSocketCloseStatus, closeStatusDescription, cancellationToken).ConfigureAwait(false);
         }
     }
 }
