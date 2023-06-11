@@ -1,11 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using PHS.Networking.Server.Managers;
 using WebsocketsSimple.Server.Models;
 
 namespace WebsocketsSimple.Server.Managers
 {
-    public class WSConnectionManager : WSConnectionManagerBase<ConnectionWSServer>
+    public class WSConnectionManager : ConnectionManager<ConnectionWSServer>
     {
-        public WSConnectionManager() { }
-        public WSConnectionManager(ConcurrentDictionary<string, ConnectionWSServer> connections) : base(connections) { }
     }
 }
