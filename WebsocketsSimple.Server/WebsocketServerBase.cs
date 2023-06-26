@@ -24,18 +24,15 @@ namespace WebsocketsSimple.Server
     {
         protected Timer _timerPing;
         protected bool _isPingRunning;
-        protected byte[] _certificate;
-        protected string _certificatePassword;
 
         public WebsocketServerBase(W parameters) : base(parameters)
         {
         }
+
         public WebsocketServerBase(W parameters,
             byte[] certificate,
-            string certificatePassword) : base(parameters)
+            string certificatePassword) : base(parameters, certificate, certificatePassword)
         {
-            _certificate = certificate;
-            _certificatePassword = certificatePassword;
         }
 
         public virtual async Task<bool> DisconnectConnectionAsync(Z connection, WebSocketCloseStatus webSocketCloseStatus = WebSocketCloseStatus.NormalClosure, string statusDescription = "Disconnect", CancellationToken cancellationToken = default)
