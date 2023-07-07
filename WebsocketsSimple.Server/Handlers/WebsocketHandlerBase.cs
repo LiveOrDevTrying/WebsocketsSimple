@@ -394,16 +394,15 @@ namespace WebsocketsSimple.Server.Handlers
                             {
                                 try
                                 {
-                                    var bytesRead = 0;
-                                    if ((bytesRead = connection.SslStream.Read(connection.ReadBuffer, 0, connection.ReadBuffer.Length)) > 0)
+                                    if (connection.TcpClient.Available > 0)
                                     {
-                                        await connection.MemoryStream.WriteAsync(connection.ReadBuffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
-                                        connection.ReadBuffer = new byte[4096];
+                                        var buffer = WebSocket.CreateServerBuffer(connection.TcpClient.Available);
+                                        result = await connection.Websocket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+                                        await connection.MemoryStream.WriteAsync(buffer.Array.AsMemory(buffer.Offset, result.Count), cancellationToken).ConfigureAwait(false);
                                     }
                                     else
                                     {
                                         await Task.Delay(1, cancellationToken).ConfigureAwait(false);
-                                        continue;
                                     }
                                 }
                                 catch { }

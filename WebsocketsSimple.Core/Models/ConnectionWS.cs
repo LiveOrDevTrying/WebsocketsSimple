@@ -25,33 +25,27 @@ namespace WebsocketsSimple.Core.Models
         {
             Disposed = true;
 
-            if (SslStream != null)
-            {
-                try
-                {
-                    SslStream.Close();
-                }
-                catch { }
-
-                try
-                {
-                    SslStream.Dispose();
-                }
-                catch { }
-            }
-
             try
             {
-                if (Websocket != null)
-                {
-                    Websocket.Dispose();
-                }
+                SslStream?.Close();
             }
             catch { }
 
             try
             {
-                TcpClient?.GetStream().Close();
+                SslStream?.Dispose();
+            }
+            catch { }
+
+            try
+            {
+                Websocket?.Dispose();
+            }
+            catch { }
+
+            try
+            {
+                TcpClient?.GetStream()?.Close();
             }
             catch { }
 
@@ -63,8 +57,11 @@ namespace WebsocketsSimple.Core.Models
 
             try
             {
-                MemoryStream.Close();
-                MemoryStream.Dispose();
+                MemoryStream?.Close();
+            } catch { }
+
+            try {
+                MemoryStream?.Dispose();
             }
             catch { }
         }
