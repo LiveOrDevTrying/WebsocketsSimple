@@ -64,21 +64,51 @@ namespace WebsocketsSimple.Client.Models
 
                     var buffer = new ArraySegment<byte>(requestHeader);
                     // Write out the header to the connection
-                    await _connection.TcpClient.Client.SendAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+                    if (Connection.SslStream != null)
+                    {
+                        await _connection.SslStream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await _connection.TcpClient.Client.SendAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+                    }
 
                     if (_connection != null && _connection.TcpClient.Connected && !cancellationToken.IsCancellationRequested)
                     {
-                        (var subprotocol, var remainingMessages) = await ParseAndValidateConnectResponseAsync(_connection, webSocketAccept, cancellationToken).ConfigureAwait(false);
+                        byte[][] remainingMessages;
+                        string subprotocol;
+
+                        if (_connection.SslStream != null)
+                        {
+                            (subprotocol, remainingMessages) = await ParseAndValidateConnectResponseSSLAsync(_connection, webSocketAccept, cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            (subprotocol, remainingMessages) = await ParseAndValidateConnectResponseAsync(_connection, webSocketAccept, cancellationToken).ConfigureAwait(false);
+                        }
 
                         if (_connection.TcpClient.Connected && remainingMessages != null && !cancellationToken.IsCancellationRequested)
                         {
-                            _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.TcpClient.GetStream(),
-                                subprotocol,
-                                _parameters.ReceiveBufferSize,
-                                _parameters.SendBufferSize,
-                                _parameters.KeepAliveInterval,
-                                false,
-                                WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
+                            if (_connection.SslStream != null)
+                            {
+                                _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.SslStream,
+                                    subprotocol,
+                                    _parameters.ReceiveBufferSize,
+                                    _parameters.SendBufferSize,
+                                    _parameters.KeepAliveInterval,
+                                    false,
+                                    WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
+                            }
+                            else
+                            {
+                                _connection.Websocket = WebSocket.CreateClientWebSocket(_connection.TcpClient.GetStream(),
+                                    subprotocol,
+                                    _parameters.ReceiveBufferSize,
+                                    _parameters.SendBufferSize,
+                                    _parameters.KeepAliveInterval,
+                                    false,
+                                    WebSocket.CreateClientBuffer(_parameters.ReceiveBufferSize, _parameters.SendBufferSize));
+                            }
 
                             if (_connection.Websocket.State == WebSocketState.Open)
                             {
@@ -337,7 +367,81 @@ namespace WebsocketsSimple.Client.Models
 
             await DisconnectAsync(cancellationToken).ConfigureAwait(false);
         }
+        protected virtual async Task ReceiveSSLAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && _connection != null && _connection.TcpClient.Connected)
+                {
+                    WebSocketReceiveResult result = null;
 
+                    do
+                    {
+                        try
+                        {
+                            var bytesRead = 0;
+                            if ((bytesRead = _connection.SslStream.Read(_connection.ReadBuffer, 0, _connection.ReadBuffer.Length)) > 0)
+                            {
+                                await _connection.MemoryStream.WriteAsync(_connection.ReadBuffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
+                                _connection.ReadBuffer = new byte[4096];
+                            }
+                            else
+                            {
+                                await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+                            }
+                        }
+                        catch { }
+                    }
+                    while (_connection != null && _connection.TcpClient.Connected && _connection.Websocket.State == WebSocketState.Open && result != null && !result.EndOfMessage);
+
+                    if (_connection != null && result != null && result.EndOfMessage)
+                    {
+                        var bytes = _connection.MemoryStream.ToArray();
+                        _connection.MemoryStream.SetLength(0);
+
+                        switch (result.MessageType)
+                        {
+                            case WebSocketMessageType.Text:
+                                FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
+                                {
+                                    Bytes = bytes,
+                                    Message = Encoding.UTF8.GetString(bytes, 0, bytes.Length),
+                                    Connection = _connection,
+                                    MessageEventType = MessageEventType.Receive,
+                                    CancellationToken = cancellationToken
+                                }));
+                                break;
+                            case WebSocketMessageType.Binary:
+                                FireEvent(this, CreateMessageEventArgs(new WSMessageEventArgs<Y>
+                                {
+                                    Bytes = bytes,
+                                    Connection = _connection,
+                                    MessageEventType = MessageEventType.Receive,
+                                    CancellationToken = cancellationToken
+                                }));
+                                break;
+                            case WebSocketMessageType.Close:
+                                await DisconnectAsync(cancellationToken).ConfigureAwait(false);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                FireEvent(this, CreateErrorEventArgs(new WSErrorEventArgs<Y>
+                {
+                    Exception = ex,
+                    Message = $"Error in ReceiveAsync() - {ex.Message}",
+                    Connection = _connection,
+                    CancellationToken = cancellationToken
+                }));
+            }
+
+            await DisconnectAsync(cancellationToken).ConfigureAwait(false);
+        }
         protected virtual void CreateNonSSLConnection()
         {
             _connection?.Dispose();
@@ -376,10 +480,10 @@ namespace WebsocketsSimple.Client.Models
             var sslStream = new SslStream(client.GetStream());
             await sslStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
             {
-                TargetHost = _parameters.Host,
+                TargetHost = "connect.themonitaur.com",
                 ClientCertificates = clientCertificates,
                 EnabledSslProtocols = _parameters.EnabledSslProtocols,
-                CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+                //CertificateRevocationCheckMode = X509RevocationMode.NoCheck
             }, cancellationToken);
 
             if (sslStream.IsAuthenticated && sslStream.IsEncrypted && !cancellationToken.IsCancellationRequested)
@@ -387,6 +491,8 @@ namespace WebsocketsSimple.Client.Models
                 _connection = CreateConnection(new ConnectionWS
                 {
                     TcpClient = client,
+                    SslStream = sslStream,
+                    ReadBuffer = new byte[4096]
                 });
             }
             else
@@ -543,6 +649,136 @@ namespace WebsocketsSimple.Client.Models
             await connection.TcpClient.Client.ReceiveAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
 
             var message = Encoding.UTF8.GetString(buffer);
+
+            var messagesSplit = message.Split("\r\n");
+
+            if (messagesSplit.Length <= 0)
+            {
+                throw new WebSocketException("Not valid handshake");
+            }
+
+            // Depending on the underlying sockets implementation and timing, connecting to a server that then
+            // immediately closes the connection may either result in an exception getting thrown from the connect
+            // earlier, or it may result in getting to here but reading 0 bytes.  If we read 0 bytes and thus have
+            // an empty status line, treat it as a connect failure.
+            if (string.IsNullOrEmpty(messagesSplit[0]))
+            {
+                throw new WebSocketException("Connection failure.");
+            }
+
+            const string ExpectedStatusStart = "HTTP/1.1 ";
+            const string ExpectedStatusStatWithCode = "HTTP/1.1 101"; // 101 == SwitchingProtocols
+
+            // If the status line doesn't begin with "HTTP/1.1" or isn't long enough to contain a status code, fail.
+            if (!messagesSplit[0].StartsWith(ExpectedStatusStart, StringComparison.Ordinal) || messagesSplit[0].Length < ExpectedStatusStatWithCode.Length)
+            {
+                throw new WebSocketException(WebSocketError.HeaderError, $"Connection failure (status line = '{messagesSplit[0]}').");
+            }
+
+            // If the status line doesn't contain a status code 101, or if it's long enough to have a status description
+            // but doesn't contain whitespace after the 101, fail.
+            if (!messagesSplit[0].StartsWith(ExpectedStatusStatWithCode, StringComparison.Ordinal) ||
+                (messagesSplit[0].Length > ExpectedStatusStatWithCode.Length && !char.IsWhiteSpace(messagesSplit[0][ExpectedStatusStatWithCode.Length])))
+            {
+                throw new WebSocketException(WebSocketError.HeaderError, $"Connection failure (status line = '{messagesSplit[0]}').");
+            }
+
+            // Read each response header. Be liberal in parsing the response header, treating
+            // everything to the left of the colon as the key and everything to the right as the value, trimming both.
+            // For each header, validate that we got the expected value.
+            bool foundUpgrade = false, foundConnection = false, foundSecWebSocketAccept = false;
+            string subprotocol = null;
+            var remainingMessages = new List<byte[]>(); ;
+            for (int i = 1; i < messagesSplit.Length; i++)
+            {
+                if (string.IsNullOrEmpty(messagesSplit[i]) && messagesSplit.Length >= i + 1)
+                {
+                    for (int j = i + 1; j < messagesSplit.Length; j++)
+                    {
+                        var bytes = ConvertUTF8ToASCIIBytes(messagesSplit[j].Trim());
+                        if (bytes.Length > 0)
+                        {
+                            remainingMessages.Add(bytes);
+                        }
+                    }
+
+                    break;
+                }
+
+                var colonIndex = messagesSplit[i].IndexOf(':');
+                if (colonIndex == -1)
+                {
+                    throw new WebSocketException(WebSocketError.HeaderError);
+                }
+
+                var headerName = SubstringTrim(messagesSplit[i], 0, colonIndex);
+                var headerValue = SubstringTrim(messagesSplit[i], colonIndex + 1);
+
+                // The Connection, Upgrade, and SecWebSocketAccept headers are required and with specific values.
+                ValidateAndTrackHeader(HttpKnownHeaderNames.Connection, "Upgrade", headerName, headerValue, ref foundConnection);
+                ValidateAndTrackHeader(HttpKnownHeaderNames.Upgrade, "websocket", headerName, headerValue, ref foundUpgrade);
+                ValidateAndTrackHeader(HttpKnownHeaderNames.SecWebSocketAccept, expectedSecWebSocketAccept, headerName, headerValue, ref foundSecWebSocketAccept);
+
+                // The SecWebSocketProtocol header is optional.  We should only get it with a non-empty value if we requested subprotocols,
+                // and then it must only be one of the ones we requested.  If we got a subprotocol other than one we requested (or if we
+                // already got one in a previous header), fail. Otherwise, track which one we got.
+                if (string.Equals(HttpKnownHeaderNames.SecWebSocketProtocol, headerName, StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(headerValue))
+                {
+                    if (_parameters.RequestedSubProtocols == null)
+                    {
+                        throw new WebSocketException("Requested sub protocols cannot be empty if server returns sub protocol");
+                    }
+
+                    var newSubprotocol = _parameters.RequestedSubProtocols.ToList().Find(requested => string.Equals(requested, headerValue, StringComparison.OrdinalIgnoreCase));
+                    if (newSubprotocol == null || subprotocol != null)
+                    {
+                        throw new WebSocketException(
+                            string.Format("Unsupported sub-protocol '{0}' (expected one of [{1}]).",
+                                subprotocol,
+                                string.Join(", ", _parameters.RequestedSubProtocols)
+                            )
+                        );
+                    }
+                    subprotocol = newSubprotocol;
+                }
+            }
+            if (!foundUpgrade || !foundConnection || !foundSecWebSocketAccept)
+            {
+                throw new WebSocketException("Connection failure.");
+            }
+
+            return (subprotocol, remainingMessages.ToArray());
+        }
+        protected async Task<(string, byte[][])> ParseAndValidateConnectResponseSSLAsync(ConnectionWS connection, string expectedSecWebSocketAccept, CancellationToken cancellationToken)
+        {
+            while (connection.TcpClient.Connected && !cancellationToken.IsCancellationRequested)
+            {
+                var bytesRead = 0;
+                if ((bytesRead = connection.SslStream.Read(connection.ReadBuffer, 0, connection.ReadBuffer.Length)) > 0)
+                {
+                    await connection.MemoryStream.WriteAsync(connection.ReadBuffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
+                    connection.ReadBuffer = new byte[4096];
+                }
+
+                if (bytesRead > 0)
+                {
+                    break;
+                }
+                else
+                {
+                    await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            if (!connection.TcpClient.Connected || cancellationToken.IsCancellationRequested)
+            {
+                await DisconnectAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                return (null, null);
+            }
+
+            var message = Encoding.UTF8.GetString(connection.MemoryStream.ToArray());
+            connection.MemoryStream.SetLength(0);
 
             var messagesSplit = message.Split("\r\n");
 
