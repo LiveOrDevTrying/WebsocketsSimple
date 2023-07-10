@@ -53,7 +53,7 @@ namespace WebsocketsSimple.Client.Models
                     }
                     else
                     {
-                        CreateNonSSLConnection();
+                        CreateConnection();
                     }
 
                     var uri = new Uri(ConstructURI());
@@ -234,9 +234,9 @@ namespace WebsocketsSimple.Client.Models
                         Connection = _connection,
                         CancellationToken = cancellationToken
                     }));
-
-                    return true;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -273,9 +273,9 @@ namespace WebsocketsSimple.Client.Models
                         Connection = _connection,
                         CancellationToken = cancellationToken
                     }));
-
-                    return true;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -442,7 +442,7 @@ namespace WebsocketsSimple.Client.Models
 
             await DisconnectAsync(cancellationToken).ConfigureAwait(false);
         }
-        protected virtual void CreateNonSSLConnection()
+        protected virtual void CreateConnection()
         {
             _connection?.Dispose();
             _connection = null;

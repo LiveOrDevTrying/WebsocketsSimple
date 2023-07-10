@@ -493,9 +493,9 @@ namespace WebsocketsSimple.Server.Handlers
                         Connection = connection,
                         CancellationToken = cancellationToken
                     }));
-
-                    return true;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -538,9 +538,9 @@ namespace WebsocketsSimple.Server.Handlers
                         Connection = connection,
                         CancellationToken = cancellationToken
                     }));
-
-                    return true;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
