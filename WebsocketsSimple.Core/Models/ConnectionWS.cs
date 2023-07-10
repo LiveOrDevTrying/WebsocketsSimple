@@ -1,5 +1,6 @@
 ﻿using PHS.Networking.Models;
 using System.IO;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 
@@ -12,6 +13,8 @@ namespace WebsocketsSimple.Core.Models
         public MemoryStream MemoryStream { get; set; }
         public string ConnectionId { get; set; }
         public bool Disposed { get; set; }
+        public SslStream SslStream { get; set; }
+        public byte[] ReadBuffer { get; set; }
 
         public ConnectionWS()
         {
@@ -24,13 +27,25 @@ namespace WebsocketsSimple.Core.Models
 
             try
             {
-                Websocket.Dispose();
+                SslStream?.Close();
             }
             catch { }
 
             try
             {
-                TcpClient?.GetStream().Close();
+                SslStream?.Dispose();
+            }
+            catch { }
+
+            try
+            {
+                Websocket?.Dispose();
+            }
+            catch { }
+
+            try
+            {
+                TcpClient?.GetStream()?.Close();
             }
             catch { }
 
@@ -42,8 +57,11 @@ namespace WebsocketsSimple.Core.Models
 
             try
             {
-                MemoryStream.Close();
-                MemoryStream.Dispose();
+                MemoryStream?.Close();
+            } catch { }
+
+            try {
+                MemoryStream?.Dispose();
             }
             catch { }
         }
