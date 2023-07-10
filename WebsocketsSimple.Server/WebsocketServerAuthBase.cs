@@ -105,7 +105,15 @@ namespace WebsocketsSimple.Server
                     if (args.Token == null || !await _userService.IsValidTokenAsync(args.Token, args.CancellationToken).ConfigureAwait(false))
                     {
                         var bytes = Encoding.UTF8.GetBytes(_parameters.ConnectionUnauthorizedString);
-                        await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, args.CancellationToken).ConfigureAwait(false);
+
+                        if (args.Connection.SslStream != null)
+                        {
+                            await args.Connection.SslStream.WriteAsync(bytes, args.CancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await args.Connection.TcpClient.Client.SendAsync(new ArraySegment<byte>(bytes), SocketFlags.None, args.CancellationToken).ConfigureAwait(false);
+                        }
                         await DisconnectConnectionAsync(args.Connection, statusDescription: _parameters.ConnectionUnauthorizedString, cancellationToken: args.CancellationToken).ConfigureAwait(false);
                         return;
                     }
