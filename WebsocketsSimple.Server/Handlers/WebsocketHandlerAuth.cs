@@ -69,7 +69,9 @@ namespace WebsocketsSimple.Server.Handlers
             return new IdentityWSServer<T>
             {
                 TcpClient = connection.TcpClient,
-                ConnectionId = Guid.NewGuid().ToString()
+                ConnectionId = Guid.NewGuid().ToString(),
+                SslStream = connection.SslStream,
+                ReadBuffer = connection.ReadBuffer
             };
         }
 
