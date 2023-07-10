@@ -22,9 +22,6 @@ namespace WebsocketsSimple.Server
         where Y : ConnectionManager<Z>
         where Z : ConnectionWSServer
     {
-        protected Timer _timerPing;
-        protected bool _isPingRunning;
-
         public WebsocketServerBase(W parameters) : base(parameters)
         {
         }
