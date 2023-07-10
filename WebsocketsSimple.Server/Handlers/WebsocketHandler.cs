@@ -26,7 +26,9 @@ namespace WebsocketsSimple.Server.Handlers
             return new ConnectionWSServer
             {
                 ConnectionId = Guid.NewGuid().ToString(),
-                TcpClient = connection.TcpClient
+                TcpClient = connection.TcpClient,
+                SslStream = connection.SslStream,
+                ReadBuffer = connection.ReadBuffer,
             };
         }
 
