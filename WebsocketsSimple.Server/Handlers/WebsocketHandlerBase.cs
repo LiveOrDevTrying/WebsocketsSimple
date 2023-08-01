@@ -55,6 +55,8 @@ namespace WebsocketsSimple.Server.Handlers
 
                 _isRunning = true;
 
+                Console.WriteLine("Starting server");
+
                 _server = new TcpListener(IPAddress.Any, _parameters.Port);
                 _server.Server.ReceiveTimeout = 60000;
                 _server.Start();
@@ -66,10 +68,12 @@ namespace WebsocketsSimple.Server.Handlers
 
                 if (_certificate == null)
                 {
+                Console.WriteLine("Listen for Connections");
                     _ = Task.Run(async () => { await ListenForConnectionsAsync(cancellationToken).ConfigureAwait(false); }, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
+                Console.WriteLine("Listen for Connections SSL");
                     _ = Task.Run(async () => { await ListenForConnectionsSSLAsync(cancellationToken).ConfigureAwait(false); }, cancellationToken).ConfigureAwait(false);
                 }
                 return;
@@ -162,13 +166,17 @@ namespace WebsocketsSimple.Server.Handlers
 
                 try
                 {
+                Console.WriteLine("Accepting socket");
                     client = await _server.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+                Console.WriteLine("Socket received");
                     var sslStream = new SslStream(client.GetStream());
+                Console.WriteLine("Authenticating as server");
                     await sslStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
                     {
                         ServerCertificate = new X509Certificate2(_certificate, _certificatePassword)
                     }, cancellationToken).ConfigureAwait(false);
 
+                Console.WriteLine("Authenticated as server");
                     if (sslStream.IsAuthenticated && sslStream.IsEncrypted)
                     {
                         var connection = CreateConnection(new ConnectionWSServer
@@ -196,6 +204,7 @@ namespace WebsocketsSimple.Server.Handlers
                 }
                 catch (Exception ex)
                 {
+                Console.WriteLine("Error on authentication as server");
                     FireEvent(this, CreateErrorEventArgs(new ErrorEventArgs<Z>
                     {
                         Exception = ex,
