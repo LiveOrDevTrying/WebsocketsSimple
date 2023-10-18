@@ -248,9 +248,9 @@ namespace WebsocketsSimple.Server.Handlers
                             {
                                 var split = item.Split(":");
 
-                                if (split.Length == 2)
+                                if (split.Length >= 2)
                                 {
-                                    headers.Add(split[0].Trim(), split[1].Trim());
+                                    headers.Add(split[0].Trim(), string.Join(":", split.Skip(1)).Trim());
                                 }
                             }
 
@@ -374,9 +374,9 @@ namespace WebsocketsSimple.Server.Handlers
                             {
                                 var split = item.Split(":");
 
-                                if (split.Length == 2)
+                                if (split.Length >= 2)
                                 {
-                                    headers.Add(split[0].Trim(), split[1].Trim());
+                                    headers.Add(split[0].Trim(), string.Join(":", split.Skip(1)).Trim());
                                 }
                             }
 
