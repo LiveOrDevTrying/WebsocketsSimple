@@ -719,7 +719,7 @@ namespace WebsocketsSimple.Server.Handlers
         }
 
         protected abstract Z CreateConnection(ConnectionWSServer connection);
-        protected abstract T CreateConnectionEventArgs(ConnectionEventArgs<Z> args);
+        protected abstract T CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<Z> args);
         protected abstract U CreateMessageEventArgs(WSMessageServerBaseEventArgs<Z> args);
         protected abstract V CreateErrorEventArgs(ErrorEventArgs<Z> args);
 
