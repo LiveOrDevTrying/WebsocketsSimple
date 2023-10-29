@@ -1,5 +1,6 @@
 ﻿using PHS.Networking.Events.Args;
 using System;
+using System.Collections.Generic;
 using WebsocketsSimple.Server.Events.Args;
 using WebsocketsSimple.Server.Models;
 
@@ -32,13 +33,14 @@ namespace WebsocketsSimple.Server.Handlers
             };
         }
 
-        protected override WSConnectionServerEventArgs CreateConnectionEventArgs(ConnectionEventArgs<ConnectionWSServer> args)
+        protected override WSConnectionServerEventArgs CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<ConnectionWSServer> args)
         {
             return new WSConnectionServerEventArgs
             {
                 Connection = args.Connection,
                 ConnectionEventType = args.ConnectionEventType,
                 CancellationToken = args.CancellationToken,
+                RequestHeaders = args.RequestHeaders,
             };
         }
 
