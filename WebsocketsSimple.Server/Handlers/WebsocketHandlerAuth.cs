@@ -87,13 +87,14 @@ namespace WebsocketsSimple.Server.Handlers
             };
         }
 
-        protected override WSConnectionServerAuthEventArgs<T> CreateConnectionEventArgs(ConnectionEventArgs<IdentityWSServer<T>> args)
+        protected override WSConnectionServerAuthEventArgs<T> CreateConnectionEventArgs(WSConnectionServerBaseEventArgs<IdentityWSServer<T>> args)
         {
             return new WSConnectionServerAuthEventArgs<T>
             {
                 Connection = args.Connection,
                 ConnectionEventType = args.ConnectionEventType,
-                CancellationToken = args.CancellationToken
+                CancellationToken = args.CancellationToken,
+                RequestHeaders = args.RequestHeaders
             };
         }
 
