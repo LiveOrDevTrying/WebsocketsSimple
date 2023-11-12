@@ -241,7 +241,7 @@ namespace WebsocketsSimple.Server.Handlers
 
                         if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                         {
-                            var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)").Groups[1].Value.Trim().Split(",");
+                            var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)", RegexOptions.IgnoreCase).Groups[1].Value.Trim().Split(",");
 
                             var headers = new Dictionary<string, string>();
                             foreach (var item in data.Split("\r\n").Where(x => !string.IsNullOrWhiteSpace(x)))
@@ -367,7 +367,7 @@ namespace WebsocketsSimple.Server.Handlers
 
                         if (Regex.IsMatch(data, "^GET", RegexOptions.IgnoreCase))
                         {
-                            var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)").Groups[1].Value.Trim().Split(",");
+                            var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)", RegexOptions.IgnoreCase).Groups[1].Value.Trim().Split(",");
 
                             var headers = new Dictionary<string, string>();
                             foreach (var item in data.Split("\r\n").Where(x => !string.IsNullOrWhiteSpace(x)))
@@ -625,7 +625,7 @@ namespace WebsocketsSimple.Server.Handlers
             // 2. Concatenate it with "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" (a special GUID specified by RFC 6455)
             // 3. Compute SHA-1 and Base64 hash of the new value
             // 4. Write the hash back as the value of "Sec-WebSocket-Accept" response header in an HTTP response
-            var swk = Regex.Match(message, $"{HttpKnownHeaderNames.SecWebSocketKey}: (.*)").Groups[1].Value.Trim();
+            var swk = Regex.Match(message, $"{HttpKnownHeaderNames.SecWebSocketKey}: (.*)", RegexOptions.IgnoreCase).Groups[1].Value.Trim();
             var swka = swk + Statics.WS_SERVER_GUID;
             var swkaSha1 = System.Security.Cryptography.SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(swka));
             var swkaSha1Base64 = Convert.ToBase64String(swkaSha1);
