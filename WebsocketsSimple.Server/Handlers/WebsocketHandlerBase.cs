@@ -243,7 +243,7 @@ namespace WebsocketsSimple.Server.Handlers
                         {
                             var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)", RegexOptions.IgnoreCase).Groups[1].Value.Trim().Split(",");
 
-                            var headers = new Dictionary<string, string>();
+                            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                             foreach (var item in data.Split("\r\n").Where(x => !string.IsNullOrWhiteSpace(x)))
                             {
                                 var split = item.Split(":");
@@ -369,7 +369,7 @@ namespace WebsocketsSimple.Server.Handlers
                         {
                             var requestSubprotocols = Regex.Match(data, $"{HttpKnownHeaderNames.SecWebSocketProtocol}: (.*)", RegexOptions.IgnoreCase).Groups[1].Value.Trim().Split(",");
 
-                            var headers = new Dictionary<string, string>();
+                            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                             foreach (var item in data.Split("\r\n").Where(x => !string.IsNullOrWhiteSpace(x)))
                             {
                                 var split = item.Split(":");
